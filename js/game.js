@@ -430,31 +430,42 @@
   btnAudio.addEventListener('click', () => {
     if (state.audioCooldown || state.modules.audio.error || state.over) return;
 
-    const bradRoom = BRAD_PATH[state.bradIndex];
+    // Son de retour audio immédiat pour feedback joueur
+    playSound(snd.pounding, 0.45);
 
-    // Si Brad est à l'accès étage → audio dans le couloir = résout l'alerte
+    // Si Brad est à l'accès étage → résout l'alerte
     if (state.stairActive) {
-      resolveStairAlert();
+      // Petit délai réaliste avant que Brad réagisse
+      setTimeout(() => {
+        resolveStairAlert();
+      }, 1500);
       startAudioCooldown();
       return;
     }
 
     // Sinon : attirer Brad vers la pièce N-1
+    // Brad ne bouge pas immédiatement — délai de 3s
     if (state.bradIndex > 0) {
-      state.bradIndex--;
-      state.bradPhase = state.bradIndex === 0 ? 2 : 1;
-      refreshMap();
-      playSound(snd.pounding, 0.5);
+      const bradRoomBefore = BRAD_PATH[state.bradIndex];
+      clearTimeout(bradMoveTimeout); // annule le prochain déplacement prévu
 
-      // Refresh caméra si nécessaire
-      if (state.selectedRoom === BRAD_PATH[state.bradIndex] ||
-          state.selectedRoom === bradRoom) {
-        selectRoom(state.selectedRoom);
-      }
+      setTimeout(() => {
+        if (state.over) return;
+        state.bradIndex--;
+        state.bradPhase = state.bradIndex === 0 ? 2 : 1;
+        refreshMap();
+        playSound(snd.pounding, 0.5);
+
+        // Refresh caméra si nécessaire
+        if (state.selectedRoom === BRAD_PATH[state.bradIndex] ||
+            state.selectedRoom === bradRoomBefore) {
+          selectRoom(state.selectedRoom);
+        }
+        scheduleBradMove();
+      }, 3000);
     }
 
     startAudioCooldown();
-    scheduleBradMove();
   });
 
   function startAudioCooldown() {
@@ -577,25 +588,22 @@
   // ══════════════════════════════════════
 
   function startPhoneCall() {
+    if (state.over) return;
     state.callPlaying = true;
-    playSound(snd.ring, 0.7);
 
+    // Lance l'enregistrement directement (la sonnerie a déjà joué)
+    playSound(snd.call, 0.75);
+
+    // Bouton mute call apparaît après 5s
     setTimeout(() => {
-      stopSound(snd.ring);
-      playSound(snd.call, 0.75);
-      btnMuteCall.classList.remove('hidden');
+      if (state.callPlaying) btnMuteCall.classList.remove('hidden');
+    }, 5000);
 
-      // Cacher le bouton après 5s (règle du PDF)
-      setTimeout(() => {
-        btnMuteCall.classList.remove('hidden');
-      }, 5000);
-
-      snd.call.onended = () => {
-        state.callPlaying = false;
-        state.callMuted   = false;
-        btnMuteCall.classList.add('hidden');
-      };
-    }, 3000);
+    snd.call.onended = () => {
+      state.callPlaying = false;
+      state.callMuted   = false;
+      btnMuteCall.classList.add('hidden');
+    };
   }
 
   btnMuteCall.addEventListener('click', () => {
@@ -704,23 +712,32 @@
   // ══════════════════════════════════════
 
   function startNight() {
+    // Son night-start joue sur l'écran 12 AM
     playSound(snd.nightStart, 0.8);
 
-    // Affiche "12 AM Night 1" pendant 3s
+    // Brad visible dès le départ sur la carte
+    refreshMap();
+
+    // Affiche "12 AM Night 1" pendant 3s puis bascule sur le jeu
     setTimeout(() => {
       screenNightStart.classList.add('hidden');
       screenGame.classList.remove('hidden');
 
       drawNoise();
-      selectRoom('cellier');
-      refreshMap();
+      selectRoom('cellier');   // caméra cellier par défaut
+      refreshMap();            // indicateur Brad visible immédiatement
       startAmbiance();
       startGameClock();
       scheduleBradMove();
       scheduleNextError();
 
-      // Appel Phone Guy après 2s
-      setTimeout(startPhoneCall, 2000);
+      // Sonnerie après 1s, puis appel Phone Guy
+      setTimeout(() => {
+        playSound(snd.ring, 0.7);
+        // L'appel démarre quand la sonnerie se termine (ou après 3s max)
+        const ringDuration = (snd.ring.duration || 3) * 1000;
+        setTimeout(startPhoneCall, Math.min(ringDuration, 3000));
+      }, 1000);
 
     }, 3000);
   }
