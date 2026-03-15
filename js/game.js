@@ -1,10 +1,10 @@
 /* ═══════════════════════════════════════════
-   GAME.JS v4
-   - ring x3 APRÈS l'appel
-   - ambiance coupée pendant l'appel, 30sec max par piste
-   - portes et bruits de pas uniquement si Brad est réellement passé
-   - couloir = écran criblé "pas d'image, son uniquement"
-   - bouton Maintenance clignote en rouge si erreur active
+   GAME.JS v5
+   - 3 sonneries au démarrage AVANT l'appel
+   - Écran criblé sur CAM ÉTAGE (pas couloir)
+   - Portes ouvertes uniquement si bradMaxIndex > index pièce
+   - Pounding uniquement si bradVisible (après 2AM)
+   - Texte "erreur" rouge sur bouton Maintenance
 ════════════════════════════════════════════ */
 
 (() => {
@@ -13,19 +13,16 @@
   // CONFIG
   // ══════════════════════════════════════
 
-  const NIGHT_NUMBER        = 1;
-  const NIGHT_DURATION      = 10 * 60 * 1000;
-  const HOURS               = ['12 AM','1 AM','2 AM','3 AM','4 AM','5 AM','6 AM'];
-  const BRAD_VISIBLE_HOUR   = 2;
-  const AMBIANCE_MAX_DURATION = 30000; // 30 secondes par piste
+  const NIGHT_NUMBER          = 1;
+  const NIGHT_DURATION        = 10 * 60 * 1000;
+  const HOURS                 = ['12 AM','1 AM','2 AM','3 AM','4 AM','5 AM','6 AM'];
+  const BRAD_VISIBLE_HOUR     = 2;
+  const AMBIANCE_MAX_DURATION = 30000;
 
   const BRAD_PATH = [
     'cellier','wc','salle-de-bain','cuisine',
     'salle-a-manger','salon','couloir','etage',
   ];
-
-  // Index max atteint par Brad (pour les portes)
-  // On se base sur bradIndex réel, pas sur un compteur séparé
 
   const CAM_IMAGES = {
     'cellier':        'assets/images/cameras/cellier.jpeg',
@@ -49,6 +46,14 @@
     'couloir':        'assets/images/cameras/brad/couloir-brad.png',
   };
 
+  // Index dans BRAD_PATH à partir duquel les portes s'ouvrent
+  // salle-de-bain = index 2, cuisine = index 3
+  // La porte s'ouvre uniquement si bradMaxIndex > cet index (Brad EST PASSÉ)
+  const DOOR_THRESHOLDS = {
+    'salle-de-bain': 2,
+    'cuisine':       3,
+  };
+
   const BRAD_MOVE_BASE      = 20000;
   const BRAD_MOVE_MIN       = 8000;
   const STAIR_WINDOW_BASE   = 8000;
@@ -65,8 +70,7 @@
     over: false, nightProgress: 0, currentHour: 0,
     selectedRoom: 'cellier', bradVisible: false,
     bradIndex: 0, bradPhase: 1,
-    // Index max jamais atteint par Brad (pour les portes ouvertes)
-    bradMaxIndex: 0,
+    bradMaxIndex: 0,          // index max réellement atteint par Brad
     stairActive: false, stairTimer: null,
     modules: {
       audio:       { error: false, rebooting: false },
@@ -132,6 +136,7 @@
     jumpscare:     document.getElementById('snd-jumpscare'),
   };
 
+  // Enregistrement perso en .m4a
   if (snd.call) snd.call.src = 'assets/audio/effect/night1-call.m4a';
 
   function playSound(audio, vol = 0.8) {
@@ -147,7 +152,7 @@
 
 
   // ══════════════════════════════════════
-  // AMBIANCE — 30sec max, coupée pendant l'appel
+  // AMBIANCE — 30sec max, pause pendant appel
   // ══════════════════════════════════════
 
   let ambianceTimeout = null;
@@ -159,16 +164,12 @@
     currentAmbiance = snd.ambiance[idx];
     currentAmbiance.volume = 0.35;
     currentAmbiance.play().catch(() => {});
-
-    // Couper après 30 secondes max puis relancer
     clearTimeout(ambianceTimeout);
     ambianceTimeout = setTimeout(() => {
       stopCurrentAmbiance();
-      // Pause de 3-8 secondes entre les pistes
-      const pause = 3000 + Math.random() * 5000;
       ambianceTimeout = setTimeout(() => {
         if (!state.ambiancePaused && !state.over) startAmbiance();
-      }, pause);
+      }, 3000 + Math.random() * 5000);
     }, AMBIANCE_MAX_DURATION);
   }
 
@@ -189,7 +190,6 @@
   function resumeAmbiance() {
     if (!state.ambiancePaused) return;
     state.ambiancePaused = false;
-    // Reprise après 2 secondes
     setTimeout(() => {
       if (!state.over && !state.ambiancePaused) startAmbiance();
     }, 2000);
@@ -227,49 +227,43 @@
 
 
   // ══════════════════════════════════════
-  // CAMÉRAS
-  // Portes ouvertes uniquement si bradMaxIndex a dépassé la pièce
-  // Couloir = écran criblé "pas d'image"
+  // OVERLAY "PAS D'IMAGE" — utilisé pour l'ÉTAGE
   // ══════════════════════════════════════
 
-  // Overlay couloir — crée dynamiquement si pas encore dans le DOM
-  function showCouloir() {
+  function showNoSignal() {
     camImg.style.display = 'none';
-
     let overlay = document.getElementById('cam-no-signal');
     if (!overlay) {
       overlay = document.createElement('div');
       overlay.id = 'cam-no-signal';
       overlay.style.cssText = `
-        position:absolute; inset:0; z-index:6;
-        display:flex; flex-direction:column;
-        align-items:center; justify-content:center;
+        position:absolute;inset:0;z-index:6;
+        display:flex;flex-direction:column;
+        align-items:center;justify-content:center;
         background:#000;
       `;
-      // Canvas statique
       const c = document.createElement('canvas');
       c.id = 'static-canvas';
       c.style.cssText = 'position:absolute;inset:0;width:100%;height:100%;opacity:0.85;';
       overlay.appendChild(c);
-      // Texte
       const txt = document.createElement('div');
       txt.style.cssText = `
-        position:relative; z-index:2;
+        position:relative;z-index:2;
         font-family:'Share Tech Mono',monospace;
-        font-size:13px; letter-spacing:4px;
-        color:#cc2020; text-align:center;
+        font-size:13px;letter-spacing:4px;
+        color:#cc2020;text-align:center;
         animation:blink 0.8s step-start infinite;
         text-shadow:0 0 8px rgba(200,30,30,0.6);
       `;
-      txt.innerHTML = 'PAS D\'IMAGE<br><span style="font-size:10px;color:#555;letter-spacing:3px;">SON UNIQUEMENT</span>';
+      txt.innerHTML = "PAS D'IMAGE<br><span style='font-size:10px;color:#555;letter-spacing:3px;'>SON UNIQUEMENT</span>";
       overlay.appendChild(txt);
       camView.appendChild(overlay);
-
-      // Animer le canvas statique
+      // Canvas statique animé
       const sctx = c.getContext('2d');
       function drawStatic() {
-        if (!document.getElementById('cam-no-signal')) return;
-        c.width = c.offsetWidth || 400;
+        if (!document.getElementById('cam-no-signal') ||
+            document.getElementById('cam-no-signal').style.display === 'none') return;
+        c.width  = c.offsetWidth  || 400;
         c.height = c.offsetHeight || 300;
         const img = sctx.createImageData(c.width, c.height);
         for (let i = 0; i < img.data.length; i += 4) {
@@ -283,23 +277,39 @@
       drawStatic();
     }
     overlay.style.display = 'flex';
-
-    // Son robot si Brad est dans le couloir
-    if (BRAD_PATH[state.bradIndex] === 'couloir' && state.bradVisible) {
-      playSound(snd.robot, 0.6);
-    }
   }
 
-  function hideCouloir() {
+  function hideNoSignal() {
     const overlay = document.getElementById('cam-no-signal');
     if (overlay) overlay.style.display = 'none';
     camImg.style.display = 'block';
   }
 
+
+  // ══════════════════════════════════════
+  // CAMÉRAS
+  // - étage → overlay "pas d'image"
+  // - couloir → image normale
+  // - portes → uniquement si bradMaxIndex > seuil
+  // ══════════════════════════════════════
+
   function selectRoom(roomId) {
-    if (roomId === 'etage') return;
+    // L'étage est cliquable mais affiche "pas d'image"
+    if (roomId === 'etage') {
+      state.selectedRoom = 'etage';
+      mapRooms.forEach(r => r.classList.remove('active'));
+      const el = document.getElementById('room-etage');
+      if (el) el.classList.add('active');
+      camBadgeName.textContent = 'CAM — ACCÈS ÉTAGE';
+      showNoSignal();
+      // Son robot si Brad est à l'étage
+      if (BRAD_PATH[state.bradIndex] === 'etage' && state.bradVisible)
+        playSound(snd.robot, 0.6);
+      return;
+    }
+
     if (state.modules.camera.error) {
-      hideCouloir();
+      hideNoSignal();
       camImg.style.display = 'block';
       camImg.src = '';
       errorDisplay.classList.remove('hidden');
@@ -309,36 +319,34 @@
 
     state.selectedRoom = roomId;
     playSound(snd.clicCamera, 0.5);
-
     mapRooms.forEach(r => r.classList.remove('active'));
     const el = document.getElementById(`room-${roomId}`);
     if (el) el.classList.add('active');
     camBadgeName.textContent = `CAM — ${roomId.replace(/-/g,' ').toUpperCase()}`;
 
-    // Couloir → écran criblé
-    if (roomId === 'couloir') {
-      showCouloir();
-      return;
-    }
-    hideCouloir();
+    hideNoSignal();
 
-    // Portes ouvertes uniquement si Brad a RÉELLEMENT dépassé cette pièce
-    // (bradMaxIndex > index de la pièce dans BRAD_PATH)
-    const roomPathIdx = BRAD_PATH.indexOf(roomId);
+    // Image de base
     let baseSrc = CAM_IMAGES[roomId] || '';
 
-    if (roomId === 'salle-de-bain' && state.bradMaxIndex > 2)
-      baseSrc = 'assets/images/cameras/salle-de-bain-ouverte.jpeg';
-    if (roomId === 'cuisine' && state.bradMaxIndex > 3)
-      baseSrc = 'assets/images/cameras/cuisine-ouverte.jpeg';
+    // Porte ouverte UNIQUEMENT si Brad a réellement dépassé cette pièce
+    // bradMaxIndex doit être STRICTEMENT supérieur à l'index de la pièce
+    const threshold = DOOR_THRESHOLDS[roomId];
+    if (threshold !== undefined && state.bradMaxIndex > threshold) {
+      if (roomId === 'salle-de-bain')
+        baseSrc = 'assets/images/cameras/salle-de-bain-ouverte.jpeg';
+      if (roomId === 'cuisine')
+        baseSrc = 'assets/images/cameras/cuisine-ouverte.jpeg';
+    }
 
-    // Brad visible uniquement à partir de 2AM et s'il est dans cette pièce
+    // Brad visible seulement après 2AM ET s'il est dans cette pièce
     const bradHere = BRAD_PATH[state.bradIndex] === roomId && state.bradVisible;
     if (bradHere) {
       let bradKey = roomId;
       if (roomId === 'cellier') bradKey = `cellier-${state.bradPhase}`;
       if (roomId === 'cuisine' && Math.random() < 0.05) bradKey = 'cuisine-rare';
       camImg.src = BRAD_IMAGES[bradKey] || baseSrc;
+      if (roomId === 'couloir') playSound(snd.robot, 0.6);
     } else {
       camImg.src = baseSrc;
     }
@@ -347,7 +355,7 @@
   mapRooms.forEach(r => {
     r.addEventListener('click', () => {
       const id = r.dataset.room;
-      if (id && id !== 'etage') selectRoom(id);
+      if (id) selectRoom(id); // étage inclus maintenant
     });
   });
 
@@ -366,8 +374,8 @@
 
   // ══════════════════════════════════════
   // DÉPLACEMENT BRAD
-  // bradMaxIndex = index max jamais atteint (pour les portes)
-  // pounding uniquement quand Brad avance réellement
+  // Pounding uniquement si bradVisible (après 2AM)
+  // bradMaxIndex mis à jour uniquement quand Brad avance
   // ══════════════════════════════════════
 
   function getBradInterval() {
@@ -377,6 +385,8 @@
 
   function moveBrad() {
     if (state.over || state.bradIndex >= BRAD_PATH.length - 1) return;
+    // Brad ne bouge pas avant 2AM
+    if (!state.bradVisible) { scheduleBradMove(); return; }
 
     // Phase cellier 1 → 2
     if (state.bradIndex === 0 && state.bradPhase === 1) {
@@ -390,13 +400,13 @@
     state.bradIndex++;
     state.bradPhase = 1;
 
-    // Mettre à jour l'index max (pour les portes)
-    if (state.bradIndex > state.bradMaxIndex) {
+    // Mettre à jour l'index max (portes)
+    if (state.bradIndex > state.bradMaxIndex)
       state.bradMaxIndex = state.bradIndex;
-    }
 
-    // Son de pas UNIQUEMENT quand Brad avance (pas quand il recule via audio)
-    playSound(snd.pounding, 0.7);
+    // Pounding UNIQUEMENT si Brad est visible (après 2AM)
+    if (state.bradVisible) playSound(snd.pounding, 0.7);
+
     refreshMap();
 
     const newRoom = BRAD_PATH[state.bradIndex];
@@ -427,7 +437,7 @@
     if (state.stairActive) return;
     state.stairActive = true;
     stairAlert.classList.remove('hidden');
-    playSound(snd.pounding, 0.9);
+    if (state.bradVisible) playSound(snd.pounding, 0.9);
     const total = Math.max(STAIR_WINDOW_MIN,
       STAIR_WINDOW_BASE - (STAIR_WINDOW_BASE - STAIR_WINDOW_MIN) * state.nightProgress);
     const start = Date.now();
@@ -435,8 +445,8 @@
       if (!state.stairActive) return;
       const rem = Math.max(0, total - (Date.now() - start));
       stairTimerFill.style.width = ((rem / total) * 100) + '%';
-      if (rem <= 0) { triggerJumpscare(); }
-      else { state.stairTimer = requestAnimationFrame(tick); }
+      if (rem <= 0) triggerJumpscare();
+      else state.stairTimer = requestAnimationFrame(tick);
     }
     state.stairTimer = requestAnimationFrame(tick);
   }
@@ -450,7 +460,6 @@
     state.bradIndex = Math.max(0, state.bradIndex - 1);
     state.bradPhase = 1;
     refreshMap();
-    // Pas de pounding ici — Brad recule silencieusement
     scheduleBradMove();
   }
 
@@ -478,12 +487,10 @@
     setTimeout(() => {
       if (state.over) return;
       if (targetIdx !== -1 && targetIdx < bradIdx) {
-        // Derrière → recule (attiré)
         state.bradIndex = Math.max(0, bradIdx - 1);
         state.bradPhase = state.bradIndex === 0 ? 2 : 1;
-        // Pas de pounding : Brad se déplace vers le son discrètement
+        // Recul silencieux
       } else if (targetIdx !== -1 && targetIdx > bradIdx) {
-        // Devant → avance
         state.bradIndex = Math.min(BRAD_PATH.length - 2, bradIdx + 1);
         state.bradPhase = 1;
         if (state.bradIndex > state.bradMaxIndex)
@@ -491,7 +498,7 @@
         if (BRAD_PATH[state.bradIndex] === 'etage') {
           triggerStairAlert(); return;
         }
-        playSound(snd.pounding, 0.5);
+        if (state.bradVisible) playSound(snd.pounding, 0.5);
       }
       refreshMap();
       if (state.selectedRoom === BRAD_PATH[state.bradIndex] ||
@@ -515,7 +522,7 @@
 
 
   // ══════════════════════════════════════
-  // MAINTENANCE — bouton clignote si erreur
+  // MAINTENANCE — texte erreur visible
   // ══════════════════════════════════════
 
   btnMaintenance.addEventListener('click', () => {
@@ -555,12 +562,14 @@
     }, 6000 + Math.random() * 4000);
   }
 
-  // Fait clignoter le bouton Maintenance en rouge si erreur
+  // Texte "erreur" en rouge sur le bouton Maintenance + clignotement
   function updateMaintenanceBtnState() {
     if (hasAnyError()) {
       btnMaintenance.classList.add('has-error');
+      btnMaintenance.textContent = 'Maintenance — erreur';
     } else {
       btnMaintenance.classList.remove('has-error');
+      btnMaintenance.textContent = 'Maintenance';
     }
   }
 
@@ -590,7 +599,7 @@
     if (alarmInterval) return;
     playSound(snd.alarm, 0.7);
     alarmInterval = setInterval(() => {
-      if (hasAnyError()) { playSound(snd.alarm, 0.7); }
+      if (hasAnyError()) playSound(snd.alarm, 0.7);
       else { clearInterval(alarmInterval); alarmInterval = null; }
     }, 2500);
   }
@@ -598,6 +607,7 @@
   function hasAnyError() {
     return Object.values(state.modules).some(m => m.error);
   }
+
   function updateErrorDisplay() {
     const errors = Object.entries(state.modules)
       .filter(([, m]) => m.error).map(([k]) => `erreur ${k}`);
@@ -612,48 +622,44 @@
 
   // ══════════════════════════════════════
   // APPEL PHONE GUY
-  // Ring x3 APRÈS l'appel — ambiance coupée pendant
+  // 3 sonneries AVANT l'appel, ambiance coupée
   // ══════════════════════════════════════
 
   function startPhoneCall() {
     if (state.over) return;
     state.callPlaying = true;
-    pauseAmbiance(); // coupe l'ambiance pendant l'appel
+    pauseAmbiance();
     playSound(snd.call, 0.75);
-
     setTimeout(() => {
       if (state.callPlaying) btnMuteCall.classList.remove('hidden');
     }, 5000);
-
     snd.call.onended = () => {
       if (state.callMuted) return;
       state.callPlaying = false;
       btnMuteCall.classList.add('hidden');
-      // Ring x3 après l'appel
-      ringAfterCall(3, () => {
-        resumeAmbiance(); // reprend l'ambiance après les sonneries
-      });
+      resumeAmbiance();
     };
-  }
-
-  function ringAfterCall(times, onDone) {
-    if (times <= 0 || state.over) { if (onDone) onDone(); return; }
-    playSound(snd.ring, 0.6);
-    const ringDur = (snd.ring.duration || 2) * 1000;
-    setTimeout(() => {
-      ringAfterCall(times - 1, onDone);
-    }, Math.min(ringDur, 2500) + 300);
   }
 
   btnMuteCall.addEventListener('click', () => {
     if (state.callMuted) return;
     state.callMuted = true;
     stopSound(snd.call);
-    stopSound(snd.ring);
     btnMuteCall.classList.add('hidden');
     state.callPlaying = false;
-    resumeAmbiance(); // reprend l'ambiance si on coupe l'appel
+    resumeAmbiance();
   });
+
+  // Joue ring N fois puis appelle onDone
+  function playRingTimes(times, onDone) {
+    if (times <= 0 || state.over) { if (onDone) onDone(); return; }
+    playSound(snd.ring, 0.7);
+    // Attend la fin du son ring (ou 2.5s max) puis rejoue
+    const ringDur = snd.ring.duration > 0
+      ? snd.ring.duration * 1000
+      : 2500;
+    setTimeout(() => playRingTimes(times - 1, onDone), Math.min(ringDur, 2500) + 200);
+  }
 
 
   // ══════════════════════════════════════
@@ -721,25 +727,35 @@
 
   // ══════════════════════════════════════
   // DÉMARRAGE
+  // Séquence : night-start → écran 3s → jeu
+  // → 3 sonneries → appel Phone Guy → ambiance
   // ══════════════════════════════════════
 
   function startNight() {
     playSound(snd.nightStart, 0.8);
+
     setTimeout(() => {
       screenNightStart.classList.add('hidden');
       screenGame.classList.remove('hidden');
       drawNoise();
       selectRoom('cellier');
       refreshMap();
-      startAmbiance();
       startGameClock();
       scheduleBradMove();
       scheduleNextError();
-      // Sonnerie → appel
+
+      // 3 sonneries dès le lancement, PUIS appel, PUIS ambiance
       setTimeout(() => {
-        playSound(snd.ring, 0.7);
-        setTimeout(() => { stopSound(snd.ring); startPhoneCall(); }, 3000);
+        playRingTimes(3, () => {
+          startPhoneCall();             // appel après les 3 sonneries
+          // L'ambiance démarre après la fin de l'appel (géré dans onended)
+          // mais on la lance aussi en fallback après 30s au cas où
+          setTimeout(() => {
+            if (!state.callPlaying && !state.over) startAmbiance();
+          }, 30000);
+        });
       }, 1000);
+
     }, 3000);
   }
 
