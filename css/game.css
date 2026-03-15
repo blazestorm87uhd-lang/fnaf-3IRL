@@ -471,3 +471,20 @@
   gap: 16px;
   z-index: 800;
 }
+
+/* ── MAINTENANCE ERREUR — bouton clignote en rouge ── */
+.action-btn.has-error {
+  animation: maintError 0.8s step-start infinite !important;
+}
+@keyframes maintError {
+  0%, 100% {
+    color: #cc2020 !important;
+    border-color: rgba(200,30,30,0.6) !important;
+    background: rgba(200,30,30,0.06) !important;
+  }
+  50% {
+    color: #ff5555 !important;
+    border-color: rgba(255,60,60,0.9) !important;
+    background: rgba(200,30,30,0.14) !important;
+  }
+}
