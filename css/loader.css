@@ -1,0 +1,145 @@
+/* ═══════════════════════════════════════════
+   LOADER — Écran de chargement
+════════════════════════════════════════════ */
+
+#loader {
+  position: fixed;
+  inset: 0;
+  background: var(--black);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 800;
+  cursor: pointer;
+}
+
+/* Bruit statique loader */
+#loader-noise {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  opacity: 0.045;
+  z-index: 1;
+}
+
+/* Scanlines loader */
+.loader-scanlines {
+  position: absolute;
+  inset: 0;
+  background: repeating-linear-gradient(
+    to bottom,
+    transparent 0px, transparent 3px,
+    rgba(0,0,0,0.15) 3px, rgba(0,0,0,0.15) 4px
+  );
+  pointer-events: none;
+  z-index: 2;
+}
+
+.loader-scan-line {
+  position: absolute;
+  left: 0; right: 0;
+  height: 2px;
+  background: rgba(255,255,255,0.04);
+  pointer-events: none;
+  z-index: 3;
+  animation: scanMove 6s linear infinite;
+}
+
+/* Contenu centré */
+.loader-content {
+  position: relative;
+  z-index: 10;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 60px;
+  text-align: center;
+}
+
+/* Logo */
+.loader-logo {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  animation: flicker 10s infinite;
+}
+
+.logo-five {
+  font-family: var(--font-mono);
+  font-size: 13px;
+  letter-spacing: 8px;
+  color: #555;
+  text-transform: uppercase;
+}
+
+/* Titre principal avec glitch */
+.logo-title {
+  font-family: var(--font-title);
+  font-size: clamp(42px, 8vw, 80px);
+  font-weight: 700;
+  color: var(--white);
+  letter-spacing: 6px;
+  position: relative;
+  text-shadow: 0 0 30px rgba(255,255,255,0.08);
+  animation: glitchClip1 8s infinite;
+}
+
+/* Ghost glitch layer */
+.logo-title::after {
+  content: attr(data-text);
+  position: absolute;
+  top: 0; left: 0;
+  color: #00ffaa;
+  animation: glitchClip2 8s infinite;
+  pointer-events: none;
+}
+
+.logo-irl {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: 6px;
+  color: var(--gold);
+  text-shadow: 0 0 8px rgba(192,160,16,0.5);
+  animation: blink 4s step-start infinite;
+}
+
+/* Texte cliquer pour continuer */
+.loader-click {
+  font-family: var(--font-mono);
+  font-size: clamp(11px, 1.5vw, 14px);
+  letter-spacing: 5px;
+  color: #666;
+  animation: blink 1.4s step-start infinite;
+  text-transform: uppercase;
+  opacity: 0;
+
+  /* Apparaît après 1.5s */
+  animation-delay: 1.5s;
+  animation-fill-mode: forwards;
+  animation-name: appearThenBlink;
+}
+
+@keyframes appearThenBlink {
+  0%   { opacity: 0; }
+  1%   { opacity: 1; }
+  50%  { opacity: 0; }
+  100% { opacity: 1; }
+}
+
+/* Transition glitch de sortie */
+#loader.glitch-out {
+  animation: loaderGlitchOut 0.6s forwards;
+}
+
+@keyframes loaderGlitchOut {
+  0%   { opacity: 1; transform: none; filter: none; }
+  15%  { opacity: 1; transform: translateX(-8px); filter: hue-rotate(90deg) saturate(3); }
+  20%  { opacity: 0.6; transform: translateX(6px) scaleY(1.02); }
+  30%  { opacity: 1; transform: translateX(-4px); filter: hue-rotate(180deg); }
+  40%  { opacity: 0.3; transform: translateX(10px) scaleX(1.01); }
+  50%  { opacity: 0.8; transform: translateX(-6px); filter: none; }
+  60%  { opacity: 0.1; transform: none; }
+  70%  { opacity: 0.5; transform: translateX(4px); }
+  100% { opacity: 0; transform: none; display: none; }
+}

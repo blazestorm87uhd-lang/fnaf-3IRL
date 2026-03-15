@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Five Nights at Chez Moi — IRL</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700&family=Share+Tech+Mono&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="css/global.css" />
+  <link rel="stylesheet" href="css/loader.css" />
+  <link rel="stylesheet" href="css/menu.css" />
+</head>
+<body>
+
+  <!-- ═══════════════════════════════════════
+       ÉCRAN DE CHARGEMENT
+  ════════════════════════════════════════ -->
+  <div id="loader">
+    <canvas id="loader-noise"></canvas>
+    <div class="loader-scanlines"></div>
+    <div class="loader-scan-line"></div>
+
+    <div class="loader-content">
+      <div class="loader-logo">
+        <span class="logo-five">FIVE NIGHTS AT</span>
+        <span class="logo-title" id="logo-glitch" data-text="CHEZ MOI">CHEZ MOI</span>
+        <span class="logo-irl">IRL — ÉDITION 3</span>
+      </div>
+      <div class="loader-click" id="loader-click">
+        CLIQUEZ POUR CONTINUER
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════
+       MENU PRINCIPAL
+  ════════════════════════════════════════ -->
+  <div id="menu" class="hidden">
+    <canvas id="noise"></canvas>
+    <div class="scan-line"></div>
+
+    <!-- Panneau gauche — Brad -->
+    <div class="left" id="left-panel">
+      <img class="brad-img" id="brad-normal" src="assets/images/brad-normal.png" alt="" />
+      <img class="brad-img" id="brad-broken" src="assets/images/brad-broken.png" alt="" />
+      <div class="left-vignette"></div>
+      <div class="left-vignette-bottom"></div>
+      <div class="rec-badge">
+        <div class="rec-dot"></div>
+        <span>REC — CAM-01 — BUREAU</span>
+      </div>
+    </div>
+
+    <div class="divider"></div>
+
+    <!-- Panneau droit — Boutons -->
+    <div class="right">
+      <div class="game-label">Five Nights at</div>
+      <div class="game-title">Chez Moi</div>
+      <div class="game-irl">IRL</div>
+      <div class="game-edition">— ÉDITION 3 —</div>
+
+      <div class="menu-items">
+
+        <button class="menu-item" id="btn-newgame">
+          <span class="arrow">›</span>
+          New Game
+          <span class="item-note">commencer depuis la nuit 1</span>
+        </button>
+
+        <button class="menu-item" id="btn-continue">
+          <span class="arrow">›</span>
+          Continue
+          <span class="item-note" id="continue-note">aucune partie sauvegardée</span>
+        </button>
+
+        <button class="menu-item nightmare" id="btn-nightmare">
+          <span class="arrow">›</span>
+          Nightmare
+          <span class="item-note">nuit sans pitié</span>
+        </button>
+
+        <button class="menu-item bonus" id="btn-bonus">
+          <span class="arrow">›</span>
+          Bonus
+          <span class="item-note">contenu débloqué</span>
+        </button>
+
+      </div>
+
+      <div class="menu-footer">APPUYEZ SUR N'IMPORTE QUELLE TOUCHE</div>
+    </div>
+  </div>
+
+  <!-- ═══════════════════════════════════════
+       MODAL NIGHTMARE
+  ════════════════════════════════════════ -->
+  <div id="modal-nightmare" class="modal hidden">
+    <div class="modal-box">
+      <div class="modal-title">NIGHTMARE</div>
+      <div class="modal-text">
+        Les trois robots sont actifs.<br />
+        Il n'y a pas de pitié.<br />
+        <span class="modal-warning">Es-tu certain de vouloir continuer ?</span>
+      </div>
+      <div class="modal-buttons">
+        <button class="modal-btn confirm" id="modal-confirm">Lancer</button>
+        <button class="modal-btn cancel"  id="modal-cancel">Annuler</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Audio -->
+  <audio id="audio-menu"      src="assets/audio/menu.mp3"      loop preload="auto"></audio>
+  <audio id="audio-nightmare" src="assets/audio/nightmare.mp3" loop preload="auto"></audio>
+
+  <script src="js/save.js"></script>
+  <script src="js/loader.js"></script>
+  <script src="js/menu.js"></script>
+</body>
+</html>
