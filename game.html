@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Five Nights at Chez Moi — Nuit 1</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700&family=Share+Tech+Mono&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="css/global.css" />
+  <link rel="stylesheet" href="css/game.css" />
+</head>
+<body>
+
+  <!-- ═══════════════════════════════════
+       ÉCRAN NIGHT START (12 AM - Night 1)
+  ════════════════════════════════════ -->
+  <div id="screen-nightstart">
+    <div class="ns-time" id="ns-time">12 AM</div>
+    <div class="ns-night" id="ns-night">NIGHT 1</div>
+  </div>
+
+  <!-- ═══════════════════════════════════
+       ÉCRAN DE JEU PRINCIPAL
+  ════════════════════════════════════ -->
+  <div id="screen-game" class="hidden">
+
+    <!-- Scanlines -->
+    <div class="game-scanlines"></div>
+    <div class="game-scan-line"></div>
+    <canvas id="game-noise"></canvas>
+
+    <!-- ── ZONE CAMÉRA (gauche) ── -->
+    <div id="cam-view">
+      <img id="cam-img" src="" alt="" />
+      <div class="cam-overlay"></div>
+
+      <!-- Badge caméra active -->
+      <div class="cam-badge">
+        <span class="rec-dot"></span>
+        <span id="cam-badge-name">CAM — CELLIER</span>
+      </div>
+
+      <!-- Alerte accès étage -->
+      <div id="stair-alert" class="hidden">
+        <span class="stair-alert-text">⚠ BRUIT DÉTECTÉ — ACCÈS ÉTAGE</span>
+        <div class="stair-timer-bar"><div id="stair-timer-fill"></div></div>
+      </div>
+
+      <!-- Erreur audio/cam/ventilation -->
+      <div id="error-display" class="hidden">
+        <span id="error-text">erreur d'audio</span>
+      </div>
+    </div>
+
+    <!-- ── PANNEAU DROIT ── -->
+    <div id="right-panel">
+
+      <!-- Heure + Nuit -->
+      <div id="hud-time">
+        <div id="hud-hour">12 AM</div>
+        <div id="hud-night">NIGHT 1</div>
+      </div>
+
+      <!-- Plan / carte des pièces -->
+      <div id="map">
+        <div class="map-room active" id="room-cellier"    data-room="cellier">Cellier</div>
+        <div class="map-room"        id="room-wc"         data-room="wc">WC</div>
+        <div class="map-room"        id="room-salle-de-bain" data-room="salle-de-bain">Salle de bain</div>
+        <div class="map-room"        id="room-cuisine"    data-room="cuisine">Cuisine</div>
+        <div class="map-room"        id="room-salle-a-manger" data-room="salle-a-manger">Salle à manger</div>
+        <div class="map-room"        id="room-salon"      data-room="salon">Salon</div>
+        <div class="map-room"        id="room-couloir"    data-room="couloir">Couloir</div>
+        <div class="map-room stairs" id="room-etage"      data-room="etage">Accès étage</div>
+        <div class="map-room you"    id="room-vous">VOUS</div>
+      </div>
+
+      <!-- Boutons d'action -->
+      <div id="action-btns">
+        <button class="action-btn" id="btn-audio">Play audio</button>
+        <button class="action-btn" id="btn-maintenance">Maintenance</button>
+        <button class="action-btn musique hidden" id="btn-musique">Boîte à musique</button>
+      </div>
+
+      <!-- Bouton mute call (appel Phone Guy) -->
+      <button id="btn-mute-call" class="hidden">mute call</button>
+
+    </div>
+
+    <!-- ── SOUS-MENU MAINTENANCE ── -->
+    <div id="panel-maintenance" class="hidden">
+      <div class="maint-title">Maintenance</div>
+      <div class="maint-list">
+        <div class="maint-item" id="maint-audio" data-module="audio">
+          <span class="maint-arrow">→</span>
+          <span class="maint-name">Audio</span>
+          <span class="maint-status" id="maint-audio-status"></span>
+        </div>
+        <div class="maint-item" id="maint-camera" data-module="camera">
+          <span class="maint-arrow">→</span>
+          <span class="maint-name">Caméra</span>
+          <span class="maint-status" id="maint-camera-status"></span>
+        </div>
+        <div class="maint-item" id="maint-ventil" data-module="ventilation">
+          <span class="maint-arrow">→</span>
+          <span class="maint-name">Ventilation</span>
+          <span class="maint-status" id="maint-ventil-status"></span>
+        </div>
+        <div class="maint-reboot" id="maint-reboot-all">Tout redémarrer</div>
+      </div>
+      <button class="action-btn" id="btn-maintenance-close">Retour</button>
+    </div>
+
+  </div>
+
+  <!-- ═══════════════════════════════════
+       JUMPSCARE
+  ════════════════════════════════════ -->
+  <div id="screen-jumpscare" class="hidden">
+    <video id="jumpscare-video" src="assets/images/cameras/brad/jumpscare-brad.mp4"
+           muted playsinline preload="auto"></video>
+  </div>
+
+  <!-- ═══════════════════════════════════
+       ÉCRAN NIGHT END (5AM → 6AM)
+  ════════════════════════════════════ -->
+  <div id="screen-nightend" class="hidden">
+    <div class="ns-time">6 AM</div>
+    <div class="ns-night">NUIT TERMINÉE</div>
+    <div class="ne-sub">Tu as survécu.</div>
+  </div>
+
+  <!-- ── AUDIO ── -->
+  <!-- Ambiances (alternées) -->
+  <audio id="snd-ambiance-1" src="assets/audio/effect/ambiance-1.mp3" loop preload="auto"></audio>
+  <audio id="snd-ambiance-2" src="assets/audio/effect/ambiance-2.mp3" loop preload="auto"></audio>
+  <audio id="snd-ambiance-3" src="assets/audio/effect/ambiance-3.mp3" loop preload="auto"></audio>
+  <!-- Effets -->
+  <audio id="snd-ring"           src="assets/audio/effect/ring.mp3"           preload="auto"></audio>
+  <audio id="snd-night1-call"    src="assets/audio/effect/night1-call.mp3"    preload="auto"></audio>
+  <audio id="snd-night-start"    src="assets/audio/effect/night-start.mp3"    preload="auto"></audio>
+  <audio id="snd-night-end"      src="assets/audio/effect/night-end.mp3"      preload="auto"></audio>
+  <audio id="snd-clic-camera"    src="assets/audio/effect/clic-camera.mp3"    preload="auto"></audio>
+  <audio id="snd-robot"          src="assets/audio/effect/robot.mp3"          preload="auto"></audio>
+  <audio id="snd-pounding"       src="assets/audio/effect/pounding.mp3"       preload="auto"></audio>
+  <audio id="snd-alarm"          src="assets/audio/effect/alarm.mp3"          preload="auto"></audio>
+  <audio id="snd-reboot"         src="assets/audio/effect/reboot.mp3"         preload="auto"></audio>
+  <audio id="snd-tablette-open"  src="assets/audio/effect/tablette-ouverte.mp3" preload="auto"></audio>
+  <audio id="snd-tablette-close" src="assets/audio/effect/tablette-ferme.mp3"   preload="auto"></audio>
+  <audio id="snd-jumpscare"      src="assets/audio/effect/jumpscare-brad.mp3" preload="auto"></audio>
+
+  <script src="js/save.js"></script>
+  <script src="js/game.js"></script>
+</body>
+</html>

@@ -1,0 +1,473 @@
+/* ═══════════════════════════════════════════
+   GAME — Interface de jeu
+════════════════════════════════════════════ */
+
+/* ── ÉCRAN NIGHT START ── */
+#screen-nightstart {
+  position: fixed;
+  inset: 0;
+  background: #000;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  z-index: 800;
+}
+
+.ns-time {
+  font-family: var(--font-title);
+  font-size: clamp(36px, 7vw, 72px);
+  font-weight: 700;
+  color: #ccc;
+  letter-spacing: 8px;
+  text-shadow: 0 0 20px rgba(200,200,200,0.3);
+  animation: fadeIn 1s ease forwards;
+}
+
+.ns-night {
+  font-family: var(--font-title);
+  font-size: clamp(24px, 5vw, 52px);
+  font-weight: 700;
+  color: #888;
+  letter-spacing: 10px;
+  animation: fadeIn 1.4s ease forwards;
+}
+
+.ne-sub {
+  font-family: var(--font-mono);
+  font-size: 13px;
+  color: #444;
+  letter-spacing: 5px;
+  margin-top: 20px;
+  animation: fadeIn 1.8s ease forwards;
+}
+
+/* ── ÉCRAN DE JEU ── */
+#screen-game {
+  position: fixed;
+  inset: 0;
+  display: flex;
+  background: #000;
+  overflow: hidden;
+}
+
+.game-scanlines {
+  position: fixed;
+  inset: 0;
+  background: repeating-linear-gradient(
+    to bottom,
+    transparent 0px, transparent 3px,
+    rgba(0,0,0,0.15) 3px, rgba(0,0,0,0.15) 4px
+  );
+  pointer-events: none;
+  z-index: 90;
+}
+
+.game-scan-line {
+  position: fixed;
+  left: 0; right: 0;
+  height: 2px;
+  background: rgba(255,255,255,0.03);
+  pointer-events: none;
+  z-index: 91;
+  animation: scanMove 7s linear infinite;
+}
+
+#game-noise {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 1;
+  opacity: 0.04;
+}
+
+/* ── VUE CAMÉRA ── */
+#cam-view {
+  flex: 1;
+  position: relative;
+  overflow: hidden;
+  background: #060606;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+#cam-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center;
+  display: block;
+  filter: brightness(0.85) contrast(1.05);
+}
+
+/* Overlay légère texture caméra */
+.cam-overlay {
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(ellipse at center, transparent 40%, rgba(0,0,0,0.55) 100%),
+    repeating-linear-gradient(
+      to bottom,
+      transparent 0px, transparent 2px,
+      rgba(0,0,0,0.08) 2px, rgba(0,0,0,0.08) 3px
+    );
+  pointer-events: none;
+  z-index: 5;
+}
+
+/* Badge caméra */
+.cam-badge {
+  position: absolute;
+  top: 14px;
+  left: 16px;
+  z-index: 10;
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  color: #999;
+  letter-spacing: 2px;
+}
+
+.rec-dot {
+  width: 8px; height: 8px;
+  border-radius: 50%;
+  background: var(--red);
+  box-shadow: 0 0 8px var(--red-glow);
+  animation: blink 1s step-start infinite;
+  flex-shrink: 0;
+}
+
+/* Alerte accès étage */
+#stair-alert {
+  position: absolute;
+  bottom: 30px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 20;
+  text-align: center;
+  width: 80%;
+}
+
+.stair-alert-text {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  color: var(--red);
+  letter-spacing: 3px;
+  animation: blink 0.5s step-start infinite;
+  display: block;
+  margin-bottom: 8px;
+}
+
+.stair-timer-bar {
+  width: 100%;
+  height: 3px;
+  background: rgba(200,30,30,0.2);
+  border-radius: 2px;
+  overflow: hidden;
+}
+
+#stair-timer-fill {
+  height: 100%;
+  width: 100%;
+  background: var(--red);
+  box-shadow: 0 0 6px var(--red-glow);
+  transition: width 0.1s linear;
+}
+
+/* Erreur */
+#error-display {
+  position: absolute;
+  top: 14px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 10;
+}
+
+#error-text {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--red);
+  letter-spacing: 3px;
+  animation: blink 0.8s step-start infinite;
+}
+
+/* ── PANNEAU DROIT ── */
+#right-panel {
+  width: 280px;
+  flex-shrink: 0;
+  background: #000;
+  border-left: 0.5px solid rgba(255,255,255,0.07);
+  display: flex;
+  flex-direction: column;
+  padding: 16px 14px;
+  gap: 14px;
+  position: relative;
+  z-index: 10;
+  overflow-y: auto;
+}
+
+/* HUD heure */
+#hud-time {
+  text-align: right;
+}
+
+#hud-hour {
+  font-family: var(--font-title);
+  font-size: 26px;
+  font-weight: 700;
+  color: #ddd;
+  letter-spacing: 4px;
+}
+
+#hud-night {
+  font-family: var(--font-title);
+  font-size: 16px;
+  font-weight: 700;
+  color: #666;
+  letter-spacing: 5px;
+}
+
+/* ── MAP ── */
+#map {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  flex: 1;
+}
+
+.map-room {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: 2px;
+  color: #555;
+  padding: 7px 10px;
+  cursor: pointer;
+  border: 0.5px solid transparent;
+  transition: color 0.15s, border-color 0.15s, background 0.15s;
+  position: relative;
+  user-select: none;
+}
+
+.map-room:hover {
+  color: #aaa;
+  background: rgba(255,255,255,0.03);
+}
+
+/* Pièce sélectionnée — jaune */
+.map-room.active {
+  color: #c0a010 !important;
+  border-color: rgba(192,160,16,0.3);
+}
+
+/* Pièce où est Brad — rouge discret */
+.map-room.brad-here {
+  color: #883030 !important;
+}
+.map-room.brad-here::after {
+  content: '●';
+  position: absolute;
+  right: 8px;
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: 8px;
+  color: var(--red);
+  animation: blink 1.2s step-start infinite;
+}
+
+/* Accès étage — danger */
+.map-room.stairs {
+  color: #444;
+  font-size: 10px;
+}
+.map-room.stairs.brad-here {
+  color: var(--red) !important;
+  animation: blink 0.6s step-start infinite;
+}
+
+/* Vous */
+.map-room.you {
+  color: #2a8a2a;
+  font-size: 10px;
+  letter-spacing: 3px;
+  cursor: default;
+  pointer-events: none;
+  text-align: center;
+  border-top: 0.5px solid rgba(42,138,42,0.2);
+  margin-top: 4px;
+  padding-top: 10px;
+}
+
+/* ── BOUTONS D'ACTION ── */
+#action-btns {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.action-btn {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: 3px;
+  color: #ccc;
+  background: rgba(255,255,255,0.04);
+  border: 0.5px solid rgba(255,255,255,0.12);
+  padding: 9px 12px;
+  cursor: pointer;
+  text-align: left;
+  transition: background 0.15s, color 0.15s, border-color 0.15s;
+  font-style: italic;
+}
+
+.action-btn:hover {
+  background: rgba(255,255,255,0.08);
+  color: #fff;
+  border-color: rgba(255,255,255,0.25);
+}
+
+.action-btn:disabled {
+  color: #333 !important;
+  border-color: rgba(255,255,255,0.04) !important;
+  background: transparent !important;
+  cursor: default;
+  pointer-events: none;
+}
+
+.action-btn.musique {
+  color: #c0a010;
+  border-color: rgba(192,160,16,0.25);
+}
+
+/* Mute call */
+#btn-mute-call {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 3px;
+  color: #888;
+  background: rgba(255,255,255,0.06);
+  border: 0.5px solid rgba(255,255,255,0.15);
+  padding: 6px 14px;
+  border-radius: 12px;
+  cursor: pointer;
+  transition: background 0.15s;
+  align-self: flex-start;
+}
+#btn-mute-call:hover { background: rgba(255,255,255,0.12); }
+
+/* ── PANNEAU MAINTENANCE ── */
+#panel-maintenance {
+  position: absolute;
+  bottom: 0; right: 0;
+  width: 280px;
+  background: #0f0f0f;
+  border: 0.5px solid rgba(255,255,255,0.1);
+  border-bottom: none;
+  border-right: none;
+  padding: 20px 18px;
+  z-index: 50;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.maint-title {
+  font-family: 'Brush Script MT', cursive, var(--font-mono);
+  font-size: 20px;
+  color: #ddd;
+  letter-spacing: 2px;
+  border-bottom: 0.5px solid rgba(255,255,255,0.08);
+  padding-bottom: 10px;
+}
+
+.maint-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.maint-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: 2px;
+  color: #888;
+  padding: 8px 10px;
+  cursor: pointer;
+  border: 0.5px solid transparent;
+  transition: background 0.15s, color 0.15s;
+}
+
+.maint-item:hover {
+  background: rgba(255,255,255,0.04);
+  color: #ccc;
+}
+
+.maint-item.selected {
+  color: #2a8a2a;
+}
+.maint-item.selected .maint-arrow { color: #2a8a2a; }
+
+.maint-item.error .maint-status::after {
+  content: 'erreur';
+  color: var(--red);
+  font-size: 9px;
+  margin-left: 6px;
+  animation: blink 0.8s step-start infinite;
+}
+
+.maint-item.rebooting .maint-status::after {
+  content: 'redémarrage...';
+  color: var(--gold);
+  font-size: 9px;
+  margin-left: 6px;
+}
+
+.maint-arrow { color: #555; font-size: 12px; }
+.maint-name  { flex: 1; }
+
+.maint-reboot {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 3px;
+  color: #2a8a2a;
+  cursor: pointer;
+  padding: 6px 10px;
+  transition: color 0.15s;
+  margin-top: 4px;
+}
+.maint-reboot:hover { color: #44bb44; }
+
+/* ── JUMPSCARE ── */
+#screen-jumpscare {
+  position: fixed;
+  inset: 0;
+  background: #000;
+  z-index: 999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+#jumpscare-video {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+/* ── NIGHT END ── */
+#screen-nightend {
+  position: fixed;
+  inset: 0;
+  background: #000;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  z-index: 800;
+}
