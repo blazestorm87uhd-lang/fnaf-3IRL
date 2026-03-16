@@ -338,3 +338,17 @@
   background: rgba(80,80,80,0.1);
   color: #aaa;
 }
+
+/* Mention dev — coin bas droit du menu */
+.menu-dev-credit {
+  position: absolute;
+  bottom: 12px;
+  right: 16px;
+  font-family: var(--font-mono);
+  font-size: 8px;
+  color: #222;
+  letter-spacing: 1px;
+  text-align: right;
+  pointer-events: none;
+  user-select: none;
+}
