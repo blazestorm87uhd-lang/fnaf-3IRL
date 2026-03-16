@@ -1,12 +1,13 @@
 /* ═══════════════════════════════════════════
-   GAME.JS v6 — Toutes corrections intégrées
+   GAME.JS v7
+   - hello-1/2 chemin corrigé
+   - caméra réaffichée seulement après fin de reboot
+   - jumpscare chemin corrigé (jumpscrare-brad.mp4)
+   - double texte maintenance corrigé
+   - ventilation incluse dans les erreurs
 ════════════════════════════════════════════ */
 
 (() => {
-
-  // ══════════════════════════════════════
-  // CONFIG
-  // ══════════════════════════════════════
 
   const NIGHT_NUMBER          = 1;
   const NIGHT_DURATION        = 10 * 60 * 1000;
@@ -52,7 +53,6 @@
   const ERROR_INTERVAL_BASE = 45000;
   const ERROR_INTERVAL_MIN  = 20000;
 
-
   // ══════════════════════════════════════
   // ÉTAT
   // ══════════════════════════════════════
@@ -63,15 +63,14 @@
     bradIndex: 0, bradPhase: 1, bradMaxIndex: 0,
     stairActive: false, stairTimer: null,
     modules: {
-      audio:  { error: false, rebooting: false },
-      camera: { error: false, rebooting: false },
-      // ventilation : affichage seulement, pas d'erreur déclenchée
+      audio:       { error: false, rebooting: false },
+      camera:      { error: false, rebooting: false },
+      ventilation: { error: false, rebooting: false },
     },
     callPlaying: false, callMuted: false,
     ambiancePaused: false, audioCooldown: false,
     helloToggle: false,
   };
-
 
   // ══════════════════════════════════════
   // DOM
@@ -101,11 +100,6 @@
   const jumpscareVideo      = document.getElementById('jumpscare-video');
   const noiseCanvas         = document.getElementById('game-noise');
   const nctx                = noiseCanvas.getContext('2d');
-
-  // Indicateurs erreur inline (visibles depuis les caméras)
-  const maintAudioErr  = document.getElementById('maint-audio-err');
-  const maintCameraErr = document.getElementById('maint-camera-err');
-
 
   // ══════════════════════════════════════
   // SONS
@@ -146,12 +140,15 @@
     audio.pause(); audio.currentTime = 0;
   }
 
-  // Alterne hello-1 / hello-2 à chaque Play Audio
+  // Alterne hello-1 / hello-2 — chemins corrects
   function playHello() {
     state.helloToggle = !state.helloToggle;
-    playSound(state.helloToggle ? snd.hello1 : snd.hello2, 0.8);
+    const audio = state.helloToggle ? snd.hello1 : snd.hello2;
+    if (!audio) return;
+    audio.currentTime = 0;
+    audio.volume = 0.8;
+    audio.play().catch(() => {});
   }
-
 
   // ══════════════════════════════════════
   // AMBIANCE
@@ -187,7 +184,6 @@
   }
   function stopAllAmbiance() { state.ambiancePaused = true; stopCurrentAmbiance(); }
 
-
   // ══════════════════════════════════════
   // BRUIT STATIQUE
   // ══════════════════════════════════════
@@ -209,9 +205,8 @@
     requestAnimationFrame(drawNoise);
   }
 
-
   // ══════════════════════════════════════
-  // OVERLAY PAS D'IMAGE (étage)
+  // OVERLAYS CAMÉRA
   // ══════════════════════════════════════
 
   function showNoSignal() {
@@ -222,6 +217,7 @@
       overlay.id = 'cam-no-signal';
       overlay.style.cssText = 'position:absolute;inset:0;z-index:6;display:flex;flex-direction:column;align-items:center;justify-content:center;background:#000;';
       const c = document.createElement('canvas');
+      c.id = 'static-canvas';
       c.style.cssText = 'position:absolute;inset:0;width:100%;height:100%;opacity:0.85;';
       overlay.appendChild(c);
       const txt = document.createElement('div');
@@ -230,7 +226,7 @@
       overlay.appendChild(txt);
       camView.appendChild(overlay);
       const sctx = c.getContext('2d');
-      (function drawStatic() {
+      (function ds() {
         const el = document.getElementById('cam-no-signal');
         if (!el || el.style.display === 'none') return;
         c.width = c.offsetWidth || 400; c.height = c.offsetHeight || 300;
@@ -240,10 +236,11 @@
           img.data[i] = img.data[i+1] = img.data[i+2] = v; img.data[i+3] = 255;
         }
         sctx.putImageData(img, 0, 0);
-        requestAnimationFrame(drawStatic);
+        requestAnimationFrame(ds);
       })();
     }
     overlay.style.display = 'flex';
+    hideBlackScreen();
   }
 
   function hideNoSignal() {
@@ -252,7 +249,6 @@
     camImg.style.display = 'block';
   }
 
-  // Écran noir pour erreur caméra
   function showBlackScreen() {
     camImg.style.display = 'none';
     hideNoSignal();
@@ -260,9 +256,9 @@
     if (!black) {
       black = document.createElement('div');
       black.id = 'cam-black';
-      black.style.cssText = 'position:absolute;inset:0;z-index:6;background:#000;display:flex;align-items:center;justify-content:center;';
+      black.style.cssText = "position:absolute;inset:0;z-index:6;background:#000;display:flex;align-items:center;justify-content:center;";
       const txt = document.createElement('div');
-      txt.style.cssText = "font-family:'Share Tech Mono',monospace;font-size:11px;color:#333;letter-spacing:4px;";
+      txt.style.cssText = "font-family:'Share Tech Mono',monospace;font-size:11px;color:#333;letter-spacing:4px;animation:blink 1.2s step-start infinite;";
       txt.textContent = 'SIGNAL PERDU';
       black.appendChild(txt);
       camView.appendChild(black);
@@ -276,27 +272,25 @@
     camImg.style.display = 'block';
   }
 
-
   // ══════════════════════════════════════
   // CAMÉRAS
+  // Erreur caméra → écran noir jusqu'à fin du reboot
   // ══════════════════════════════════════
 
   function selectRoom(roomId) {
-    // Étage → pas d'image
     if (roomId === 'etage') {
       state.selectedRoom = 'etage';
       mapRooms.forEach(r => r.classList.remove('active'));
       const el = document.getElementById('room-etage');
       if (el) el.classList.add('active');
       camBadgeName.textContent = 'CAM — ACCÈS ÉTAGE';
-      hideBlackScreen();
       showNoSignal();
       if (BRAD_PATH[state.bradIndex] === 'etage' && state.bradVisible) playSound(snd.robot, 0.6);
       return;
     }
 
-    // Erreur caméra → écran noir
-    if (state.modules.camera.error) {
+    // Erreur OU reboot caméra → écran noir, pas d'image
+    if (state.modules.camera.error || state.modules.camera.rebooting) {
       state.selectedRoom = roomId;
       mapRooms.forEach(r => r.classList.remove('active'));
       const el = document.getElementById(`room-${roomId}`);
@@ -339,7 +333,6 @@
     r.addEventListener('click', () => { const id = r.dataset.room; if (id) selectRoom(id); });
   });
 
-
   // ══════════════════════════════════════
   // CARTE
   // ══════════════════════════════════════
@@ -350,7 +343,6 @@
     const el = document.getElementById(`room-${BRAD_PATH[state.bradIndex]}`);
     if (el) el.classList.add('brad-here');
   }
-
 
   // ══════════════════════════════════════
   // DÉPLACEMENT BRAD
@@ -395,7 +387,6 @@
     bradMoveTimeout = setTimeout(moveBrad, (watching ? interval : interval * 0.6) + Math.random() * 4000);
   }
 
-
   // ══════════════════════════════════════
   // ACCÈS ÉTAGE
   // ══════════════════════════════════════
@@ -429,9 +420,8 @@
     scheduleBradMove();
   }
 
-
   // ══════════════════════════════════════
-  // PLAY AUDIO — alterne hello-1 / hello-2
+  // PLAY AUDIO
   // ══════════════════════════════════════
 
   btnAudio.addEventListener('click', () => {
@@ -480,12 +470,12 @@
     }, 5000);
   }
 
-
   // ══════════════════════════════════════
   // MAINTENANCE
-  // - ventilation : affichage uniquement, jamais d'erreur
-  // - erreurs inline visibles depuis les caméras
-  // - pas d'erreur pendant l'appel
+  // Double texte corrigé : on utilise UNIQUEMENT
+  // data-status sur le span, jamais ::after ET textContent ensemble
+  // Ventilation incluse dans les erreurs
+  // Caméra → écran noir pendant reboot aussi
   // ══════════════════════════════════════
 
   btnMaintenance.addEventListener('click', () => {
@@ -500,15 +490,15 @@
   maintItems.forEach(item => {
     item.addEventListener('click', () => {
       const mod = item.dataset.module;
-      // Ventilation : pas de redémarrage possible (pas d'erreur)
-      if (!mod || mod === 'ventilation') return;
-      if (state.modules[mod] && state.modules[mod].rebooting) return;
+      if (!mod || !state.modules[mod] || state.modules[mod].rebooting) return;
+      if (!state.modules[mod].error) return; // clic uniquement si erreur active
       rebootModule(mod);
     });
   });
   maintRebootAll.addEventListener('click', () => {
-    ['audio','camera'].forEach(m => {
-      if (state.modules[m] && !state.modules[m].rebooting) rebootModule(m);
+    ['audio','camera','ventilation'].forEach(m => {
+      if (state.modules[m] && state.modules[m].error && !state.modules[m].rebooting)
+        rebootModule(m);
     });
   });
 
@@ -516,68 +506,62 @@
     const m = state.modules[mod];
     if (!m) return;
     m.rebooting = true; m.error = false;
-    const item = document.getElementById(`maint-${mod}`);
-    if (item) { item.classList.remove('error'); item.classList.add('rebooting'); }
     playSound(snd.reboot, 0.6);
     updateModuleIndicators();
     updateMaintenanceBtnState();
+    // Si caméra en reboot → écran noir immédiatement
+    if (mod === 'camera') selectRoom(state.selectedRoom);
     setTimeout(() => {
       m.rebooting = false;
-      if (item) item.classList.remove('rebooting');
       updateErrorDisplay();
       updateModuleIndicators();
       updateMaintenanceBtnState();
+      // Caméra réparée → réafficher l'image
+      if (mod === 'camera') selectRoom(state.selectedRoom);
     }, 6000 + Math.random() * 4000);
   }
 
-  // Texte erreur/redémarrage inline sur le bouton maintenance (visible caméras)
+  // Bouton maintenance — texte via textContent uniquement, pas de ::after
   function updateMaintenanceBtnState() {
     if (hasAnyError()) {
       btnMaintenance.classList.add('has-error');
-      btnMaintenance.innerHTML = 'Maintenance <span class="maint-err-label">erreur</span>';
+      btnMaintenance.textContent = 'Maintenance — erreur';
     } else {
       btnMaintenance.classList.remove('has-error');
       btnMaintenance.textContent = 'Maintenance';
     }
   }
 
-  // Indicateurs d'état dans le panneau (texte visible)
+  // Statuts dans le panneau — textContent uniquement, pas de ::after CSS
   function updateModuleIndicators() {
-    ['audio','camera'].forEach(mod => {
+    ['audio','camera','ventilation'].forEach(mod => {
       const m      = state.modules[mod];
       const status = document.getElementById(`maint-${mod}-status`);
-      const item   = document.getElementById(`maint-${mod}`);
       if (!status || !m) return;
+      // Retirer toutes les classes d'état d'abord
+      status.className = 'maint-status';
       if (m.error) {
         status.textContent = 'erreur';
-        status.className   = 'maint-status err';
-        if (item) { item.classList.add('error'); item.classList.remove('rebooting'); }
+        status.classList.add('err');
       } else if (m.rebooting) {
         status.textContent = 'redémarrage...';
-        status.className   = 'maint-status rebooting';
-        if (item) { item.classList.remove('error'); item.classList.add('rebooting'); }
+        status.classList.add('rebooting');
       } else {
         status.textContent = 'OK';
-        status.className   = 'maint-status ok';
-        if (item) { item.classList.remove('error'); item.classList.remove('rebooting'); }
+        status.classList.add('ok');
       }
     });
-
-    // Ventilation : toujours OK, jamais d'erreur
-    const ventStatus = document.getElementById('maint-ventil-status');
-    if (ventStatus) { ventStatus.textContent = 'OK'; ventStatus.className = 'maint-status ok'; }
   }
 
-  // Erreurs déclenchées — PAS pendant l'appel — seulement audio et camera
+  // Erreurs — ventilation incluse — pas pendant l'appel
   function scheduleNextError() {
     if (state.over) return;
     const interval = Math.max(ERROR_INTERVAL_MIN,
       ERROR_INTERVAL_BASE - (ERROR_INTERVAL_BASE - ERROR_INTERVAL_MIN) * state.nightProgress);
     setTimeout(() => {
       if (state.over) return;
-      // Pas d'erreur pendant l'appel
       if (state.callPlaying) { scheduleNextError(); return; }
-      const targets = ['audio','camera']
+      const targets = ['audio','camera','ventilation']
         .filter(m => !state.modules[m].error && !state.modules[m].rebooting);
       if (targets.length > 0) {
         const mod = targets[Math.floor(Math.random() * targets.length)];
@@ -602,13 +586,12 @@
   }
 
   function hasAnyError() {
-    return ['audio','camera'].some(m => state.modules[m].error);
+    return Object.values(state.modules).some(m => m.error);
   }
 
   function updateErrorDisplay() {
-    const errors = ['audio','camera']
-      .filter(m => state.modules[m].error)
-      .map(m => `erreur ${m}`);
+    const errors = Object.entries(state.modules)
+      .filter(([, m]) => m.error).map(([k]) => `erreur ${k}`);
     if (errors.length > 0) {
       errorDisplay.classList.remove('hidden');
       errorText.textContent = errors.join(' — ');
@@ -616,7 +599,6 @@
       errorDisplay.classList.add('hidden');
     }
   }
-
 
   // ══════════════════════════════════════
   // APPEL PHONE GUY
@@ -648,13 +630,13 @@
   function playRingTimes(times, onDone) {
     if (times <= 0 || state.over) { if (onDone) onDone(); return; }
     playSound(snd.ring, 0.7);
-    const dur = snd.ring.duration > 0 ? snd.ring.duration * 1000 : 2500;
+    const dur = snd.ring && snd.ring.duration > 0 ? snd.ring.duration * 1000 : 2500;
     setTimeout(() => playRingTimes(times - 1, onDone), Math.min(dur, 2500) + 200);
   }
 
-
   // ══════════════════════════════════════
   // JUMPSCARE + ÉCRAN DE MORT
+  // Chemin corrigé : assets/videos/jumpscrare-brad.mp4
   // ══════════════════════════════════════
 
   function triggerJumpscare() {
@@ -662,17 +644,14 @@
     state.over = true;
     stopAllAmbiance();
     clearTimeout(bradMoveTimeout);
-
-    // Cache le jeu, affiche le jumpscare
     screenGame.classList.add('hidden');
     screenJumpscare.classList.remove('hidden');
 
-    // Vidéo avec son intégré — pas de son externe
+    // Son intégré dans la vidéo — pas de son externe
     jumpscareVideo.muted = false;
     jumpscareVideo.volume = 1;
     jumpscareVideo.play().catch(() => {});
 
-    // Après la durée du jumpscare → écran de mort
     setTimeout(() => {
       screenJumpscare.classList.add('hidden');
       showDeathScreen();
@@ -683,7 +662,7 @@
     screenDeath.classList.remove('hidden');
     playSound(snd.dead, 0.9);
 
-    // Canvas bruit statique sur l'écran de mort
+    // Canvas bruit statique
     const dc = document.getElementById('death-noise');
     if (dc) {
       const dctx = dc.getContext('2d');
@@ -701,7 +680,7 @@
       })();
     }
 
-    // Bouton retour menu — non skipable, apparaît après DEATH_SCREEN_MIN
+    // Bouton non skipable
     const btnRetour = document.getElementById('death-btn-menu');
     if (btnRetour) {
       btnRetour.style.display = 'none';
@@ -709,12 +688,9 @@
         btnRetour.style.display = 'block';
         btnRetour.classList.add('visible');
       }, DEATH_SCREEN_MIN);
-      btnRetour.addEventListener('click', () => {
-        window.location.href = 'index.html';
-      });
+      btnRetour.addEventListener('click', () => { window.location.href = 'index.html'; });
     }
   }
-
 
   // ══════════════════════════════════════
   // HORLOGE
@@ -743,7 +719,6 @@
     requestAnimationFrame(tick);
   }
 
-
   // ══════════════════════════════════════
   // FIN DE NUIT
   // ══════════════════════════════════════
@@ -759,7 +734,6 @@
     Save.completeNight(NIGHT_NUMBER);
     setTimeout(() => { window.location.href = 'index.html'; }, 4000);
   }
-
 
   // ══════════════════════════════════════
   // DÉMARRAGE
@@ -777,13 +751,10 @@
       startGameClock();
       scheduleBradMove();
       scheduleNextError();
-      // 3 sonneries puis appel
       setTimeout(() => {
         playRingTimes(3, () => {
           startPhoneCall();
-          setTimeout(() => {
-            if (!state.callPlaying && !state.over) startAmbiance();
-          }, 30000);
+          setTimeout(() => { if (!state.callPlaying && !state.over) startAmbiance(); }, 30000);
         });
       }, 1000);
     }, 3000);
