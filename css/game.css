@@ -488,3 +488,148 @@
     background: rgba(200,30,30,0.14) !important;
   }
 }
+
+/* ══════════════════════════════════════════
+   MAINTENANCE — statuts visibles
+══════════════════════════════════════════ */
+
+.maint-status {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 2px;
+  margin-left: auto;
+  padding: 2px 8px;
+}
+
+.maint-status.ok {
+  color: #2a8a2a;
+}
+
+.maint-status.err {
+  color: #cc2020;
+  animation: blink 0.7s step-start infinite;
+  font-weight: bold;
+}
+
+.maint-status.rebooting {
+  color: #c0a010;
+  animation: blink 1.2s step-start infinite;
+}
+
+/* Ventilation — non cliquable */
+.maint-item.no-action {
+  cursor: default;
+  opacity: 0.5;
+  pointer-events: none;
+}
+
+/* Bouton Maintenance — clignote rouge si erreur */
+.action-btn.has-error {
+  animation: maintError 0.7s step-start infinite !important;
+}
+.action-btn.has-error .maint-err-label {
+  color: #ff4444;
+  font-weight: bold;
+  margin-left: 6px;
+  animation: blink 0.5s step-start infinite;
+}
+@keyframes maintError {
+  0%,100% { color: #cc2020; border-color: rgba(200,30,30,0.6); background: rgba(200,30,30,0.06); }
+  50%      { color: #ff5555; border-color: rgba(255,60,60,0.9); background: rgba(200,30,30,0.14); }
+}
+
+
+/* ══════════════════════════════════════════
+   ÉCRAN DE MORT
+══════════════════════════════════════════ */
+
+#screen-death {
+  position: fixed;
+  inset: 0;
+  background: #000;
+  z-index: 950;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+}
+
+#death-noise {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 1;
+  opacity: 0.06;
+}
+
+.death-scanlines {
+  position: absolute;
+  inset: 0;
+  background: repeating-linear-gradient(
+    to bottom,
+    transparent 0px, transparent 3px,
+    rgba(0,0,0,0.2) 3px, rgba(0,0,0,0.2) 4px
+  );
+  pointer-events: none;
+  z-index: 2;
+}
+
+.death-content {
+  position: relative;
+  z-index: 10;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+  animation: fadeIn 1.2s ease forwards;
+}
+
+.death-title {
+  font-family: var(--font-title);
+  font-size: clamp(48px, 10vw, 96px);
+  font-weight: 700;
+  color: #cc2020;
+  letter-spacing: 10px;
+  text-shadow: 0 0 40px rgba(200,30,30,0.6), 0 0 80px rgba(200,30,30,0.2);
+  animation: glitchClip1 6s infinite, flicker 8s infinite;
+}
+
+.death-sub {
+  font-family: var(--font-mono);
+  font-size: 14px;
+  color: #888;
+  letter-spacing: 4px;
+  animation: fadeIn 2s ease forwards;
+}
+
+.death-night {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: #444;
+  letter-spacing: 6px;
+  margin-top: 4px;
+}
+
+.death-btn {
+  display: none;
+  margin-top: 48px;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: 5px;
+  text-transform: uppercase;
+  color: #888;
+  background: transparent;
+  border: 0.5px solid rgba(255,255,255,0.15);
+  padding: 12px 32px;
+  cursor: pointer;
+  transition: color 0.2s, border-color 0.2s;
+  animation: fadeIn 0.6s ease forwards;
+}
+.death-btn:hover {
+  color: #fff;
+  border-color: rgba(255,255,255,0.4);
+}
+.death-btn.visible {
+  display: block;
+}
