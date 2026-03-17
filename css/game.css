@@ -206,3 +206,53 @@
     overflow-y: auto;
   }
 }
+
+/* ══ MOBILE portrait — remplace tout ══ */
+@media (max-width: 600px) and (orientation: portrait) {
+  #screen-game {
+    flex-direction: column;
+    height: 100dvh;
+  }
+  #cam-view {
+    flex: none;
+    width: 100%;
+    height: 50vw;
+  }
+  #right-panel {
+    flex: 1;
+    width: 100%;
+    flex-direction: column;
+    padding: 8px 12px;
+    gap: 6px;
+    overflow-y: auto;
+    border-left: none;
+    border-top: 0.5px solid rgba(255,255,255,0.07);
+  }
+  #hud-time { text-align: left; }
+  #hud-hour { font-size: 18px; }
+  #hud-night { font-size: 11px; }
+  #map { flex: none; }
+  .map-room { font-size: 10px; padding: 4px 8px; }
+  #action-btns { flex-direction: row; flex-wrap: wrap; gap: 4px; }
+  .action-btn { font-size: 10px; padding: 7px 10px; flex: 1; min-width: 120px; }
+  #panel-maintenance {
+    width: 100%;
+    position: fixed;
+    bottom: 0; left: 0; right: 0;
+    border: none;
+    border-top: 0.5px solid rgba(255,255,255,0.1);
+    max-height: 55vh;
+    overflow-y: auto;
+  }
+}
+
+/* ══ MOBILE paysage — layout identique au desktop ══ */
+@media (max-width: 900px) and (orientation: landscape) {
+  #screen-game {
+    flex-direction: row;
+  }
+  #right-panel {
+    width: 200px;
+    flex-shrink: 0;
+  }
+}
