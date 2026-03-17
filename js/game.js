@@ -1,10 +1,11 @@
 /* ═══════════════════════════════════════════
-   GAME.JS v7
-   - hello-1/2 chemin corrigé
-   - caméra réaffichée seulement après fin de reboot
-   - jumpscare chemin corrigé (jumpscrare-brad.mp4)
-   - double texte maintenance corrigé
-   - ventilation incluse dans les erreurs
+   GAME.JS v8
+   - Écran play-gate pour forcer l'interaction (autoplay fix)
+   - Maintenance : retour bloqué si reboot en cours
+   - Tout redémarrer = 17 secondes
+   - hello-1/2 fonctionnel
+   - Ventilation OK en vert, erreur/reboot animés
+   - Délai entre les sonneries ring
 ════════════════════════════════════════════ */
 
 (() => {
@@ -16,6 +17,8 @@
   const AMBIANCE_MAX_DURATION = 30000;
   const JUMPSCARE_DURATION    = 4000;
   const DEATH_SCREEN_MIN      = 6000;
+  const REBOOT_ALL_DURATION   = 17000;
+  const RING_PAUSE_MS         = 1200; // pause entre chaque ring
 
   const BRAD_PATH = [
     'cellier','wc','salle-de-bain','cuisine',
@@ -70,12 +73,15 @@
     callPlaying: false, callMuted: false,
     ambiancePaused: false, audioCooldown: false,
     helloToggle: false,
+    rebootingAll: false,
   };
 
   // ══════════════════════════════════════
   // DOM
   // ══════════════════════════════════════
 
+  const screenPlayGate      = document.getElementById('screen-play-gate');
+  const btnPlayGate         = document.getElementById('btn-play-gate');
   const screenNightStart    = document.getElementById('screen-nightstart');
   const screenGame          = document.getElementById('screen-game');
   const screenJumpscare     = document.getElementById('screen-jumpscare');
@@ -95,6 +101,7 @@
   const btnMuteCall         = document.getElementById('btn-mute-call');
   const panelMaintenance    = document.getElementById('panel-maintenance');
   const btnMaintenanceClose = document.getElementById('btn-maintenance-close');
+  const maintLockMsg        = document.getElementById('maint-lock-msg');
   const maintItems          = document.querySelectorAll('.maint-item');
   const maintRebootAll      = document.getElementById('maint-reboot-all');
   const jumpscareVideo      = document.getElementById('jumpscare-video');
@@ -127,28 +134,73 @@
     hello2:        document.getElementById('snd-hello-2'),
   };
 
+  // Forcer .m4a pour l'enregistrement perso
   if (snd.call) snd.call.src = 'assets/audio/effect/night1-call.m4a';
 
   function playSound(audio, vol = 0.8) {
     if (!audio) return;
-    audio.currentTime = 0;
-    audio.volume = Math.min(1, vol);
-    audio.play().catch(() => {});
-  }
-  function stopSound(audio) {
-    if (!audio) return;
-    audio.pause(); audio.currentTime = 0;
+    try {
+      audio.currentTime = 0;
+      audio.volume = Math.min(1, Math.max(0, vol));
+      const p = audio.play();
+      if (p && p.catch) p.catch(() => {});
+    } catch(e) {}
   }
 
-  // Alterne hello-1 / hello-2 — chemins corrects
+  function stopSound(audio) {
+    if (!audio) return;
+    try { audio.pause(); audio.currentTime = 0; } catch(e) {}
+  }
+
+  // hello-1 / hello-2 en alternance
   function playHello() {
     state.helloToggle = !state.helloToggle;
     const audio = state.helloToggle ? snd.hello1 : snd.hello2;
     if (!audio) return;
-    audio.currentTime = 0;
-    audio.volume = 0.8;
-    audio.play().catch(() => {});
+    try {
+      audio.currentTime = 0;
+      audio.volume = 0.85;
+      const p = audio.play();
+      if (p && p.catch) p.catch(() => {});
+    } catch(e) {}
   }
+
+  // ══════════════════════════════════════
+  // PLAY GATE — forcer interaction utilisateur
+  // Résout le blocage autoplay des navigateurs
+  // ══════════════════════════════════════
+
+  const gateCanvas = document.getElementById('gate-noise');
+  if (gateCanvas) {
+    const gctx = gateCanvas.getContext('2d');
+    (function gNoise() {
+      if (!screenPlayGate || screenPlayGate.classList.contains('hidden')) return;
+      gateCanvas.width = window.innerWidth;
+      gateCanvas.height = window.innerHeight;
+      const img = gctx.createImageData(gateCanvas.width, gateCanvas.height);
+      for (let i = 0; i < img.data.length; i += 4) {
+        const v = Math.random() > 0.5 ? 255 : 0;
+        img.data[i] = img.data[i+1] = img.data[i+2] = v;
+        img.data[i+3] = Math.random() * 22;
+      }
+      gctx.putImageData(img, 0, 0);
+      requestAnimationFrame(gNoise);
+    })();
+  }
+
+  btnPlayGate.addEventListener('click', () => {
+    // Déclencher un silence pour débloquer le contexte audio du navigateur
+    const ctx = new (window.AudioContext || window.webkitAudioContext)();
+    const buf = ctx.createBuffer(1, 1, 22050);
+    const src = ctx.createBufferSource();
+    src.buffer = buf;
+    src.connect(ctx.destination);
+    src.start(0);
+
+    screenPlayGate.classList.add('hidden');
+    screenNightStart.classList.remove('hidden');
+    startNight();
+  });
 
   // ══════════════════════════════════════
   // AMBIANCE
@@ -211,35 +263,34 @@
 
   function showNoSignal() {
     camImg.style.display = 'none';
-    let overlay = document.getElementById('cam-no-signal');
-    if (!overlay) {
-      overlay = document.createElement('div');
-      overlay.id = 'cam-no-signal';
-      overlay.style.cssText = 'position:absolute;inset:0;z-index:6;display:flex;flex-direction:column;align-items:center;justify-content:center;background:#000;';
+    let o = document.getElementById('cam-no-signal');
+    if (!o) {
+      o = document.createElement('div');
+      o.id = 'cam-no-signal';
+      o.style.cssText = 'position:absolute;inset:0;z-index:6;display:flex;flex-direction:column;align-items:center;justify-content:center;background:#000;';
       const c = document.createElement('canvas');
-      c.id = 'static-canvas';
       c.style.cssText = 'position:absolute;inset:0;width:100%;height:100%;opacity:0.85;';
-      overlay.appendChild(c);
+      o.appendChild(c);
       const txt = document.createElement('div');
-      txt.style.cssText = "position:relative;z-index:2;font-family:'Share Tech Mono',monospace;font-size:13px;letter-spacing:4px;color:#cc2020;text-align:center;animation:blink 0.8s step-start infinite;text-shadow:0 0 8px rgba(200,30,30,0.6);";
+      txt.style.cssText = "position:relative;z-index:2;font-family:'Share Tech Mono',monospace;font-size:13px;letter-spacing:4px;color:#cc2020;text-align:center;animation:blink 0.8s step-start infinite;";
       txt.innerHTML = "PAS D'IMAGE<br><span style='font-size:10px;color:#555;letter-spacing:3px;'>SON UNIQUEMENT</span>";
-      overlay.appendChild(txt);
-      camView.appendChild(overlay);
-      const sctx = c.getContext('2d');
+      o.appendChild(txt);
+      camView.appendChild(o);
+      const sc = c.getContext('2d');
       (function ds() {
         const el = document.getElementById('cam-no-signal');
         if (!el || el.style.display === 'none') return;
         c.width = c.offsetWidth || 400; c.height = c.offsetHeight || 300;
-        const img = sctx.createImageData(c.width, c.height);
+        const img = sc.createImageData(c.width, c.height);
         for (let i = 0; i < img.data.length; i += 4) {
           const v = Math.floor(Math.random() * 80);
           img.data[i] = img.data[i+1] = img.data[i+2] = v; img.data[i+3] = 255;
         }
-        sctx.putImageData(img, 0, 0);
+        sc.putImageData(img, 0, 0);
         requestAnimationFrame(ds);
       })();
     }
-    overlay.style.display = 'flex';
+    o.style.display = 'flex';
     hideBlackScreen();
   }
 
@@ -252,18 +303,18 @@
   function showBlackScreen() {
     camImg.style.display = 'none';
     hideNoSignal();
-    let black = document.getElementById('cam-black');
-    if (!black) {
-      black = document.createElement('div');
-      black.id = 'cam-black';
-      black.style.cssText = "position:absolute;inset:0;z-index:6;background:#000;display:flex;align-items:center;justify-content:center;";
+    let b = document.getElementById('cam-black');
+    if (!b) {
+      b = document.createElement('div');
+      b.id = 'cam-black';
+      b.style.cssText = "position:absolute;inset:0;z-index:6;background:#000;display:flex;align-items:center;justify-content:center;";
       const txt = document.createElement('div');
       txt.style.cssText = "font-family:'Share Tech Mono',monospace;font-size:11px;color:#333;letter-spacing:4px;animation:blink 1.2s step-start infinite;";
       txt.textContent = 'SIGNAL PERDU';
-      black.appendChild(txt);
-      camView.appendChild(black);
+      b.appendChild(txt);
+      camView.appendChild(b);
     }
-    black.style.display = 'flex';
+    b.style.display = 'flex';
   }
 
   function hideBlackScreen() {
@@ -274,7 +325,6 @@
 
   // ══════════════════════════════════════
   // CAMÉRAS
-  // Erreur caméra → écran noir jusqu'à fin du reboot
   // ══════════════════════════════════════
 
   function selectRoom(roomId) {
@@ -288,35 +338,27 @@
       if (BRAD_PATH[state.bradIndex] === 'etage' && state.bradVisible) playSound(snd.robot, 0.6);
       return;
     }
-
-    // Erreur OU reboot caméra → écran noir, pas d'image
     if (state.modules.camera.error || state.modules.camera.rebooting) {
       state.selectedRoom = roomId;
       mapRooms.forEach(r => r.classList.remove('active'));
       const el = document.getElementById(`room-${roomId}`);
       if (el) el.classList.add('active');
       camBadgeName.textContent = `CAM — ${roomId.replace(/-/g,' ').toUpperCase()}`;
-      hideNoSignal();
-      showBlackScreen();
-      return;
+      hideNoSignal(); showBlackScreen(); return;
     }
-
-    hideNoSignal();
-    hideBlackScreen();
+    hideNoSignal(); hideBlackScreen();
     state.selectedRoom = roomId;
     playSound(snd.clicCamera, 0.5);
     mapRooms.forEach(r => r.classList.remove('active'));
     const el = document.getElementById(`room-${roomId}`);
     if (el) el.classList.add('active');
     camBadgeName.textContent = `CAM — ${roomId.replace(/-/g,' ').toUpperCase()}`;
-
     let baseSrc = CAM_IMAGES[roomId] || '';
-    const threshold = DOOR_THRESHOLDS[roomId];
-    if (threshold !== undefined && state.bradMaxIndex > threshold) {
+    const thr = DOOR_THRESHOLDS[roomId];
+    if (thr !== undefined && state.bradMaxIndex > thr) {
       if (roomId === 'salle-de-bain') baseSrc = 'assets/images/cameras/salle-de-bain-ouverte.jpeg';
       if (roomId === 'cuisine')       baseSrc = 'assets/images/cameras/cuisine-ouverte.jpeg';
     }
-
     const bradHere = BRAD_PATH[state.bradIndex] === roomId && state.bradVisible;
     if (bradHere) {
       let bradKey = roomId;
@@ -355,22 +397,14 @@
   function moveBrad() {
     if (state.over || state.bradIndex >= BRAD_PATH.length - 1) return;
     if (!state.bradVisible) { scheduleBradMove(); return; }
-
     if (state.bradIndex === 0 && state.bradPhase === 1) {
-      state.bradPhase = 2;
-      refreshMap();
+      state.bradPhase = 2; refreshMap();
       if (state.selectedRoom === 'cellier') selectRoom('cellier');
-      scheduleBradMove();
-      return;
+      scheduleBradMove(); return;
     }
-
-    state.bradIndex++;
-    state.bradPhase = 1;
+    state.bradIndex++; state.bradPhase = 1;
     if (state.bradIndex > state.bradMaxIndex) state.bradMaxIndex = state.bradIndex;
-
-    playSound(snd.pounding, 0.7);
-    refreshMap();
-
+    playSound(snd.pounding, 0.7); refreshMap();
     const newRoom = BRAD_PATH[state.bradIndex];
     if (newRoom === 'etage') { triggerStairAlert(); return; }
     if (state.selectedRoom === newRoom) selectRoom(newRoom);
@@ -415,9 +449,7 @@
     stairAlert.classList.add('hidden');
     stairTimerFill.style.width = '100%';
     state.bradIndex = Math.max(0, state.bradIndex - 1);
-    state.bradPhase = 1;
-    refreshMap();
-    scheduleBradMove();
+    state.bradPhase = 1; refreshMap(); scheduleBradMove();
   }
 
   // ══════════════════════════════════════
@@ -426,20 +458,16 @@
 
   btnAudio.addEventListener('click', () => {
     if (state.audioCooldown || state.modules.audio.error || state.over) return;
-
     playHello();
-
     if (state.stairActive) {
       startAudioCooldown();
       setTimeout(() => { if (!state.over) resolveStairAlert(); }, 1500);
       return;
     }
-
     const targetIdx = BRAD_PATH.indexOf(state.selectedRoom);
     const bradIdx   = state.bradIndex;
     startAudioCooldown();
     clearTimeout(bradMoveTimeout);
-
     setTimeout(() => {
       if (state.over) return;
       if (targetIdx !== -1 && targetIdx < bradIdx) {
@@ -461,21 +489,18 @@
 
   function startAudioCooldown() {
     state.audioCooldown = true;
-    btnAudio.disabled = true;
-    btnAudio.textContent = 'Audio en cours...';
+    btnAudio.disabled = true; btnAudio.textContent = 'Audio en cours...';
     setTimeout(() => {
       state.audioCooldown = false;
-      btnAudio.disabled = false;
-      btnAudio.textContent = 'Play audio';
+      btnAudio.disabled = false; btnAudio.textContent = 'Play audio';
     }, 5000);
   }
 
   // ══════════════════════════════════════
   // MAINTENANCE
-  // Double texte corrigé : on utilise UNIQUEMENT
-  // data-status sur le span, jamais ::after ET textContent ensemble
-  // Ventilation incluse dans les erreurs
-  // Caméra → écran noir pendant reboot aussi
+  // - Retour bloqué si reboot en cours
+  // - Tout redémarrer = 17 secondes
+  // - Statuts via textContent uniquement
   // ══════════════════════════════════════
 
   btnMaintenance.addEventListener('click', () => {
@@ -483,45 +508,71 @@
     playSound(snd.tabletteOpen, 0.6);
     panelMaintenance.classList.remove('hidden');
   });
+
   btnMaintenanceClose.addEventListener('click', () => {
+    // Bloqué si un module est en cours de reboot
+    const anyRebooting = Object.values(state.modules).some(m => m.rebooting);
+    if (anyRebooting) {
+      maintLockMsg.classList.remove('hidden');
+      setTimeout(() => maintLockMsg.classList.add('hidden'), 2000);
+      return;
+    }
     playSound(snd.tabletteClose, 0.6);
     panelMaintenance.classList.add('hidden');
   });
+
   maintItems.forEach(item => {
     item.addEventListener('click', () => {
       const mod = item.dataset.module;
-      if (!mod || !state.modules[mod] || state.modules[mod].rebooting) return;
-      if (!state.modules[mod].error) return; // clic uniquement si erreur active
-      rebootModule(mod);
-    });
-  });
-  maintRebootAll.addEventListener('click', () => {
-    ['audio','camera','ventilation'].forEach(m => {
-      if (state.modules[m] && state.modules[m].error && !state.modules[m].rebooting)
-        rebootModule(m);
+      if (!mod || !state.modules[mod]) return;
+      if (state.modules[mod].rebooting) return;
+      if (!state.modules[mod].error) return;
+      rebootModule(mod, 6000 + Math.random() * 4000);
     });
   });
 
-  function rebootModule(mod) {
+  maintRebootAll.addEventListener('click', () => {
+    if (state.rebootingAll) return;
+    state.rebootingAll = true;
+    ['audio','camera','ventilation'].forEach(m => {
+      if (state.modules[m] && !state.modules[m].rebooting) {
+        state.modules[m].rebooting = true;
+        state.modules[m].error = false;
+      }
+    });
+    playSound(snd.reboot, 0.6);
+    updateModuleIndicators();
+    updateMaintenanceBtnState();
+    selectRoom(state.selectedRoom); // refresh cam si caméra en reboot
+    setTimeout(() => {
+      ['audio','camera','ventilation'].forEach(m => {
+        if (state.modules[m]) state.modules[m].rebooting = false;
+      });
+      state.rebootingAll = false;
+      updateErrorDisplay();
+      updateModuleIndicators();
+      updateMaintenanceBtnState();
+      selectRoom(state.selectedRoom);
+    }, REBOOT_ALL_DURATION);
+  });
+
+  function rebootModule(mod, duration) {
     const m = state.modules[mod];
     if (!m) return;
     m.rebooting = true; m.error = false;
     playSound(snd.reboot, 0.6);
     updateModuleIndicators();
     updateMaintenanceBtnState();
-    // Si caméra en reboot → écran noir immédiatement
     if (mod === 'camera') selectRoom(state.selectedRoom);
     setTimeout(() => {
       m.rebooting = false;
       updateErrorDisplay();
       updateModuleIndicators();
       updateMaintenanceBtnState();
-      // Caméra réparée → réafficher l'image
       if (mod === 'camera') selectRoom(state.selectedRoom);
-    }, 6000 + Math.random() * 4000);
+    }, duration || 8000);
   }
 
-  // Bouton maintenance — texte via textContent uniquement, pas de ::after
   function updateMaintenanceBtnState() {
     if (hasAnyError()) {
       btnMaintenance.classList.add('has-error');
@@ -532,13 +583,12 @@
     }
   }
 
-  // Statuts dans le panneau — textContent uniquement, pas de ::after CSS
+  // Statuts — textContent UNIQUEMENT, pas de ::after
   function updateModuleIndicators() {
     ['audio','camera','ventilation'].forEach(mod => {
       const m      = state.modules[mod];
       const status = document.getElementById(`maint-${mod}-status`);
       if (!status || !m) return;
-      // Retirer toutes les classes d'état d'abord
       status.className = 'maint-status';
       if (m.error) {
         status.textContent = 'erreur';
@@ -553,7 +603,6 @@
     });
   }
 
-  // Erreurs — ventilation incluse — pas pendant l'appel
   function scheduleNextError() {
     if (state.over) return;
     const interval = Math.max(ERROR_INTERVAL_MIN,
@@ -627,31 +676,29 @@
     resumeAmbiance();
   });
 
+  // 3 sonneries avec RING_PAUSE_MS entre chaque
   function playRingTimes(times, onDone) {
     if (times <= 0 || state.over) { if (onDone) onDone(); return; }
     playSound(snd.ring, 0.7);
-    const dur = snd.ring && snd.ring.duration > 0 ? snd.ring.duration * 1000 : 2500;
-    setTimeout(() => playRingTimes(times - 1, onDone), Math.min(dur, 2500) + 200);
+    const dur = (snd.ring && snd.ring.duration > 0)
+      ? snd.ring.duration * 1000
+      : 2000;
+    setTimeout(() => playRingTimes(times - 1, onDone), dur + RING_PAUSE_MS);
   }
 
   // ══════════════════════════════════════
-  // JUMPSCARE + ÉCRAN DE MORT
-  // Chemin corrigé : assets/videos/jumpscrare-brad.mp4
+  // JUMPSCARE + MORT
   // ══════════════════════════════════════
 
   function triggerJumpscare() {
     if (state.over) return;
     state.over = true;
-    stopAllAmbiance();
-    clearTimeout(bradMoveTimeout);
+    stopAllAmbiance(); clearTimeout(bradMoveTimeout);
     screenGame.classList.add('hidden');
     screenJumpscare.classList.remove('hidden');
-
-    // Son intégré dans la vidéo — pas de son externe
     jumpscareVideo.muted = false;
     jumpscareVideo.volume = 1;
     jumpscareVideo.play().catch(() => {});
-
     setTimeout(() => {
       screenJumpscare.classList.add('hidden');
       showDeathScreen();
@@ -661,12 +708,10 @@
   function showDeathScreen() {
     screenDeath.classList.remove('hidden');
     playSound(snd.dead, 0.9);
-
-    // Canvas bruit statique
     const dc = document.getElementById('death-noise');
     if (dc) {
       const dctx = dc.getContext('2d');
-      (function drawDeathNoise() {
+      (function dn() {
         if (screenDeath.classList.contains('hidden')) return;
         dc.width = window.innerWidth; dc.height = window.innerHeight;
         const img = dctx.createImageData(dc.width, dc.height);
@@ -676,19 +721,14 @@
           img.data[i+3] = Math.random() * 20;
         }
         dctx.putImageData(img, 0, 0);
-        requestAnimationFrame(drawDeathNoise);
+        requestAnimationFrame(dn);
       })();
     }
-
-    // Bouton non skipable
-    const btnRetour = document.getElementById('death-btn-menu');
-    if (btnRetour) {
-      btnRetour.style.display = 'none';
-      setTimeout(() => {
-        btnRetour.style.display = 'block';
-        btnRetour.classList.add('visible');
-      }, DEATH_SCREEN_MIN);
-      btnRetour.addEventListener('click', () => { window.location.href = 'index.html'; });
+    const btn = document.getElementById('death-btn-menu');
+    if (btn) {
+      btn.style.display = 'none';
+      setTimeout(() => { btn.style.display = 'block'; btn.classList.add('visible'); }, DEATH_SCREEN_MIN);
+      btn.addEventListener('click', () => { window.location.href = 'index.html'; });
     }
   }
 
@@ -708,9 +748,7 @@
         state.currentHour = hourIdx;
         hudHour.textContent = HOURS[hourIdx];
         if (hourIdx >= BRAD_VISIBLE_HOUR && !state.bradVisible) {
-          state.bradVisible = true;
-          refreshMap();
-          selectRoom(state.selectedRoom);
+          state.bradVisible = true; refreshMap(); selectRoom(state.selectedRoom);
         }
       }
       if (state.nightProgress >= 1) { triggerNightEnd(); return; }
@@ -726,8 +764,7 @@
   function triggerNightEnd() {
     if (state.over) return;
     state.over = true;
-    stopAllAmbiance();
-    clearTimeout(bradMoveTimeout);
+    stopAllAmbiance(); clearTimeout(bradMoveTimeout);
     playSound(snd.nightEnd, 0.8);
     screenGame.classList.add('hidden');
     screenNightEnd.classList.remove('hidden');
@@ -736,7 +773,7 @@
   }
 
   // ══════════════════════════════════════
-  // DÉMARRAGE
+  // DÉMARRAGE (appelé après le play-gate)
   // ══════════════════════════════════════
 
   function startNight() {
@@ -751,15 +788,16 @@
       startGameClock();
       scheduleBradMove();
       scheduleNextError();
+      // 3 sonneries avec délai puis appel
       setTimeout(() => {
         playRingTimes(3, () => {
           startPhoneCall();
-          setTimeout(() => { if (!state.callPlaying && !state.over) startAmbiance(); }, 30000);
+          setTimeout(() => {
+            if (!state.callPlaying && !state.over) startAmbiance();
+          }, 30000);
         });
       }, 1000);
     }, 3000);
   }
-
-  startNight();
 
 })();
