@@ -358,18 +358,14 @@
       if (roomId === 'cuisine')       baseSrc = 'assets/images/cameras/cuisine-ouverte.jpeg';
     }
 
-    // Brad visible sur caméra UNIQUEMENT si bradIndex >= BRAD_CAM_SHOW_INDEX
-    const bradHere = BRAD_PATH[state.bradIndex] === roomId
-      && state.bradVisible
-      && state.bradIndex >= BRAD_CAM_SHOW_INDEX;
+    // Brad visible sur toutes les caméras dès 2AM (bradVisible)
+    const bradHere = BRAD_PATH[state.bradIndex] === roomId && state.bradVisible;
 
     if (bradHere) {
       let bradKey = roomId;
-      if (roomId === 'couloir') {
-        camImg.src = BRAD_IMAGES['couloir'] || baseSrc;
-        playSound(snd.robot, 0.6);
-        return;
-      }
+      if (roomId === 'cellier') bradKey = 'cellier-' + state.bradPhase;
+      if (roomId === 'cuisine' && Math.random() < 0.05) bradKey = 'cuisine-rare';
+      if (roomId === 'couloir') playSound(snd.robot, 0.6);
       camImg.src = BRAD_IMAGES[bradKey] || baseSrc;
     } else {
       camImg.src = baseSrc;
@@ -600,31 +596,43 @@
   }
 
   // Statuts — textContent UNIQUEMENT
-  // Injecter @keyframes blinkStatus une seule fois dans le document
-  (function injectBlink() {
-    if (document.getElementById('blink-style')) return;
-    const s = document.createElement('style');
-    s.id = 'blink-style';
-    s.textContent = '@keyframes blinkStatus { 0%,100%{opacity:1} 50%{opacity:0} }';
-    document.head.appendChild(s);
-  })();
+  // Clignotement géré par setInterval JS pur — aucune dépendance CSS
+  const blinkIntervals = {};
+  function startBlink(el, color, speed) {
+    stopBlink(el);
+    let visible = true;
+    el.style.color = color;
+    blinkIntervals[el.id] = setInterval(() => {
+      visible = !visible;
+      el.style.opacity = visible ? '1' : '0';
+    }, speed);
+  }
+  function stopBlink(el) {
+    if (blinkIntervals[el.id]) {
+      clearInterval(blinkIntervals[el.id]);
+      delete blinkIntervals[el.id];
+    }
+    el.style.opacity = '1';
+  }
 
   function updateModuleIndicators() {
     ['audio','camera','ventilation'].forEach(mod => {
       const m      = state.modules[mod];
       const status = document.getElementById('maint-' + mod + '-status');
       if (!status || !m) return;
-      status.className = 'maint-status';
       status.removeAttribute('style');
+      stopBlink(status);
       if (m.error) {
         status.textContent = 'erreur';
-        status.style.cssText = 'color:#cc2020;font-weight:bold;font-family:var(--font-mono);font-size:10px;letter-spacing:2px;animation:blinkStatus 0.7s step-start infinite;';
+        status.style.cssText = 'font-weight:bold;font-size:10px;letter-spacing:2px;';
+        startBlink(status, '#cc2020', 350);
       } else if (m.rebooting) {
         status.textContent = 'redémarrage...';
-        status.style.cssText = 'color:#c0a010;font-family:var(--font-mono);font-size:10px;letter-spacing:2px;animation:blinkStatus 1.2s step-start infinite;';
+        status.style.cssText = 'font-size:10px;letter-spacing:2px;';
+        startBlink(status, '#c0a010', 600);
       } else {
         status.textContent = 'OK';
-        status.style.cssText = 'color:#2a8a2a;font-family:var(--font-mono);font-size:10px;letter-spacing:2px;animation:none;';
+        status.style.cssText = 'color:#2a8a2a;font-size:10px;letter-spacing:2px;opacity:1;';
       }
     });
   }
