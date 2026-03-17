@@ -2,7 +2,7 @@
 <html lang="fr">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no" />
   <title>Five Nights at Chez Moi — Nuit 1</title>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
@@ -12,13 +12,13 @@
 </head>
 <body>
 
-  <!-- ══ ÉCRAN D'INTERACTION FORCÉE (autoplay audio) ══ -->
+  <!-- ══ PLAY GATE ══ -->
   <div id="screen-play-gate">
     <canvas id="gate-noise"></canvas>
     <div class="gate-scanlines"></div>
     <div class="gate-content">
-      <div class="gate-title" data-text="CHEZ MOI">CHEZ MOI</div>
-      <div class="gate-sub">IRL — NUIT 1</div>
+      <div class="gate-title">NIGHT 1</div>
+      <div class="gate-sub">IRL — ÉDITION 3</div>
       <button id="btn-play-gate">▶ &nbsp;JOUER</button>
     </div>
   </div>
@@ -77,7 +77,7 @@
       <button id="btn-mute-call" class="hidden">mute call</button>
     </div>
 
-    <!-- PANNEAU MAINTENANCE -->
+    <!-- MAINTENANCE -->
     <div id="panel-maintenance" class="hidden">
       <div class="maint-title">Maintenance</div>
       <div class="maint-list">
@@ -96,9 +96,8 @@
           <span class="maint-name">Ventilation</span>
           <span class="maint-status ok" id="maint-ventil-status">OK</span>
         </div>
-        <div class="maint-reboot" id="maint-reboot-all">Tout redémarrer (17s)</div>
+        <div class="maint-reboot" id="maint-reboot-all">Tout redémarrer</div>
       </div>
-      <!-- Retour bloqué si reboot en cours -->
       <button class="action-btn" id="btn-maintenance-close">Retour</button>
       <div class="maint-lock-msg hidden" id="maint-lock-msg">redémarrage en cours...</div>
     </div>
@@ -132,23 +131,24 @@
   </div>
 
   <!-- AUDIO -->
-  <audio id="snd-ambiance-1"    src="assets/audio/effect/ambiance-1.mp3"       loop preload="auto"></audio>
-  <audio id="snd-ambiance-2"    src="assets/audio/effect/ambiance-2.mp3"       loop preload="auto"></audio>
-  <audio id="snd-ambiance-3"    src="assets/audio/effect/ambiance-3.mp3"       loop preload="auto"></audio>
-  <audio id="snd-ring"          src="assets/audio/effect/ring.mp3"             preload="auto"></audio>
-  <audio id="snd-night1-call"   src="assets/audio/effect/night1-call.mp3"      preload="auto"></audio>
-  <audio id="snd-night-start"   src="assets/audio/effect/night-start.mp3"      preload="auto"></audio>
-  <audio id="snd-night-end"     src="assets/audio/effect/night-end.mp3"        preload="auto"></audio>
-  <audio id="snd-clic-camera"   src="assets/audio/effect/clic-camera.mp3"      preload="auto"></audio>
-  <audio id="snd-robot"         src="assets/audio/effect/robot.mp3"            preload="auto"></audio>
-  <audio id="snd-pounding"      src="assets/audio/effect/pounding.mp3"         preload="auto"></audio>
-  <audio id="snd-alarm"         src="assets/audio/effect/alarm.mp3"            preload="auto"></audio>
-  <audio id="snd-reboot"        src="assets/audio/effect/reboot.mp3"           preload="auto"></audio>
-  <audio id="snd-tablette-open" src="assets/audio/effect/tablette-ouverte.mp3" preload="auto"></audio>
-  <audio id="snd-tablette-close"src="assets/audio/effect/tablette-ferme.mp3"   preload="auto"></audio>
-  <audio id="snd-dead"          src="assets/audio/dead.mp3"                    preload="auto"></audio>
-  <audio id="snd-hello-1"       src="assets/audio/hello-1.mp3"                 preload="auto"></audio>
-  <audio id="snd-hello-2"       src="assets/audio/hello-2.mp3"                 preload="auto"></audio>
+  <audio id="snd-ambiance-1"    src="assets/audio/effect/ambiance-1.mp3"         loop preload="auto"></audio>
+  <audio id="snd-ambiance-2"    src="assets/audio/effect/ambiance-2.mp3"         loop preload="auto"></audio>
+  <audio id="snd-ambiance-3"    src="assets/audio/effect/ambiance-3.mp3"         loop preload="auto"></audio>
+  <audio id="snd-ring"          src="assets/audio/effect/ring.mp3"               preload="auto"></audio>
+  <audio id="snd-night1-call"   src="assets/audio/effect/night1-call.mp3"        preload="auto"></audio>
+  <audio id="snd-night-start"   src="assets/audio/effect/night-start.mp3"        preload="auto"></audio>
+  <audio id="snd-night-end"     src="assets/audio/effect/night-end.mp3"          preload="auto"></audio>
+  <audio id="snd-clic-camera"   src="assets/audio/effect/clic-camera.mp3"        preload="auto"></audio>
+  <audio id="snd-robot"         src="assets/audio/effect/robot.mp3"              preload="auto"></audio>
+  <audio id="snd-pounding"      src="assets/audio/effect/pounding.mp3"           preload="auto"></audio>
+  <audio id="snd-alarm"         src="assets/audio/effect/alarm.mp3"              preload="auto"></audio>
+  <audio id="snd-reboot"        src="assets/audio/effect/reboot.mp3"             preload="auto"></audio>
+  <audio id="snd-tablette-open" src="assets/audio/effect/tablette-ouverte.mp3"   preload="auto"></audio>
+  <audio id="snd-tablette-close"src="assets/audio/effect/tablette-ferme.mp3"     preload="auto"></audio>
+  <audio id="snd-dead"          src="assets/audio/dead.mp3"                      preload="auto"></audio>
+  <!-- hello en .wav -->
+  <audio id="snd-hello-1"       src="assets/audio/effect/hello-1.wav"            preload="auto"></audio>
+  <audio id="snd-hello-2"       src="assets/audio/effect/hello-2.wav"            preload="auto"></audio>
 
   <script src="js/save.js"></script>
   <script src="js/game.js"></script>
