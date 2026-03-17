@@ -482,7 +482,8 @@
       } else if (targetIdx !== -1 && targetIdx > bradIdx) {
         state.bradIndex = Math.min(BRAD_PATH.length - 2, bradIdx + 1);
         state.bradPhase = 1;
-        if (state.bradIndex > state.bradMaxIndex) state.bradMaxIndex = state.bradIndex;
+        // NE PAS mettre à jour bradMaxIndex ici — les portes ne s'ouvrent
+        // que si Brad avance naturellement via moveBrad()
         if (BRAD_PATH[state.bradIndex] === 'etage') { triggerStairAlert(); return; }
         playSound(snd.pounding, 0.5);
       }
@@ -599,27 +600,31 @@
   }
 
   // Statuts — textContent UNIQUEMENT
+  // Injecter @keyframes blinkStatus une seule fois dans le document
+  (function injectBlink() {
+    if (document.getElementById('blink-style')) return;
+    const s = document.createElement('style');
+    s.id = 'blink-style';
+    s.textContent = '@keyframes blinkStatus { 0%,100%{opacity:1} 50%{opacity:0} }';
+    document.head.appendChild(s);
+  })();
+
   function updateModuleIndicators() {
     ['audio','camera','ventilation'].forEach(mod => {
       const m      = state.modules[mod];
-      const status = document.getElementById(`maint-${mod}-status`);
+      const status = document.getElementById('maint-' + mod + '-status');
       if (!status || !m) return;
-      // Reset
       status.className = 'maint-status';
       status.removeAttribute('style');
       if (m.error) {
         status.textContent = 'erreur';
-        status.style.color = '#cc2020';
-        status.style.fontWeight = 'bold';
-        status.style.animation = 'blink 0.7s step-start infinite';
+        status.style.cssText = 'color:#cc2020;font-weight:bold;font-family:var(--font-mono);font-size:10px;letter-spacing:2px;animation:blinkStatus 0.7s step-start infinite;';
       } else if (m.rebooting) {
         status.textContent = 'redémarrage...';
-        status.style.color = '#c0a010';
-        status.style.animation = 'blink 1.2s step-start infinite';
+        status.style.cssText = 'color:#c0a010;font-family:var(--font-mono);font-size:10px;letter-spacing:2px;animation:blinkStatus 1.2s step-start infinite;';
       } else {
         status.textContent = 'OK';
-        status.style.color = '#2a8a2a';
-        status.style.animation = 'none';
+        status.style.cssText = 'color:#2a8a2a;font-family:var(--font-mono);font-size:10px;letter-spacing:2px;animation:none;';
       }
     });
   }
