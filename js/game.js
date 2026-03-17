@@ -1,11 +1,11 @@
 /* ═══════════════════════════════════════════
-   GAME.JS v8
-   - Écran play-gate pour forcer l'interaction (autoplay fix)
-   - Maintenance : retour bloqué si reboot en cours
-   - Tout redémarrer = 17 secondes
-   - hello-1/2 fonctionnel
-   - Ventilation OK en vert, erreur/reboot animés
-   - Délai entre les sonneries ring
+   GAME.JS v9
+   - night-start coupé au lancement du jeu
+   - hello-1/2 en .wav (assets/audio/effect/)
+   - Brad masqué sur caméras sauf si au couloir
+   - ventilation erreur/reboot animés
+   - tout redémarrer : son reboot rejoué à chaque fois
+   - mobile : layout portrait/paysage corrigé
 ════════════════════════════════════════════ */
 
 (() => {
@@ -18,7 +18,10 @@
   const JUMPSCARE_DURATION    = 4000;
   const DEATH_SCREEN_MIN      = 6000;
   const REBOOT_ALL_DURATION   = 17000;
-  const RING_PAUSE_MS         = 1200; // pause entre chaque ring
+  const RING_PAUSE_MS         = 1200;
+
+  // Brad masqué sur caméras sauf à partir de ce seuil (couloir = index 6)
+  const BRAD_CAM_SHOW_INDEX   = 6;
 
   const BRAD_PATH = [
     'cellier','wc','salle-de-bain','cuisine',
@@ -134,7 +137,6 @@
     hello2:        document.getElementById('snd-hello-2'),
   };
 
-  // Forcer .m4a pour l'enregistrement perso
   if (snd.call) snd.call.src = 'assets/audio/effect/night1-call.m4a';
 
   function playSound(audio, vol = 0.8) {
@@ -152,7 +154,7 @@
     try { audio.pause(); audio.currentTime = 0; } catch(e) {}
   }
 
-  // hello-1 / hello-2 en alternance
+  // hello-1.wav / hello-2.wav en alternance
   function playHello() {
     state.helloToggle = !state.helloToggle;
     const audio = state.helloToggle ? snd.hello1 : snd.hello2;
@@ -166,8 +168,7 @@
   }
 
   // ══════════════════════════════════════
-  // PLAY GATE — forcer interaction utilisateur
-  // Résout le blocage autoplay des navigateurs
+  // PLAY GATE
   // ══════════════════════════════════════
 
   const gateCanvas = document.getElementById('gate-noise');
@@ -189,14 +190,13 @@
   }
 
   btnPlayGate.addEventListener('click', () => {
-    // Déclencher un silence pour débloquer le contexte audio du navigateur
-    const ctx = new (window.AudioContext || window.webkitAudioContext)();
-    const buf = ctx.createBuffer(1, 1, 22050);
-    const src = ctx.createBufferSource();
-    src.buffer = buf;
-    src.connect(ctx.destination);
-    src.start(0);
-
+    // Débloque l'audio du navigateur
+    try {
+      const ctx = new (window.AudioContext || window.webkitAudioContext)();
+      const buf = ctx.createBuffer(1, 1, 22050);
+      const src = ctx.createBufferSource();
+      src.buffer = buf; src.connect(ctx.destination); src.start(0);
+    } catch(e) {}
     screenPlayGate.classList.add('hidden');
     screenNightStart.classList.remove('hidden');
     startNight();
@@ -286,12 +286,10 @@
           const v = Math.floor(Math.random() * 80);
           img.data[i] = img.data[i+1] = img.data[i+2] = v; img.data[i+3] = 255;
         }
-        sc.putImageData(img, 0, 0);
-        requestAnimationFrame(ds);
+        sc.putImageData(img, 0, 0); requestAnimationFrame(ds);
       })();
     }
-    o.style.display = 'flex';
-    hideBlackScreen();
+    o.style.display = 'flex'; hideBlackScreen();
   }
 
   function hideNoSignal() {
@@ -301,8 +299,7 @@
   }
 
   function showBlackScreen() {
-    camImg.style.display = 'none';
-    hideNoSignal();
+    camImg.style.display = 'none'; hideNoSignal();
     let b = document.getElementById('cam-black');
     if (!b) {
       b = document.createElement('div');
@@ -311,8 +308,7 @@
       const txt = document.createElement('div');
       txt.style.cssText = "font-family:'Share Tech Mono',monospace;font-size:11px;color:#333;letter-spacing:4px;animation:blink 1.2s step-start infinite;";
       txt.textContent = 'SIGNAL PERDU';
-      b.appendChild(txt);
-      camView.appendChild(b);
+      b.appendChild(txt); camView.appendChild(b);
     }
     b.style.display = 'flex';
   }
@@ -325,6 +321,7 @@
 
   // ══════════════════════════════════════
   // CAMÉRAS
+  // Brad masqué sauf si bradIndex >= BRAD_CAM_SHOW_INDEX (couloir+)
   // ══════════════════════════════════════
 
   function selectRoom(roomId) {
@@ -353,19 +350,27 @@
     const el = document.getElementById(`room-${roomId}`);
     if (el) el.classList.add('active');
     camBadgeName.textContent = `CAM — ${roomId.replace(/-/g,' ').toUpperCase()}`;
+
     let baseSrc = CAM_IMAGES[roomId] || '';
     const thr = DOOR_THRESHOLDS[roomId];
     if (thr !== undefined && state.bradMaxIndex > thr) {
       if (roomId === 'salle-de-bain') baseSrc = 'assets/images/cameras/salle-de-bain-ouverte.jpeg';
       if (roomId === 'cuisine')       baseSrc = 'assets/images/cameras/cuisine-ouverte.jpeg';
     }
-    const bradHere = BRAD_PATH[state.bradIndex] === roomId && state.bradVisible;
+
+    // Brad visible sur caméra UNIQUEMENT si bradIndex >= BRAD_CAM_SHOW_INDEX
+    const bradHere = BRAD_PATH[state.bradIndex] === roomId
+      && state.bradVisible
+      && state.bradIndex >= BRAD_CAM_SHOW_INDEX;
+
     if (bradHere) {
       let bradKey = roomId;
-      if (roomId === 'cellier') bradKey = `cellier-${state.bradPhase}`;
-      if (roomId === 'cuisine' && Math.random() < 0.05) bradKey = 'cuisine-rare';
+      if (roomId === 'couloir') {
+        camImg.src = BRAD_IMAGES['couloir'] || baseSrc;
+        playSound(snd.robot, 0.6);
+        return;
+      }
       camImg.src = BRAD_IMAGES[bradKey] || baseSrc;
-      if (roomId === 'couloir') playSound(snd.robot, 0.6);
     } else {
       camImg.src = baseSrc;
     }
@@ -376,12 +381,13 @@
   });
 
   // ══════════════════════════════════════
-  // CARTE
+  // CARTE — Brad visible seulement si bradIndex >= BRAD_CAM_SHOW_INDEX
   // ══════════════════════════════════════
 
   function refreshMap() {
     mapRooms.forEach(r => r.classList.remove('brad-here'));
     if (!state.bradVisible) return;
+    if (state.bradIndex < BRAD_CAM_SHOW_INDEX) return; // masqué avant le couloir
     const el = document.getElementById(`room-${BRAD_PATH[state.bradIndex]}`);
     if (el) el.classList.add('brad-here');
   }
@@ -498,9 +504,6 @@
 
   // ══════════════════════════════════════
   // MAINTENANCE
-  // - Retour bloqué si reboot en cours
-  // - Tout redémarrer = 17 secondes
-  // - Statuts via textContent uniquement
   // ══════════════════════════════════════
 
   btnMaintenance.addEventListener('click', () => {
@@ -510,7 +513,6 @@
   });
 
   btnMaintenanceClose.addEventListener('click', () => {
-    // Bloqué si un module est en cours de reboot
     const anyRebooting = Object.values(state.modules).some(m => m.rebooting);
     if (anyRebooting) {
       maintLockMsg.classList.remove('hidden');
@@ -525,12 +527,12 @@
     item.addEventListener('click', () => {
       const mod = item.dataset.module;
       if (!mod || !state.modules[mod]) return;
-      if (state.modules[mod].rebooting) return;
-      if (!state.modules[mod].error) return;
+      if (state.modules[mod].rebooting || !state.modules[mod].error) return;
       rebootModule(mod, 6000 + Math.random() * 4000);
     });
   });
 
+  // Tout redémarrer — son reboot rejoué à chaque appel
   maintRebootAll.addEventListener('click', () => {
     if (state.rebootingAll) return;
     state.rebootingAll = true;
@@ -540,10 +542,11 @@
         state.modules[m].error = false;
       }
     });
-    playSound(snd.reboot, 0.6);
+    // Son reboot créé dynamiquement pour éviter le bug de cache audio
+    playRebootSound();
     updateModuleIndicators();
     updateMaintenanceBtnState();
-    selectRoom(state.selectedRoom); // refresh cam si caméra en reboot
+    selectRoom(state.selectedRoom);
     setTimeout(() => {
       ['audio','camera','ventilation'].forEach(m => {
         if (state.modules[m]) state.modules[m].rebooting = false;
@@ -556,11 +559,23 @@
     }, REBOOT_ALL_DURATION);
   });
 
+  // Crée un nouvel élément audio à chaque fois pour éviter le blocage
+  function playRebootSound() {
+    try {
+      const a = new Audio('assets/audio/effect/reboot.mp3');
+      a.volume = 0.6;
+      a.play().catch(() => {});
+    } catch(e) {
+      // Fallback sur l'élément existant
+      playSound(snd.reboot, 0.6);
+    }
+  }
+
   function rebootModule(mod, duration) {
     const m = state.modules[mod];
     if (!m) return;
     m.rebooting = true; m.error = false;
-    playSound(snd.reboot, 0.6);
+    playRebootSound();
     updateModuleIndicators();
     updateMaintenanceBtnState();
     if (mod === 'camera') selectRoom(state.selectedRoom);
@@ -583,12 +598,13 @@
     }
   }
 
-  // Statuts — textContent UNIQUEMENT, pas de ::after
+  // Statuts — textContent UNIQUEMENT
   function updateModuleIndicators() {
     ['audio','camera','ventilation'].forEach(mod => {
       const m      = state.modules[mod];
       const status = document.getElementById(`maint-${mod}-status`);
       if (!status || !m) return;
+      // Reset complet des classes
       status.className = 'maint-status';
       if (m.error) {
         status.textContent = 'erreur';
@@ -608,8 +624,7 @@
     const interval = Math.max(ERROR_INTERVAL_MIN,
       ERROR_INTERVAL_BASE - (ERROR_INTERVAL_BASE - ERROR_INTERVAL_MIN) * state.nightProgress);
     setTimeout(() => {
-      if (state.over) return;
-      if (state.callPlaying) { scheduleNextError(); return; }
+      if (state.over || state.callPlaying) { scheduleNextError(); return; }
       const targets = ['audio','camera','ventilation']
         .filter(m => !state.modules[m].error && !state.modules[m].rebooting);
       if (targets.length > 0) {
@@ -676,13 +691,10 @@
     resumeAmbiance();
   });
 
-  // 3 sonneries avec RING_PAUSE_MS entre chaque
   function playRingTimes(times, onDone) {
     if (times <= 0 || state.over) { if (onDone) onDone(); return; }
     playSound(snd.ring, 0.7);
-    const dur = (snd.ring && snd.ring.duration > 0)
-      ? snd.ring.duration * 1000
-      : 2000;
+    const dur = (snd.ring && snd.ring.duration > 0) ? snd.ring.duration * 1000 : 2000;
     setTimeout(() => playRingTimes(times - 1, onDone), dur + RING_PAUSE_MS);
   }
 
@@ -720,8 +732,7 @@
           img.data[i] = img.data[i+1] = img.data[i+2] = v;
           img.data[i+3] = Math.random() * 20;
         }
-        dctx.putImageData(img, 0, 0);
-        requestAnimationFrame(dn);
+        dctx.putImageData(img, 0, 0); requestAnimationFrame(dn);
       })();
     }
     const btn = document.getElementById('death-btn-menu');
@@ -773,12 +784,17 @@
   }
 
   // ══════════════════════════════════════
-  // DÉMARRAGE (appelé après le play-gate)
+  // DÉMARRAGE
+  // night-start coupé dès que le jeu se lance
   // ══════════════════════════════════════
 
   function startNight() {
     playSound(snd.nightStart, 0.8);
+
     setTimeout(() => {
+      // Couper le night-start au moment où le jeu s'affiche
+      stopSound(snd.nightStart);
+
       screenNightStart.classList.add('hidden');
       screenGame.classList.remove('hidden');
       drawNoise();
@@ -788,7 +804,7 @@
       startGameClock();
       scheduleBradMove();
       scheduleNextError();
-      // 3 sonneries avec délai puis appel
+
       setTimeout(() => {
         playRingTimes(3, () => {
           startPhoneCall();
