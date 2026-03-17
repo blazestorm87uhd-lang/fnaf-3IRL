@@ -604,17 +604,22 @@
       const m      = state.modules[mod];
       const status = document.getElementById(`maint-${mod}-status`);
       if (!status || !m) return;
-      // Reset complet des classes
+      // Reset
       status.className = 'maint-status';
+      status.removeAttribute('style');
       if (m.error) {
         status.textContent = 'erreur';
-        status.classList.add('err');
+        status.style.color = '#cc2020';
+        status.style.fontWeight = 'bold';
+        status.style.animation = 'blink 0.7s step-start infinite';
       } else if (m.rebooting) {
         status.textContent = 'redémarrage...';
-        status.classList.add('rebooting');
+        status.style.color = '#c0a010';
+        status.style.animation = 'blink 1.2s step-start infinite';
       } else {
         status.textContent = 'OK';
-        status.classList.add('ok');
+        status.style.color = '#2a8a2a';
+        status.style.animation = 'none';
       }
     });
   }
