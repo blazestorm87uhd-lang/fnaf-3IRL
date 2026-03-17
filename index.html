@@ -13,34 +13,26 @@
 </head>
 <body>
 
-  <!-- ═══════════════════════════════════════
-       ÉCRAN DE CHARGEMENT
-  ════════════════════════════════════════ -->
+  <!-- LOADER -->
   <div id="loader">
     <canvas id="loader-noise"></canvas>
     <div class="loader-scanlines"></div>
     <div class="loader-scan-line"></div>
-
     <div class="loader-content">
       <div class="loader-logo">
         <span class="logo-five">FIVE NIGHTS AT</span>
         <span class="logo-title" id="logo-glitch" data-text="CHEZ MOI">CHEZ MOI</span>
         <span class="logo-irl">IRL — ÉDITION 3</span>
       </div>
-      <div class="loader-click" id="loader-click">
-        CLIQUEZ POUR CONTINUER
-      </div>
+      <div class="loader-click" id="loader-click">CLIQUEZ POUR CONTINUER</div>
     </div>
   </div>
 
-  <!-- ═══════════════════════════════════════
-       MENU PRINCIPAL
-  ════════════════════════════════════════ -->
+  <!-- MENU -->
   <div id="menu" class="hidden">
     <canvas id="noise"></canvas>
     <div class="scan-line"></div>
 
-    <!-- Panneau gauche — Brad -->
     <div class="left" id="left-panel">
       <img class="brad-img" id="brad-normal" src="assets/images/brad-normal.png" alt="" />
       <img class="brad-img" id="brad-broken" src="assets/images/brad-broken.png" alt="" />
@@ -54,7 +46,6 @@
 
     <div class="divider"></div>
 
-    <!-- Panneau droit — Boutons -->
     <div class="right">
       <div class="game-label">Five Nights at</div>
       <div class="game-title">Chez Moi</div>
@@ -62,41 +53,39 @@
       <div class="game-edition">— ÉDITION 3 —</div>
 
       <div class="menu-items">
-
         <button class="menu-item" id="btn-newgame">
           <span class="arrow">›</span>
           New Game
           <span class="item-note">commencer depuis la nuit 1</span>
         </button>
-
         <button class="menu-item" id="btn-continue">
           <span class="arrow">›</span>
           Continue
           <span class="item-note" id="continue-note">aucune partie sauvegardée</span>
         </button>
-
         <button class="menu-item nightmare" id="btn-nightmare">
           <span class="arrow">›</span>
           Nightmare
           <span class="item-note">nuit sans pitié</span>
         </button>
-
         <button class="menu-item bonus" id="btn-bonus">
           <span class="arrow">›</span>
           Bonus
           <span class="item-note">contenu débloqué</span>
         </button>
-
       </div>
 
       <div class="menu-footer">APPUYEZ SUR N'IMPORTE QUELLE TOUCHE</div>
-      <div class="menu-dev-credit">Accès dev. — v1.0.7 — IMAGINe Studio &amp; HwR Engine</div>
+
+      <!-- Mention dev — plus visible, responsive -->
+      <div class="menu-dev-credit">
+        Accès dev. — v1.0.7<br>
+        IMAGINe Studio &amp; HwR Engine
+      </div>
     </div>
   </div>
 
-  <!-- ═══════════════════════════════════════
-       MODAL NIGHTMARE
-  ════════════════════════════════════════ -->
+  <!-- MODAL NIGHTMARE -->
   <div id="modal-nightmare" class="modal hidden">
     <div class="modal-box">
       <div class="modal-title">NIGHTMARE</div>
@@ -112,7 +101,6 @@
     </div>
   </div>
 
-  <!-- Audio -->
   <audio id="audio-menu"      src="assets/audio/menu.mp3"      loop preload="auto"></audio>
   <audio id="audio-nightmare" src="assets/audio/nightmare.mp3" loop preload="auto"></audio>
 
