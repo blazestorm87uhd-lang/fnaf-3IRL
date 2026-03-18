@@ -56,8 +56,8 @@
   const BRAD_MOVE_MIN       = 8000;
   const STAIR_WINDOW_BASE   = 8000;
   const STAIR_WINDOW_MIN    = 3000;
-  const ERROR_INTERVAL_BASE = 45000;
-  const ERROR_INTERVAL_MIN  = 20000;
+  const ERROR_INTERVAL_BASE = 90000;  // 90s de base
+  const ERROR_INTERVAL_MIN  = 50000;  // 50s minimum
 
   // ══════════════════════════════════════
   // ÉTAT
@@ -373,7 +373,12 @@
   }
 
   mapRooms.forEach(r => {
-    r.addEventListener('click', () => { const id = r.dataset.room; if (id) selectRoom(id); });
+    r.addEventListener('click', () => {
+      // Pas de navigation si maintenance ouvert
+      if (!panelMaintenance.classList.contains('hidden')) return;
+      const id = r.dataset.room;
+      if (id) selectRoom(id);
+    });
   });
 
   // ══════════════════════════════════════
@@ -533,7 +538,7 @@
   maintRebootAll.addEventListener('click', () => {
     if (state.rebootingAll) return;
     state.rebootingAll = true;
-    ['audio','camera','ventilation'].forEach(m => {
+    ['audio','camera'].forEach(m => {
       if (state.modules[m] && !state.modules[m].rebooting) {
         state.modules[m].rebooting = true;
         state.modules[m].error = false;
@@ -545,7 +550,7 @@
     updateMaintenanceBtnState();
     selectRoom(state.selectedRoom);
     setTimeout(() => {
-      ['audio','camera','ventilation'].forEach(m => {
+      ['audio','camera'].forEach(m => {
         if (state.modules[m]) state.modules[m].rebooting = false;
       });
       state.rebootingAll = false;
@@ -616,7 +621,7 @@
   }
 
   function updateModuleIndicators() {
-    ['audio','camera','ventilation'].forEach(mod => {
+    ['audio','camera'].forEach(mod => {
       const m      = state.modules[mod];
       const status = document.getElementById('maint-' + mod + '-status');
       if (!status || !m) return;
@@ -643,7 +648,7 @@
       ERROR_INTERVAL_BASE - (ERROR_INTERVAL_BASE - ERROR_INTERVAL_MIN) * state.nightProgress);
     setTimeout(() => {
       if (state.over || state.callPlaying) { scheduleNextError(); return; }
-      const targets = ['audio','camera','ventilation']
+      const targets = ['audio','camera']
         .filter(m => !state.modules[m].error && !state.modules[m].rebooting);
       if (targets.length > 0) {
         const mod = targets[Math.floor(Math.random() * targets.length)];
@@ -794,11 +799,41 @@
     if (state.over) return;
     state.over = true;
     stopAllAmbiance(); clearTimeout(bradMoveTimeout);
-    playSound(snd.nightEnd, 0.8);
     screenGame.classList.add('hidden');
-    screenNightEnd.classList.remove('hidden');
+    showNightEndScreen();
+  }
+
+  function showNightEndScreen() {
+    const screen = document.getElementById('screen-nightend');
+    screen.classList.remove('hidden');
+
+    // Animation 5AM → 6AM
+    const timeEl  = screen.querySelector('.ns-time');
+    const nightEl = screen.querySelector('.ns-night');
+    if (timeEl) {
+      timeEl.textContent = '5 AM';
+      timeEl.style.cssText = 'animation:slideDown 0.8s ease forwards;';
+      setTimeout(() => {
+        timeEl.textContent = '6 AM';
+        timeEl.style.cssText = 'animation:slideUp 0.8s ease forwards;';
+      }, 1200);
+    }
+    if (nightEl) nightEl.textContent = 'NUIT TERMINÉE';
+
+    // Son night-end
+    if (snd.nightEnd) {
+      snd.nightEnd.currentTime = 0;
+      snd.nightEnd.volume = 0.8;
+      snd.nightEnd.play().catch(() => {});
+    }
+
+    // Durée = longueur de l'audio + 3 secondes
+    const audioDur = (snd.nightEnd && snd.nightEnd.duration > 0)
+      ? snd.nightEnd.duration * 1000
+      : 4000;
+
     Save.completeNight(NIGHT_NUMBER);
-    setTimeout(() => { window.location.href = 'index.html'; }, 4000);
+    setTimeout(() => { window.location.href = 'index.html'; }, audioDur + 3000);
   }
 
   // ══════════════════════════════════════
