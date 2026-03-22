@@ -44,7 +44,7 @@ const Save = (() => {
   function completeNight(nightNumber) {
     const d = load();
     d.nightCompleted = Math.max(d.nightCompleted, nightNumber);
-    d.nightReached   = Math.min(Math.max(d.nightReached, nightNumber + 1), 3);
+    d.nightReached   = Math.max(d.nightReached, nightNumber + 1);
     d.currentNight   = null;
 
     if (d.nightCompleted >= 3) d.nightmareUnlocked = true;
