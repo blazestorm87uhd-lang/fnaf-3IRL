@@ -1,0 +1,88 @@
+/* ═══════════════════════════════════════════
+   GAME2 CSS — Nuit 2 spécifique
+════════════════════════════════════════════ */
+
+/* ── BOÎTE À MUSIQUE — panneau ── */
+#musicbox-panel {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 0;
+  border-top: 0.5px solid rgba(255,255,255,0.06);
+  border-bottom: 0.5px solid rgba(255,255,255,0.06);
+}
+
+#musicbox-gauge-wrap {
+  position: relative;
+  width: 56px;
+  height: 56px;
+  flex-shrink: 0;
+}
+
+#musicbox-gauge {
+  display: block;
+}
+
+#musicbox-label {
+  position: absolute;
+  top: 50%; left: 50%;
+  transform: translate(-50%, -50%);
+  font-size: 18px;
+  color: #666;
+  pointer-events: none;
+  user-select: none;
+}
+
+.musicbox-btn {
+  flex: 1;
+  font-size: 10px !important;
+  letter-spacing: 2px !important;
+  padding: 10px 8px !important;
+  text-align: center !important;
+  cursor: pointer;
+  user-select: none;
+  -webkit-user-select: none;
+  touch-action: none;
+}
+
+.musicbox-btn:active,
+.musicbox-btn.holding {
+  background: rgba(192,160,16,0.15) !important;
+  border-color: rgba(192,160,16,0.5) !important;
+  color: #c0a010 !important;
+}
+
+/* ── AVERTISSEMENT CARTE ── */
+.musicbox-map-warn {
+  font-size: 9px;
+  margin-left: 4px;
+  font-weight: bold;
+}
+
+.musicbox-map-warn.warn-yellow {
+  color: #c0a010;
+}
+
+.musicbox-map-warn.warn-red {
+  color: #cc2020;
+}
+
+/* Pièce étage-2 — clignote jaune première visite */
+#room-etage-2.first-visit {
+  animation: firstVisitBlink 0.6s step-start infinite;
+}
+
+@keyframes firstVisitBlink {
+  0%,100% { color: #c0a010; border-color: rgba(192,160,16,0.4); }
+  50%     { color: #555; border-color: transparent; }
+}
+
+/* ── ANIMATION PASSAGE 5AM → 6AM ── */
+@keyframes slideDown {
+  0%   { opacity: 1; transform: translateY(0); }
+  100% { opacity: 0; transform: translateY(40px); }
+}
+@keyframes slideUp {
+  0%   { opacity: 0; transform: translateY(-40px); }
+  100% { opacity: 1; transform: translateY(0); }
+}
