@@ -156,11 +156,12 @@ function initMenu() {
 
   // ── Lancement du jeu ──
   function launchGame(night) {
-    // Fondu au noir puis redirection
     document.body.style.transition = 'opacity 0.5s';
     document.body.style.opacity = '0';
     setTimeout(() => {
-      window.location.href = `game.html?night=${night}`;
+      if (night === 2)          window.location.href = 'game2.html';
+      else if (night === 'nightmare') window.location.href = 'game.html?night=nightmare';
+      else                      window.location.href = 'game.html';
     }, 500);
   }
 
