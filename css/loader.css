@@ -143,3 +143,22 @@
   70%  { opacity: 0.5; transform: translateX(4px); }
   100% { opacity: 0; transform: none; display: none; }
 }
+
+/* ── Avertissement loader ── */
+.warning-glitch {
+  color: #cc2020 !important;
+  text-shadow: 0 0 20px rgba(200,30,30,0.6), 0 0 50px rgba(200,30,30,0.2) !important;
+  font-size: clamp(48px, 9vw, 88px) !important;
+  letter-spacing: 8px;
+}
+
+.loader-warning-text {
+  font-family: var(--font-mono);
+  font-size: clamp(12px, 1.8vw, 16px);
+  color: #888;
+  letter-spacing: 2px;
+  line-height: 2;
+  text-align: center;
+  margin-top: 20px;
+  animation: fadeIn 1.5s ease forwards;
+}
