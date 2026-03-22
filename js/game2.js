@@ -12,12 +12,12 @@
   const NIGHT_NUMBER          = 2;
   const NIGHT_DURATION        = 10 * 60 * 1000;
   const HOURS                 = ['12 AM','1 AM','2 AM','3 AM','4 AM','5 AM','6 AM'];
-  const BRAD_VISIBLE_HOUR     = 2;
+  const BRAD_VISIBLE_HOUR     = 1;
   const AMBIANCE_MAX_DURATION = 30000;
   const JUMPSCARE_DURATION    = 4000;
   const DEATH_SCREEN_MIN      = 6000;
   const REBOOT_ALL_DURATION   = 17000;
-  const RING_PAUSE_MS         = 1200;
+  const RING_PAUSE_MS         = 2200;  // pause plus longue entre sonneries
   const BRAD_CAM_SHOW_INDEX   = 6; // couloir+
 
   // Brad nuit 2 — légèrement plus rapide
@@ -25,15 +25,15 @@
   const BRAD_MOVE_MIN         = 6000;
 
   // Erreurs nuit 2 — légèrement plus fréquentes
-  const ERROR_INTERVAL_BASE   = 70000;
-  const ERROR_INTERVAL_MIN    = 35000;
+  const ERROR_INTERVAL_BASE   = 110000;
+  const ERROR_INTERVAL_MIN    =  60000;
 
   // Boîte à musique
   const MUSICBOX_DRAIN_MS     = 130000; // 130s pour se vider complètement
   const MUSICBOX_WARN_THRESH  = 0.25;   // jaune sous 25%
   const MUSICBOX_CRIT_THRESH  = 0.0;    // rouge à 0%
   const MUSICBOX_FRANK_DELAY  = 6000;   // secondes avant jumpscare une fois vide
-  const REWIND_RATE           = 0.025;  // gain par tick (100ms) lors du rembobinage
+  const REWIND_RATE           = 0.008;  // gain par tick (100ms) — plus lent
   const REWIND_SOUND_COOLDOWN = 750;    // ms entre chaque son remonter
 
   const STAIR_WINDOW_BASE     = 8000;
@@ -365,12 +365,18 @@
       return;
     }
 
-    // Erreur / reboot caméra → écran noir
+    // Erreur / reboot caméra
     if (state.modules.camera.error || state.modules.camera.rebooting) {
       state.selectedRoom = roomId;
       mapRooms.forEach(r => r.classList.remove('active'));
       const el = document.getElementById(`room-${roomId}`); if (el) el.classList.add('active');
       camBadgeName.textContent = `CAM — ${roomId.replace(/-/g,' ').toUpperCase()}`;
+      const mbp = document.getElementById('musicbox-panel');
+      if (mbp) mbp.style.display = 'none';
+      // Étage-2 → "pas de signal" plutôt qu'écran noir
+      if (roomId === 'etage-2') {
+        hideBlackScreen(); showNoSignal(); muteAllCamSounds(); return;
+      }
       hideNoSignal(); showBlackScreen(); muteAllCamSounds(); return;
     }
 
@@ -387,9 +393,13 @@
     if (roomId === 'etage-2') {
       camImg.src = getFrankImage();
 
+      // Afficher le panneau boîte à musique
+      const mbPanel = document.getElementById('musicbox-panel');
+      if (mbPanel) mbPanel.style.display = 'flex';
+
       // Musique boîte à musique — audible seulement ici
-      if (snd.musicBox && !state.over) {
-        snd.musicBox.volume = 0.65;
+      if (snd.musicBox && !state.over && state.musicBox.warnState === 'none') {
+        snd.musicBox.volume = state.callPlaying ? 0.2 : 0.65;
         snd.musicBox.play().catch(() => {});
       }
 
@@ -401,6 +411,10 @@
       }
       return;
     }
+
+    // Masquer le panneau boîte sur les autres pièces
+    const mbPanel = document.getElementById('musicbox-panel');
+    if (mbPanel) mbPanel.style.display = 'none';
 
     // Autres pièces
     let baseSrc = CAM_IMAGES[roomId] || '';
@@ -523,35 +537,40 @@
     const g = state.musicBox.gauge;
 
     if (state.musicBox.frankOut) {
-      // Rouge clignotant rapide
       if (state.musicBox.warnState !== 'red') {
         state.musicBox.warnState = 'red';
         setMusicBoxMapWarn('red');
-        // Jouer critique-musicbox en boucle
+        // Couper musicbox, lancer critique
+        if (snd.musicBox) { snd.musicBox.pause(); }
         if (!state.musicBox.critiquePlaying && snd.critiqueBox) {
           state.musicBox.critiquePlaying = true;
-          snd.critiqueBox.volume = 0.8;
+          snd.critiqueBox.volume = 0.85;
           snd.critiqueBox.play().catch(() => {});
         }
       }
     } else if (g <= MUSICBOX_WARN_THRESH && g > 0) {
-      // Jaune clignotant
       if (state.musicBox.warnState !== 'yellow') {
         state.musicBox.warnState = 'yellow';
         setMusicBoxMapWarn('yellow');
+        // Couper musicbox, lancer critique
+        if (snd.musicBox) { snd.musicBox.pause(); }
         if (!state.musicBox.critiquePlaying && snd.critiqueBox) {
           state.musicBox.critiquePlaying = true;
-          snd.critiqueBox.volume = 0.6;
+          snd.critiqueBox.volume = 0.65;
           snd.critiqueBox.play().catch(() => {});
         }
       }
     } else if (g > MUSICBOX_WARN_THRESH) {
-      // OK
       if (state.musicBox.warnState !== 'none') {
         state.musicBox.warnState = 'none';
         setMusicBoxMapWarn('none');
         stopSound(snd.critiqueBox);
         state.musicBox.critiquePlaying = false;
+        // Reprendre musicbox si joueur est sur étage-2
+        if (state.selectedRoom === 'etage-2' && snd.musicBox && !state.over) {
+          snd.musicBox.volume = 0.65;
+          snd.musicBox.play().catch(() => {});
+        }
       }
     }
   }
@@ -846,12 +865,16 @@
     pauseAmbiance();
     snd.call.volume = 0.75;
     snd.call.play().catch(() => {});
+    // Baisser musicbox pendant l'appel
+    if (snd.musicBox) snd.musicBox.volume = 0.2;
     setTimeout(() => { if (state.callPlaying) btnMuteCall.classList.remove('hidden'); }, 5000);
     snd.call.onended = () => {
       if (state.callMuted) return;
       state.callPlaying = false;
       btnMuteCall.classList.add('hidden');
       resumeAmbiance();
+      // Remonter le volume musicbox si on est sur étage-2
+      if (snd.musicBox && state.selectedRoom === 'etage-2') snd.musicBox.volume = 0.65;
       // Démarrer le drain APRÈS la fin de l'appel
       startMusicBoxDrain();
     };
@@ -1032,7 +1055,7 @@
 
       // 3 sonneries → appel night2
       setTimeout(() => {
-        playRingTimes(3, () => {
+        playRingTimes(2, () => {
           startPhoneCall();
           // Fallback ambiance si appel très court
           setTimeout(() => {
