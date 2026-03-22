@@ -83,10 +83,15 @@ function initMenu() {
   // ── Chargement de la sauvegarde ──
   const saveData = Save.load();
 
-  // Continue
-  if (Save.hasActiveGame()) {
+  // Continue — disponible si une nuit suivante existe (nightReached >= 2)
+  // OU si une partie est en cours (currentNight !== null)
+  const nextNight = saveData.currentNight !== null
+    ? saveData.currentNight
+    : saveData.nightReached;
+
+  if (nextNight && nextNight >= 1) {
     btnContinue.classList.remove('disabled');
-    continueNote.textContent = `reprendre — nuit ${saveData.currentNight}`;
+    continueNote.textContent = `reprendre — nuit ${nextNight}`;
     continueNote.style.color = '#555';
   } else {
     btnContinue.classList.add('disabled');
@@ -110,7 +115,11 @@ function initMenu() {
 
   btnContinue.addEventListener('click', () => {
     const d = Save.load();
-    if (d.currentNight) launchGame(d.currentNight);
+    const night = d.currentNight !== null ? d.currentNight : d.nightReached;
+    if (night) {
+      Save.startNight(night);
+      launchGame(night);
+    }
   });
 
   btnNightmare.addEventListener('click', () => {
