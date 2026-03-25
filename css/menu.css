@@ -129,3 +129,16 @@
   .game-title { font-size: 22px; }
   .menu-item  { font-size: 16px; }
 }
+
+/* ── Mama Coco — portrait (centré, taille réduite) ── */
+.mama-img {
+  position: absolute;
+  top: 0; bottom: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: auto;
+  height: 100%;
+  object-fit: contain;
+  object-position: center center;
+  transition: opacity 0.05s;
+}
