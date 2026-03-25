@@ -31,7 +31,7 @@
   // Boîte à musique
   const MUSICBOX_DRAIN_MS     = 130000; // 130s pour se vider complètement
   const MUSICBOX_WARN_THRESH  = 0.25;   // jaune sous 25%
-  const MUSICBOX_CRIT_THRESH  = 0.0;    // rouge à 0%
+  const MUSICBOX_CRIT_THRESH  = 0.10;   // rouge à 10%
   const MUSICBOX_FRANK_DELAY  = 6000;   // secondes avant jumpscare une fois vide
   const REWIND_RATE           = 0.008;  // gain par tick (100ms) — plus lent
   const REWIND_SOUND_COOLDOWN = 750;    // ms entre chaque son remonter
@@ -488,16 +488,7 @@
     drawMusicBoxGauge();
     updateMusicBoxWarning();
 
-    // Si la jauge atteint 0 et Frank pas encore sorti
-    if (state.musicBox.gauge <= 0 && !state.musicBox.frankOut && !state.musicBox.frankTimer) {
-      state.musicBox.frankOut = true;
-      if (state.selectedRoom === 'etage-2') camImg.src = FRANK_IMAGES.critical;
-      // Compte à rebours avant jumpscare Frank
-      const delay = MUSICBOX_FRANK_DELAY + Math.random() * 3000;
-      state.musicBox.frankTimer = setTimeout(() => {
-        triggerJumpscareFrank();
-      }, delay);
-    }
+    // frankOut est maintenant géré dans updateMusicBoxWarning()
 
     // Rafraîchir image étage-2 si on y est
     if (state.selectedRoom === 'etage-2' && !state.modules.camera.error && !state.modules.camera.rebooting) {
@@ -536,6 +527,13 @@
   function updateMusicBoxWarning() {
     const g = state.musicBox.gauge;
 
+    if (state.musicBox.gauge <= MUSICBOX_CRIT_THRESH && !state.musicBox.frankOut) {
+      // Passer en rouge à 10%
+      state.musicBox.frankOut = true;
+      if (state.selectedRoom === 'etage-2') camImg.src = FRANK_IMAGES.critical;
+      const delay = MUSICBOX_FRANK_DELAY + Math.random() * 3000;
+      state.musicBox.frankTimer = setTimeout(() => { triggerJumpscareFrank(); }, delay);
+    }
     if (state.musicBox.frankOut) {
       if (state.musicBox.warnState !== 'red') {
         state.musicBox.warnState = 'red';
@@ -715,6 +713,8 @@
 
   btnAudio.addEventListener('click', () => {
     if (state.audioCooldown || state.modules.audio.error || state.over) return;
+    // Pas d'audio depuis la chambre d'ami
+    if (state.selectedRoom === 'etage-2') return;
     playHello();
     if (state.stairActive) {
       startAudioCooldown();
