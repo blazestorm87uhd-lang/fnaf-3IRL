@@ -1,14 +1,11 @@
 /* ═══════════════════════════════════════════
-   MENU — Logique principale
-   Glitch Brad, boutons, modal Nightmare, saves
+   MENU — Logique principale v2
+   Brad → Frank (nuit 2+) → Mama Coco (nuit 3+)
 ════════════════════════════════════════════ */
 
 function initMenu() {
 
-  // ── Éléments ──
   const noiseCanvas    = document.getElementById('noise');
-  const bradNormal     = document.getElementById('brad-normal');
-  const bradBroken     = document.getElementById('brad-broken');
   const btnNewGame     = document.getElementById('btn-newgame');
   const btnContinue    = document.getElementById('btn-continue');
   const btnNightmare   = document.getElementById('btn-nightmare');
@@ -22,72 +19,72 @@ function initMenu() {
 
   // ── Bruit statique ──
   const nctx = noiseCanvas.getContext('2d');
-
-  function resizeNoise() {
-    noiseCanvas.width  = window.innerWidth;
-    noiseCanvas.height = window.innerHeight;
-  }
+  function resizeNoise() { noiseCanvas.width = window.innerWidth; noiseCanvas.height = window.innerHeight; }
   resizeNoise();
   window.addEventListener('resize', resizeNoise);
-
   function drawNoise() {
     const w = noiseCanvas.width, h = noiseCanvas.height;
     const img = nctx.createImageData(w, h);
     for (let i = 0; i < img.data.length; i += 4) {
       const v = Math.random() > 0.5 ? 255 : 0;
-      img.data[i] = img.data[i+1] = img.data[i+2] = v;
-      img.data[i+3] = Math.random() * 20;
+      img.data[i] = img.data[i+1] = img.data[i+2] = v; img.data[i+3] = Math.random() * 20;
     }
-    nctx.putImageData(img, 0, 0);
-    requestAnimationFrame(drawNoise);
+    nctx.putImageData(img, 0, 0); requestAnimationFrame(drawNoise);
   }
   drawNoise();
 
-  // ── Glitch Brad ──
+  // ── Personnage selon progression ──
+  const saveData = Save.load();
+  const nightCompleted = saveData.nightCompleted || 0;
+
+  // Éléments de chaque personnage
+  const chars = {
+    brad:  { normal: document.getElementById('brad-normal'),  broken: document.getElementById('brad-broken')  },
+    frank: { normal: document.getElementById('frank-normal'), broken: document.getElementById('frank-broken') },
+    mama:  { normal: document.getElementById('mama-normal'),  broken: document.getElementById('mama-broken')  },
+  };
+
+  // Déterminer le personnage actif
+  let activeChar = 'brad';
+  if (nightCompleted >= 3) activeChar = 'mama';
+  else if (nightCompleted >= 2) activeChar = 'frank';
+
+  // Masquer tout, afficher le bon
+  Object.keys(chars).forEach(key => {
+    const c = chars[key];
+    if (c.normal) c.normal.classList.add('hidden');
+    if (c.broken) c.broken.classList.add('hidden');
+  });
+  const active = chars[activeChar];
+  if (active.normal) { active.normal.classList.remove('hidden'); active.normal.style.opacity = '1'; }
+  if (active.broken) { active.broken.style.opacity = '0'; active.broken.classList.remove('hidden'); }
+
+  // ── Glitch ──
   function doGlitch() {
-    // Passage sur photo brisée
-    bradNormal.style.opacity = '0';
-    bradBroken.style.opacity = '1';
-
+    const n = active.normal, b = active.broken;
+    if (!n || !b) { scheduleGlitch(); return; }
+    n.style.opacity = '0'; b.style.opacity = '1';
     const shifts = [
-      { delay: 0,   tx: -7,  filter: 'hue-rotate(20deg) saturate(2)' },
-      { delay: 50,  tx:  5,  filter: 'none' },
-      { delay: 90,  tx: -4,  filter: 'hue-rotate(-15deg)' },
-      { delay: 130, tx:  0,  filter: 'none' },
+      { delay: 0,   tx: -7, filter: 'hue-rotate(20deg) saturate(2)' },
+      { delay: 50,  tx:  5, filter: 'none' },
+      { delay: 90,  tx: -4, filter: 'hue-rotate(-15deg)' },
+      { delay: 130, tx:  0, filter: 'none' },
     ];
-
-    shifts.forEach(s => {
-      setTimeout(() => {
-        bradBroken.style.transform = `translateX(${s.tx}px)`;
-        bradBroken.style.filter   = s.filter;
-      }, s.delay);
-    });
-
-    const duration = 120 + Math.random() * 200;
+    shifts.forEach(s => setTimeout(() => {
+      b.style.transform = `translateX(${s.tx}px)`;
+      b.style.filter    = s.filter;
+    }, s.delay));
     setTimeout(() => {
-      bradNormal.style.opacity  = '1';
-      bradBroken.style.opacity  = '0';
-      bradBroken.style.transform = '';
-      bradBroken.style.filter   = '';
+      n.style.opacity = '1'; b.style.opacity = '0';
+      b.style.transform = ''; b.style.filter = '';
       scheduleGlitch();
-    }, duration);
+    }, 120 + Math.random() * 200);
   }
-
-  function scheduleGlitch() {
-    const delay = 3000 + Math.random() * 9000;
-    setTimeout(doGlitch, delay);
-  }
-
+  function scheduleGlitch() { setTimeout(doGlitch, 3000 + Math.random() * 9000); }
   scheduleGlitch();
 
-  // ── Chargement de la sauvegarde ──
-  const saveData = Save.load();
-
-  // Continue — disponible si une nuit suivante existe (nightReached >= 2)
-  // OU si une partie est en cours (currentNight !== null)
-  const nextNight = saveData.currentNight !== null
-    ? saveData.currentNight
-    : saveData.nightReached;
+  // ── Sauvegarde ──
+  const nextNight = saveData.currentNight !== null ? saveData.currentNight : saveData.nightReached;
 
   if (nextNight && nextNight >= 1) {
     btnContinue.classList.remove('disabled');
@@ -97,99 +94,54 @@ function initMenu() {
     btnContinue.classList.add('disabled');
   }
 
-  // Nightmare
-  if (saveData.nightmareUnlocked) {
-    btnNightmare.style.display = 'flex';
-  }
+  if (saveData.nightmareUnlocked) btnNightmare.style.display = 'flex';
+  if (saveData.bonusUnlocked)     btnBonus.style.display     = 'flex';
 
-  // Bonus
-  if (saveData.bonusUnlocked) {
-    btnBonus.style.display = 'flex';
-  }
-
-  // ── Actions boutons ──
-  btnNewGame.addEventListener('click', () => {
-    Save.startNight(1);
-    launchGame(1);
-  });
+  // ── Actions ──
+  btnNewGame.addEventListener('click', () => { Save.startNight(1); launchGame(1); });
 
   btnContinue.addEventListener('click', () => {
     const d = Save.load();
     const night = d.currentNight !== null ? d.currentNight : d.nightReached;
-    if (night) {
-      Save.startNight(night);
-      launchGame(night);
-    }
+    if (night) { Save.startNight(night); launchGame(night); }
   });
 
-  btnNightmare.addEventListener('click', () => {
-    openNightmareModal();
-  });
+  btnNightmare.addEventListener('click', openNightmareModal);
+  btnBonus.addEventListener('click', () => { console.log('Bonus — à implémenter'); });
 
-  btnBonus.addEventListener('click', () => {
-    // TODO : rediriger vers page bonus
-    console.log('Bonus — à implémenter');
-  });
-
-  // ── Modal Nightmare ──
-  function openNightmareModal() {
-    modalNightmare.classList.remove('hidden');
-  }
-
-  function closeNightmareModal() {
-    modalNightmare.classList.add('hidden');
-  }
+  function openNightmareModal()  { modalNightmare.classList.remove('hidden'); }
+  function closeNightmareModal() { modalNightmare.classList.add('hidden'); }
 
   modalCancel.addEventListener('click', closeNightmareModal);
-
   modalConfirm.addEventListener('click', () => {
     closeNightmareModal();
-
-    // Coupe musique menu, lance musique nightmare
-    fadeAudio(audioMenu, 0, 600, () => {
-      audioMenu.pause();
-      audioMenu.currentTime = 0;
-    });
-    audioNightmare.volume = 0;
-    audioNightmare.play().catch(() => {});
+    fadeAudio(audioMenu, 0, 600, () => { audioMenu.pause(); audioMenu.currentTime = 0; });
+    audioNightmare.volume = 0; audioNightmare.play().catch(() => {});
     fadeAudio(audioNightmare, 0.65, 800);
-
-    Save.startNight('nightmare');
-    launchGame('nightmare');
+    Save.startNight('nightmare'); launchGame('nightmare');
   });
+  document.addEventListener('keydown', e => { if (e.key === 'Escape') closeNightmareModal(); });
 
-  // Fermer modal avec Échap
-  document.addEventListener('keydown', (e) => {
-    if (e.key === 'Escape') closeNightmareModal();
-  });
-
-  // ── Lancement du jeu ──
+  // ── Lancement ──
   function launchGame(night) {
     document.body.style.transition = 'opacity 0.5s';
-    document.body.style.opacity = '0';
+    document.body.style.opacity    = '0';
     setTimeout(() => {
-      if (night === 2)          window.location.href = 'game2.html';
-      else if (night === 'nightmare') window.location.href = 'game.html?night=nightmare';
-      else                      window.location.href = 'game.html';
+      if      (night === 1)          window.location.href = 'game.html';
+      else if (night === 2)          window.location.href = 'game2.html';
+      else if (night === 'nightmare')window.location.href = 'game.html?night=nightmare';
+      else                           window.location.href = 'game.html';
     }, 500);
   }
 
-  // ── Utilitaire fade audio ──
   function fadeAudio(audio, targetVol, duration, callback) {
-    const steps    = 30;
-    const interval = duration / steps;
-    const startVol = audio.volume;
-    const delta    = (targetVol - startVol) / steps;
-    let   step     = 0;
-
+    const steps = 30, interval = duration / steps;
+    const startVol = audio.volume, delta = (targetVol - startVol) / steps;
+    let step = 0;
     const t = setInterval(() => {
       step++;
       audio.volume = Math.max(0, Math.min(1, startVol + delta * step));
-      if (step >= steps) {
-        clearInterval(t);
-        if (callback) callback();
-      }
+      if (step >= steps) { clearInterval(t); if (callback) callback(); }
     }, interval);
   }
-
 }
