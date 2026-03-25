@@ -527,8 +527,8 @@
   function updateMusicBoxWarning() {
     const g = state.musicBox.gauge;
 
-    if (state.musicBox.gauge <= MUSICBOX_CRIT_THRESH && !state.musicBox.frankOut) {
-      // Passer en rouge à 10%
+    // Rouge à 10% (panneau seulement), Frank sort de sa boite à 0%
+    if (state.musicBox.gauge <= 0 && !state.musicBox.frankOut && !state.musicBox.frankTimer) {
       state.musicBox.frankOut = true;
       if (state.selectedRoom === 'etage-2') camImg.src = FRANK_IMAGES.critical;
       const delay = MUSICBOX_FRANK_DELAY + Math.random() * 3000;
@@ -538,15 +538,26 @@
       if (state.musicBox.warnState !== 'red') {
         state.musicBox.warnState = 'red';
         setMusicBoxMapWarn('red');
-        // Couper musicbox, lancer critique
-        if (snd.musicBox) { snd.musicBox.pause(); }
+        if (snd.musicBox) snd.musicBox.pause();
         if (!state.musicBox.critiquePlaying && snd.critiqueBox) {
           state.musicBox.critiquePlaying = true;
           snd.critiqueBox.volume = 0.85;
           snd.critiqueBox.play().catch(() => {});
         }
       }
-    } else if (g <= MUSICBOX_WARN_THRESH && g > 0) {
+    } else if (g <= MUSICBOX_CRIT_THRESH && g > 0) {
+      // Rouge à 10% — panneau seulement, Frank pas encore sorti
+      if (state.musicBox.warnState !== 'red') {
+        state.musicBox.warnState = 'red';
+        setMusicBoxMapWarn('red');
+        if (snd.musicBox) snd.musicBox.pause();
+        if (!state.musicBox.critiquePlaying && snd.critiqueBox) {
+          state.musicBox.critiquePlaying = true;
+          snd.critiqueBox.volume = 0.85;
+          snd.critiqueBox.play().catch(() => {});
+        }
+      }
+    } else if (g <= MUSICBOX_WARN_THRESH && g > MUSICBOX_CRIT_THRESH) {
       if (state.musicBox.warnState !== 'yellow') {
         state.musicBox.warnState = 'yellow';
         setMusicBoxMapWarn('yellow');
@@ -727,7 +738,8 @@
     clearTimeout(bradMoveTimeout);
     setTimeout(() => {
       if (state.over) return;
-      if (targetIdx !== -1 && targetIdx < bradIdx) {
+      if (targetIdx !== -1 && targetIdx === bradIdx - 1) {
+        // Recul uniquement si audio joué dans la pièce JUSTE avant Brad
         state.bradIndex = Math.max(0, bradIdx - 1);
         state.bradPhase = state.bradIndex === 0 ? 2 : 1;
       } else if (targetIdx !== -1 && targetIdx > bradIdx) {
@@ -965,6 +977,13 @@
   // HORLOGE
   // ══════════════════════════════════════
 
+  // ── DEV SHORTCUT : clic sur l'heure pour finir la nuit ──
+  const devHour2  = document.getElementById('hud-hour');
+  const devNight2 = document.getElementById('hud-night');
+  function devFinish2() { if (!state.over) triggerNightEnd(); }
+  if (devHour2)  devHour2.addEventListener('click',  devFinish2);
+  if (devNight2) devNight2.addEventListener('click', devFinish2);
+
   function startGameClock() {
     const startTime    = Date.now();
     const hourInterval = NIGHT_DURATION / (HOURS.length - 1);
@@ -1000,21 +1019,24 @@
   }
 
   function showNightEndScreen() {
-    const screen  = document.getElementById('screen-nightend');
-    const timeEl  = document.getElementById('ns-end-time');
+    const screen = document.getElementById('screen-nightend');
     screen.classList.remove('hidden');
+
+    // Animation 5→6 AM : seulement le chiffre, AM fixe
+    const timeEl = document.getElementById('ns-end-time');
     if (timeEl) {
-      timeEl.textContent = '5 AM';
-      timeEl.style.animation = 'slideDown 0.8s ease forwards';
+      timeEl.innerHTML = '<span id="end-number" style="display:inline-block;">5</span> AM';
+      const numEl = document.getElementById('end-number');
       setTimeout(() => {
-        timeEl.textContent = '6 AM';
-        timeEl.style.animation = 'slideUp 0.8s ease forwards';
-      }, 1200);
+        numEl.style.cssText = 'display:inline-block;animation:slideDown 1.4s ease forwards;';
+        setTimeout(() => {
+          numEl.textContent = '6';
+          numEl.style.cssText = 'display:inline-block;opacity:0;transform:translateY(-40px);animation:slideUp 1.4s ease forwards;';
+        }, 1600);
+      }, 600);
     }
-    if (snd.nightEnd) {
-      snd.nightEnd.currentTime = 0; snd.nightEnd.volume = 0.8;
-      snd.nightEnd.play().catch(() => {});
-    }
+
+    if (snd.nightEnd) { snd.nightEnd.currentTime = 0; snd.nightEnd.volume = 0.8; snd.nightEnd.play().catch(() => {}); }
     const audioDur = (snd.nightEnd && snd.nightEnd.duration > 0) ? snd.nightEnd.duration * 1000 : 4000;
     Save.completeNight(NIGHT_NUMBER);
     setTimeout(() => { window.location.href = 'index.html'; }, audioDur + 3000);
