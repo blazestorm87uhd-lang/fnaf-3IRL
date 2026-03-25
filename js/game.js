@@ -477,14 +477,13 @@
     clearTimeout(bradMoveTimeout);
     setTimeout(() => {
       if (state.over) return;
-      if (targetIdx !== -1 && targetIdx < bradIdx) {
+      // Recule uniquement si audio joué dans la pièce JUSTE avant Brad
+      if (targetIdx !== -1 && targetIdx === bradIdx - 1) {
         state.bradIndex = Math.max(0, bradIdx - 1);
         state.bradPhase = state.bradIndex === 0 ? 2 : 1;
       } else if (targetIdx !== -1 && targetIdx > bradIdx) {
         state.bradIndex = Math.min(BRAD_PATH.length - 2, bradIdx + 1);
         state.bradPhase = 1;
-        // NE PAS mettre à jour bradMaxIndex ici — les portes ne s'ouvrent
-        // que si Brad avance naturellement via moveBrad()
         if (BRAD_PATH[state.bradIndex] === 'etage') { triggerStairAlert(); return; }
         playSound(snd.pounding, 0.5);
       }
@@ -770,6 +769,13 @@
   // HORLOGE
   // ══════════════════════════════════════
 
+  // ── DEV SHORTCUT : clic sur l'heure pour finir la nuit ──
+  const devHour = document.getElementById('hud-hour');
+  const devNight = document.getElementById('hud-night');
+  function devFinish() { if (!state.over) triggerNightEnd(); }
+  if (devHour)  devHour.addEventListener('click',  devFinish);
+  if (devNight) devNight.addEventListener('click', devFinish);
+
   function startGameClock() {
     const startTime    = Date.now();
     const hourInterval = NIGHT_DURATION / (HOURS.length - 1);
@@ -807,27 +813,29 @@
     const screen = document.getElementById('screen-nightend');
     screen.classList.remove('hidden');
 
-    // Animation 5AM → 6AM
+    // Animation 5AM → 6AM : seulement le chiffre change, AM reste fixe
     const timeEl  = screen.querySelector('.ns-time');
     const nightEl = screen.querySelector('.ns-night');
     if (timeEl) {
-      timeEl.textContent = '5 AM';
-      timeEl.style.cssText = 'animation:slideDown 0.8s ease forwards;';
+      // Construire le HTML avec chiffre animable séparé du AM
+      timeEl.innerHTML = '<span id="end-number" style="display:inline-block;">5</span> AM';
+      const numEl = document.getElementById('end-number');
+      // Animation lente : glissement vers le bas puis le 6 arrive d'en haut
       setTimeout(() => {
-        timeEl.textContent = '6 AM';
-        timeEl.style.cssText = 'animation:slideUp 0.8s ease forwards;';
-      }, 1200);
+        numEl.style.cssText = 'display:inline-block;animation:slideDown 1.4s ease forwards;';
+        setTimeout(() => {
+          numEl.textContent = '6';
+          numEl.style.cssText = 'display:inline-block;opacity:0;transform:translateY(-40px);animation:slideUp 1.4s ease forwards;';
+        }, 1600);
+      }, 600);
     }
     if (nightEl) nightEl.textContent = 'NUIT TERMINÉE';
 
-    // Son night-end
     if (snd.nightEnd) {
       snd.nightEnd.currentTime = 0;
       snd.nightEnd.volume = 0.8;
       snd.nightEnd.play().catch(() => {});
     }
-
-    // Durée = longueur de l'audio + 3 secondes
     const audioDur = (snd.nightEnd && snd.nightEnd.duration > 0)
       ? snd.nightEnd.duration * 1000
       : 4000;
