@@ -44,23 +44,38 @@ function initMenu() {
     mama:  { normal: document.getElementById('mama-normal'),  broken: document.getElementById('mama-broken')  },
   };
 
-  // Déterminer le personnage actif
-  let activeChar = 'brad';
-  if (nightCompleted >= 3) activeChar = 'mama';
-  else if (nightCompleted >= 2) activeChar = 'frank';
+  // Déterminer les personnages disponibles selon progression
+  const availableChars = ['brad'];
+  if (nightCompleted >= 2) availableChars.push('frank');
+  if (nightCompleted >= 3) availableChars.push('mama');
 
-  // Masquer tout, afficher le bon
+  // Masquer tout
   Object.keys(chars).forEach(key => {
-    const c = chars[key];
-    if (c.normal) c.normal.classList.add('hidden');
-    if (c.broken) c.broken.classList.add('hidden');
+    const ch = chars[key];
+    if (ch.normal) ch.normal.classList.add('hidden');
+    if (ch.broken) ch.broken.classList.add('hidden');
   });
-  const active = chars[activeChar];
-  if (active.normal) { active.normal.classList.remove('hidden'); active.normal.style.opacity = '1'; }
-  if (active.broken) { active.broken.style.opacity = '0'; active.broken.classList.remove('hidden'); }
+
+  let currentCharIdx = 0;
+  let currentGlitchTimeout = null;
+
+  function showChar(charKey) {
+    Object.keys(chars).forEach(key => {
+      const ch = chars[key];
+      if (ch.normal) { ch.normal.classList.add('hidden'); ch.normal.style.opacity = '1'; }
+      if (ch.broken) { ch.broken.classList.add('hidden'); ch.broken.style.opacity = '0'; }
+    });
+    const active = chars[charKey];
+    if (!active) return;
+    if (active.normal) { active.normal.classList.remove('hidden'); active.normal.style.opacity = '1'; }
+    if (active.broken) { active.broken.classList.remove('hidden'); active.broken.style.opacity = '0'; }
+  }
 
   // ── Glitch ──
   function doGlitch() {
+    const charKey = availableChars[currentCharIdx];
+    const active  = chars[charKey];
+    if (!active) { scheduleGlitch(); return; }
     const n = active.normal, b = active.broken;
     if (!n || !b) { scheduleGlitch(); return; }
     n.style.opacity = '0'; b.style.opacity = '1';
@@ -71,17 +86,29 @@ function initMenu() {
       { delay: 130, tx:  0, filter: 'none' },
     ];
     shifts.forEach(s => setTimeout(() => {
-      b.style.transform = `translateX(${s.tx}px)`;
-      b.style.filter    = s.filter;
+      if (b) { b.style.transform = `translateX(${s.tx}px)`; b.style.filter = s.filter; }
     }, s.delay));
     setTimeout(() => {
-      n.style.opacity = '1'; b.style.opacity = '0';
-      b.style.transform = ''; b.style.filter = '';
+      if (n) n.style.opacity = '1';
+      if (b) { b.style.opacity = '0'; b.style.transform = ''; b.style.filter = ''; }
       scheduleGlitch();
     }, 120 + Math.random() * 200);
   }
-  function scheduleGlitch() { setTimeout(doGlitch, 3000 + Math.random() * 9000); }
+  function scheduleGlitch() { currentGlitchTimeout = setTimeout(doGlitch, 3000 + Math.random() * 9000); }
+
+  // Afficher le premier personnage
+  showChar(availableChars[0]);
   scheduleGlitch();
+
+  // Rotation toutes les 15s si plusieurs personnages
+  if (availableChars.length > 1) {
+    setInterval(() => {
+      clearTimeout(currentGlitchTimeout);
+      currentCharIdx = (currentCharIdx + 1) % availableChars.length;
+      showChar(availableChars[currentCharIdx]);
+      scheduleGlitch();
+    }, 15000);
+  }
 
   // ── Sauvegarde ──
   const nextNight = saveData.currentNight !== null ? saveData.currentNight : saveData.nightReached;
@@ -129,6 +156,7 @@ function initMenu() {
     setTimeout(() => {
       if      (night === 1)          window.location.href = 'game.html';
       else if (night === 2)          window.location.href = 'game2.html';
+      else if (night === 3)          window.location.href = 'game3.html';
       else if (night === 'nightmare')window.location.href = 'game.html?night=nightmare';
       else                           window.location.href = 'game.html';
     }, 500);
