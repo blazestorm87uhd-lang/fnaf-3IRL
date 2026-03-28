@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no" />
+  <title>Five Nights at Chez Moi — Nuit 3</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700&family=Share+Tech+Mono&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="css/global.css" />
+  <link rel="stylesheet" href="css/game.css" />
+  <link rel="stylesheet" href="css/game2.css" />
+  <link rel="stylesheet" href="css/game3.css" />
+</head>
+<body>
+
+  <!-- ══ PLAY GATE ══ -->
+  <div id="screen-play-gate">
+    <canvas id="gate-noise"></canvas>
+    <div class="gate-scanlines"></div>
+    <div class="gate-content">
+      <div class="gate-title">NIGHT 3</div>
+      <div class="gate-sub">IRL — ÉDITION 3</div>
+      <button id="btn-play-gate">▶ &nbsp;JOUER</button>
+    </div>
+  </div>
+
+  <!-- ══ NIGHT START ══ -->
+  <div id="screen-nightstart" class="hidden">
+    <div class="ns-time">12 AM</div>
+    <div class="ns-night">NIGHT 3</div>
+  </div>
+
+  <!-- ══ JEU ══ -->
+  <div id="screen-game" class="hidden">
+    <div class="game-scanlines"></div>
+    <div class="game-scan-line"></div>
+    <canvas id="game-noise"></canvas>
+
+    <!-- VUE CAMÉRA -->
+    <div id="cam-view">
+      <img id="cam-img" src="" alt="" />
+      <div class="cam-overlay"></div>
+      <div class="cam-badge">
+        <span class="rec-dot"></span>
+        <span id="cam-badge-name">CAM — CELLIER</span>
+      </div>
+      <div id="stair-alert" class="hidden">
+        <span class="stair-alert-text">⚠ BRUIT DÉTECTÉ — ACCÈS ÉTAGE 1</span>
+        <div class="stair-timer-bar"><div id="stair-timer-fill"></div></div>
+      </div>
+      <div id="error-display" class="hidden">
+        <span id="error-text">erreur</span>
+      </div>
+    </div>
+
+    <!-- PANNEAU DROIT -->
+    <div id="right-panel">
+      <div id="hud-time">
+        <div id="hud-hour" title="DEV: cliquer pour finir la nuit">12 AM</div>
+        <div id="hud-night">NIGHT 3</div>
+      </div>
+
+      <!-- CARTE -->
+      <div id="map">
+        <div class="map-room active" id="room-cellier"        data-room="cellier">Cellier</div>
+        <div class="map-room"        id="room-wc"             data-room="wc">WC</div>
+        <div class="map-room"        id="room-salle-de-bain"  data-room="salle-de-bain">Salle de bain</div>
+        <div class="map-room"        id="room-cuisine"        data-room="cuisine">Cuisine</div>
+        <div class="map-room"        id="room-salle-a-manger" data-room="salle-a-manger">Salle à manger</div>
+        <div class="map-room"        id="room-salon"          data-room="salon">Salon</div>
+        <div class="map-room"        id="room-couloir"        data-room="couloir">Couloir</div>
+        <div class="map-room stairs" id="room-etage"          data-room="etage">Accès étage 1</div>
+        <div class="map-room you"    id="room-vous">Chambre (vous)</div>
+        <div class="map-room"        id="room-etage-2"        data-room="etage-2">
+          Chambre d'ami
+          <span class="musicbox-map-warn hidden" id="musicbox-map-warn">⚠</span>
+        </div>
+        <div class="map-room ext"    id="room-rue"            data-room="rue">
+          Extérieur rue
+          <span class="rue-warn hidden" id="rue-warn">⚠</span>
+        </div>
+      </div>
+
+      <!-- JAUGE BOÎTE À MUSIQUE -->
+      <div id="musicbox-panel" style="display:none;">
+        <div id="musicbox-gauge-wrap">
+          <canvas id="musicbox-gauge" width="56" height="56"></canvas>
+          <span id="musicbox-label">♪</span>
+        </div>
+        <button id="btn-rewind-musicbox" class="action-btn musicbox-btn">↺ Remonter</button>
+      </div>
+
+      <!-- ACTIONS -->
+      <div id="action-btns">
+        <button class="action-btn" id="btn-audio">Play audio</button>
+        <button class="action-btn" id="btn-maintenance">Maintenance</button>
+      </div>
+
+      <button id="btn-mute-call" class="hidden">mute call</button>
+    </div>
+
+    <!-- MAINTENANCE -->
+    <div id="panel-maintenance" class="hidden">
+      <div class="maint-title">Maintenance</div>
+      <div class="maint-list">
+        <div class="maint-item" id="maint-audio" data-module="audio">
+          <span class="maint-arrow">→</span>
+          <span class="maint-name">Audio</span>
+          <span class="maint-status ok" id="maint-audio-status">OK</span>
+        </div>
+        <div class="maint-item" id="maint-camera" data-module="camera">
+          <span class="maint-arrow">→</span>
+          <span class="maint-name">Caméra</span>
+          <span class="maint-status ok" id="maint-camera-status">OK</span>
+        </div>
+        <div class="maint-reboot" id="maint-reboot-all">Tout redémarrer</div>
+      </div>
+      <button class="action-btn" id="btn-maintenance-close">Retour</button>
+      <div class="maint-lock-msg hidden" id="maint-lock-msg">redémarrage en cours...</div>
+    </div>
+  </div>
+
+  <!-- ══ JUMPSCARES ══ -->
+  <div id="screen-jumpscare" class="hidden" style="position:fixed;inset:0;z-index:9999;background:#000;">
+    <video id="jumpscare-video" src="assets/videos/jumpscrare-brad.mp4" playsinline preload="auto" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;"></video>
+  </div>
+  <div id="screen-jumpscare-frank" class="hidden" style="position:fixed;inset:0;z-index:9999;background:#000;">
+    <video id="jumpscare-frank-video" src="assets/videos/jumpscrare-frank.mp4" playsinline preload="auto" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;"></video>
+  </div>
+  <div id="screen-jumpscare-mama" class="hidden" style="position:fixed;inset:0;z-index:9999;background:#000;">
+    <video id="jumpscare-mama-video" src="assets/videos/jumpscrare-mama-coco.mp4" playsinline preload="auto" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;"></video>
+  </div>
+
+  <!-- ══ ÉCRAN DE MORT ══ -->
+  <div id="screen-death" class="hidden">
+    <canvas id="death-noise"></canvas>
+    <div class="death-scanlines"></div>
+    <div class="death-content">
+      <div class="death-title">GAME OVER</div>
+      <div class="death-sub" id="death-sub">Il vous a trouvé.</div>
+      <div class="death-night">— NUIT 3 —</div>
+      <button id="death-btn-menu" class="death-btn">Retour au menu</button>
+    </div>
+  </div>
+
+  <!-- ══ NIGHT END ══ -->
+  <div id="screen-nightend" class="hidden">
+    <canvas id="end-noise"></canvas>
+    <div class="end-scanlines"></div>
+    <div class="end-content">
+      <div class="ns-time" id="ns-end-time">
+        <span id="end-number">5</span> AM
+      </div>
+      <div class="ns-night" id="end-night-label">NUIT TERMINÉE</div>
+      <div class="end-thanks hidden" id="end-thanks">Merci d'avoir joué</div>
+      <div class="end-click hidden" id="end-click">CLIQUEZ POUR CONTINUER</div>
+    </div>
+  </div>
+
+  <!-- AUDIO -->
+  <audio id="snd-ambiance-4"    src="assets/audio/effect/ambiance-4.wav"              loop preload="auto"></audio>
+  <audio id="snd-ring"          src="assets/audio/effect/ring.mp3"                   preload="auto"></audio>
+  <audio id="snd-night3-call"   src="assets/audio/effect/night-3-call.m4a"           preload="auto"></audio>
+  <audio id="snd-night-start"   src="assets/audio/effect/night-start.mp3"            preload="auto"></audio>
+  <audio id="snd-night-end"     src="assets/audio/effect/night-end.mp3"              preload="auto"></audio>
+  <audio id="snd-tk4play"       src="assets/audio/effect/tk4play.wav"                preload="auto"></audio>
+  <audio id="snd-clic-camera"   src="assets/audio/effect/clic-camera.mp3"            preload="auto"></audio>
+  <audio id="snd-robot"         src="assets/audio/effect/robot.mp3"                  preload="auto"></audio>
+  <audio id="snd-pounding"      src="assets/audio/effect/pounding.mp3"               preload="auto"></audio>
+  <audio id="snd-alarm"         src="assets/audio/effect/alarm.mp3"                  preload="auto"></audio>
+  <audio id="snd-reboot"        src="assets/audio/effect/reboot.mp3"                 preload="auto"></audio>
+  <audio id="snd-tablette-open" src="assets/audio/effect/tablette-ouverte.mp3"       preload="auto"></audio>
+  <audio id="snd-tablette-close"src="assets/audio/effect/tablette-ferme.mp3"         preload="auto"></audio>
+  <audio id="snd-dead"          src="assets/audio/dead.mp3"                          preload="auto"></audio>
+  <audio id="snd-hello-1"       src="assets/audio/effect/hello-1.wav"                preload="auto"></audio>
+  <audio id="snd-hello-2"       src="assets/audio/effect/hello-2.wav"                preload="auto"></audio>
+  <!-- Boîte à musique -->
+  <audio id="snd-musicbox"      src="assets/audio/effect/music-box/music-box.mp3"    loop preload="auto"></audio>
+  <audio id="snd-rewind-box"    src="assets/audio/effect/music-box/remonter-musicbox.wav" preload="auto"></audio>
+  <audio id="snd-critique-box"  src="assets/audio/effect/music-box/critique-musicbox.wav" loop preload="auto"></audio>
+  <!-- Mama Coco -->
+  <audio id="snd-bruit-pas"     src="assets/audio/effect/bruit-pas.wav"              preload="auto"></audio>
+  <audio id="snd-fastrun"       src="assets/audio/effect/fastrun.wav"                preload="auto"></audio>
+
+  <script src="js/save.js"></script>
+  <script src="js/game3.js"></script>
+</body>
+</html>
