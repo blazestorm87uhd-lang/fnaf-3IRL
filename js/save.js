@@ -48,7 +48,7 @@ const Save = (() => {
     d.currentNight   = null;
 
     if (d.nightCompleted >= 3) d.nightmareUnlocked = true;
-    if (d.nightmareUnlocked)   d.bonusUnlocked = true; // à ajuster selon ta logique
+    if (d.nightCompleted >= 3) d.bonusUnlocked = true;
 
     save(d);
     return d;
