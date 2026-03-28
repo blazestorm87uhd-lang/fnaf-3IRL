@@ -1,0 +1,74 @@
+/* ═══════════════════════════════════════════
+   GAME3 CSS — Nuit 3
+════════════════════════════════════════════ */
+
+/* ── Caméra Extérieur rue — clignote en blanc la première visite ── */
+#room-rue.first-visit {
+  animation: rueFirstVisit 0.7s step-start infinite;
+}
+@keyframes rueFirstVisit {
+  0%,100% { color: #fff; border-color: rgba(255,255,255,0.5); background: rgba(255,255,255,0.06); }
+  50%     { color: #555; border-color: transparent; background: transparent; }
+}
+
+/* ── Icône avertissement rue ── */
+.rue-warn {
+  font-size: 13px;
+  margin-left: 6px;
+  font-weight: bold;
+  display: inline-block;
+  min-width: 18px;
+  text-align: center;
+}
+.rue-warn.warn-yellow { color: #c0a010; }
+.rue-warn.warn-red    { color: #cc2020; }
+
+/* ── Pièce extérieure ── */
+.map-room.ext { color: #4a7a9b; }
+.map-room.ext:hover { color: #6ab0d4; }
+.map-room.ext.active { color: #c0a010 !important; }
+.map-room.ext.mama-alert { color: #cc2020 !important; animation: blink 0.5s step-start infinite; }
+
+/* ── ÉCRAN NIGHT END nuit 3 ── */
+#screen-nightend {
+  position: fixed; inset: 0; background: #000; z-index: 800;
+  display: flex; align-items: center; justify-content: center; overflow: hidden;
+}
+#end-noise { position: absolute; inset: 0; pointer-events: none; z-index: 1; opacity: 0.04; }
+.end-scanlines {
+  position: absolute; inset: 0; pointer-events: none; z-index: 2;
+  background: repeating-linear-gradient(to bottom, transparent 0px, transparent 3px, rgba(0,0,0,0.15) 3px, rgba(0,0,0,0.15) 4px);
+}
+.end-content {
+  position: relative; z-index: 10; text-align: center;
+  display: flex; flex-direction: column; align-items: center; gap: 20px;
+}
+.end-thanks {
+  font-family: var(--font-title);
+  font-size: clamp(18px, 3vw, 28px);
+  color: #aaa;
+  letter-spacing: 6px;
+  animation: fadeIn 1.5s ease forwards;
+}
+.end-click {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  color: #555;
+  letter-spacing: 4px;
+  animation: blink 1.2s step-start infinite;
+  cursor: pointer;
+  padding: 12px 24px;
+  border: 0.5px solid rgba(255,255,255,0.1);
+  transition: border-color 0.2s, color 0.2s;
+}
+.end-click:hover { color: #aaa; border-color: rgba(255,255,255,0.25); }
+
+/* ── Animations 5→6 AM ── */
+@keyframes slideDown {
+  0%   { opacity: 1; transform: translateY(0); }
+  100% { opacity: 0; transform: translateY(50px); }
+}
+@keyframes slideUp {
+  0%   { opacity: 0; transform: translateY(-50px); }
+  100% { opacity: 1; transform: translateY(0); }
+}
