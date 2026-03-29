@@ -54,7 +54,7 @@
     <div class="divider"></div>
 
     <div class="right">
-      <div class="game-label">Three Nights at</div>
+      <div class="game-label">Five Nights at</div>
       <div class="game-title">Chez Moi</div>
       <div class="game-irl">IRL</div>
       <div class="game-edition">— ÉDITION 3 —</div>
@@ -84,8 +84,10 @@
 
       <div class="menu-footer">APPUYEZ SUR N'IMPORTE QUELLE TOUCHE</div>
 
+      <button class="menu-options-btn" id="btn-options">Options</button>
+
       <div class="menu-dev-credit">
-        Accès dev. — v1.1.9<br>
+        Accès dev. — v1.2.0<br>
         IMAGINe Studio &amp; HwR Engine
       </div>
     </div>
@@ -108,6 +110,11 @@
 
   <audio id="audio-menu"      src="assets/audio/menu.mp3"      loop preload="auto"></audio>
   <audio id="audio-nightmare" src="assets/audio/nightmare.mp3" loop preload="auto"></audio>
+
+  <!-- Indicateur chargement -->
+  <div id="loading-indicator" style="display:none;position:fixed;bottom:16px;right:20px;z-index:9999;font-family:'Share Tech Mono',monospace;font-size:11px;color:#555;letter-spacing:3px;align-items:center;gap:6px;">
+    <span>CHARGEMENT</span><span id="loading-dots"></span>
+  </div>
 
   <script src="js/save.js"></script>
   <script src="js/loader.js"></script>
