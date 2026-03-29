@@ -170,7 +170,7 @@
   const musicboxMapWarn       = document.getElementById('musicbox-map-warn');
   const roomEtage2            = document.getElementById('room-etage-2');
   const roomRue               = document.getElementById('room-rue');
-  const rueWarn               = document.getElementById('rue-warn');
+  const rueWarn               = null; // supprimé du HTML
 
   // ══════════════════════════════════════
   // SONS
@@ -522,28 +522,15 @@
   }
 
   function updateMamaRueWarn() {
-    if (!rueWarn || !roomRue) return;
+    // Panneau attention retiré de la caméra rue (uniquement sur Frank)
+    if (!roomRue) return;
     const phase = state.mama.phase;
-    rueWarn.className = 'rue-warn';
-    clearInterval(state._rueWarnInterval);
     if (phase === 'inactive') {
-      rueWarn.classList.add('hidden'); rueWarn.style.opacity = '1'; return;
-    }
-    rueWarn.classList.remove('hidden');
-    if (phase === 'partie') {
-      rueWarn.classList.add('warn-red');
-      roomRue.classList.add('mama-alert');
-      let vis = true;
-      state._rueWarnInterval = setInterval(() => {
-        vis = !vis; rueWarn.style.opacity = vis ? '1' : '0';
-      }, 250);
-    } else {
-      rueWarn.classList.add('warn-yellow');
       roomRue.classList.remove('mama-alert');
-      let vis = true;
-      state._rueWarnInterval = setInterval(() => {
-        vis = !vis; rueWarn.style.opacity = vis ? '1' : '0';
-      }, 600);
+    } else if (phase === 'partie') {
+      roomRue.classList.add('mama-alert');
+    } else {
+      roomRue.classList.remove('mama-alert');
     }
   }
 
@@ -915,8 +902,7 @@
       state.callPlaying = false; btnMuteCall.classList.add('hidden');
       resumeAmbiance();
       if (snd.musicBox && state.selectedRoom === 'etage-2') snd.musicBox.volume = 0.65;
-      // Démarrer drain et mama après l'appel
-      startMusicBoxDrain();
+      // Mama Coco démarre après l'appel
       startMamaCoco();
     };
   }
@@ -927,7 +913,7 @@
     btnMuteCall.classList.add('hidden'); state.callPlaying = false;
     resumeAmbiance();
     if (snd.musicBox && state.selectedRoom === 'etage-2') snd.musicBox.volume = 0.65;
-    startMusicBoxDrain(); startMamaCoco();
+    startMamaCoco();
   });
 
   function playRingTimes(times, onDone) {
@@ -1142,6 +1128,8 @@
       startGameClock();
       scheduleBradMove();
       scheduleNextError();
+      // Boîte à musique se vide dès le début
+      startMusicBoxDrain();
 
       // 2 sonneries → appel
       setTimeout(() => {
