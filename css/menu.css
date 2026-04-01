@@ -444,3 +444,20 @@ body.display-tv .opt-binding-row       { font-size: 13px; padding: 10px 0; }
 #gamepad-indicator {
   animation: fadeIn 0.5s ease forwards;
 }
+
+/* Reset volumes */
+.opt-reset-btn {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 3px;
+  color: #555;
+  background: transparent;
+  border: 0.5px solid rgba(255,255,255,0.1);
+  padding: 8px 16px;
+  cursor: pointer;
+  transition: color 0.15s, border-color 0.15s;
+  margin-top: 8px;
+  align-self: flex-start;
+}
+.opt-reset-btn:hover { color: #aaa; border-color: rgba(255,255,255,0.25); }
+body.display-tv .opt-reset-btn { font-size: 13px; padding: 12px 22px; }
