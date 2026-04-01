@@ -10,6 +10,21 @@
 
 (() => {
 
+  // ── Appliquer volumes sauvegardés ──
+  (function applyStoredVolumes() {
+    try {
+      const gVol = parseFloat(localStorage.getItem('fnaf_vol_general') || '0.8');
+      const eVol = parseFloat(localStorage.getItem('fnaf_vol_effects') || '0.8');
+      const vVol = parseFloat(localStorage.getItem('fnaf_vol_voices')  || '0.8');
+      // Volumes généraux sur tous les audios
+      document.querySelectorAll('audio').forEach(a => { a.volume = gVol; });
+      // Stocker pour accès rapide dans playSound
+      window._vol_general = gVol;
+      window._vol_effects = eVol;
+      window._vol_voices  = vVol;
+    } catch(e) {}
+  })();
+
   const NIGHT_NUMBER          = 1;
   const NIGHT_DURATION        = 10 * 60 * 1000;
   const HOURS                 = ['12 AM','1 AM','2 AM','3 AM','4 AM','5 AM','6 AM'];
