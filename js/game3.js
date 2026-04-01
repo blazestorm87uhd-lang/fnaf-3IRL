@@ -6,6 +6,21 @@
 
 (() => {
 
+  // ── Appliquer volumes sauvegardés ──
+  (function applyStoredVolumes() {
+    try {
+      const gVol = parseFloat(localStorage.getItem('fnaf_vol_general') || '0.8');
+      const eVol = parseFloat(localStorage.getItem('fnaf_vol_effects') || '0.8');
+      const vVol = parseFloat(localStorage.getItem('fnaf_vol_voices')  || '0.8');
+      // Volumes généraux sur tous les audios
+      document.querySelectorAll('audio').forEach(a => { a.volume = gVol; });
+      // Stocker pour accès rapide dans playSound
+      window._vol_general = gVol;
+      window._vol_effects = eVol;
+      window._vol_voices  = vVol;
+    } catch(e) {}
+  })();
+
   // ══════════════════════════════════════
   // CONFIG
   // ══════════════════════════════════════
@@ -895,7 +910,7 @@
     if (state.over) return;
     state.callPlaying = true; pauseAmbiance();
     if (snd.musicBox) snd.musicBox.volume = 0.2;
-    snd.call.volume = 0.75; snd.call.play().catch(() => {});
+    snd.call.volume = Math.min(1, 0.75 * (window._vol_voices !== undefined ? window._vol_voices : 0.8)); snd.call.play().catch(() => {});
     setTimeout(() => { if (state.callPlaying) btnMuteCall.classList.remove('hidden'); }, 5000);
     snd.call.onended = () => {
       if (state.callMuted) return;
