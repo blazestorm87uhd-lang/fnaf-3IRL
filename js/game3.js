@@ -68,6 +68,9 @@
     'salle-a-manger','salon','couloir','etage',
   ];
 
+  // Exposer les pièces au module manette
+  window._gpRooms = [...BRAD_PATH, 'rue', 'etage-2'];
+
   const DOOR_THRESHOLDS = { 'salle-de-bain': 2, 'cuisine': 3 };
 
   const CAM_IMAGES = {
