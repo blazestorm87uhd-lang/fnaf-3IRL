@@ -400,3 +400,47 @@ body.display-tv .game-edition { font-size: 12px; }
 /* Phone — déjà géré par @media, mais renforcer */
 body.display-phone .menu-item { font-size: clamp(18px, 5vw, 24px); padding: 14px 0; }
 body.display-phone .menu-footer { display: none; }
+
+/* ══════════════════════════════════════
+   CORRECTIONS v2
+══════════════════════════════════════ */
+
+/* Bouton Options — même style que menu-item */
+.options-menu-item {
+  border-top: 0.5px solid rgba(255,255,255,0.07) !important;
+  margin-top: 8px;
+}
+
+/* Supprimer ancien style petit */
+.menu-options-btn { display: none !important; }
+
+/* Mode TV — agrandir aussi le sous-menu Options */
+body.display-tv .options-box           { width: min(95vw, 700px); }
+body.display-tv .options-title         { font-size: 22px; }
+body.display-tv .opt-tab               { font-size: 13px; padding: 16px 22px; }
+body.display-tv .opt-section-label     { font-size: 12px; letter-spacing: 5px; }
+body.display-tv .opt-mode              { padding: 18px 14px; font-size: 13px; }
+body.display-tv .opt-mode-icon         { font-size: 28px; }
+body.display-tv .opt-mode-desc         { font-size: 11px; }
+body.display-tv .opt-ctrl, 
+body.display-tv .opt-gp               { font-size: 13px; padding: 12px 18px; }
+body.display-tv .opt-slider-row        { font-size: 13px; }
+body.display-tv .opt-toggle-row        { font-size: 13px; }
+body.display-tv .opt-hint              { font-size: 12px; }
+body.display-tv .opt-binding-row       { font-size: 13px; padding: 10px 0; }
+
+/* Icônes SVG inline pour les onglets (remplace emojis) */
+.opt-tab-icon {
+  display: inline-block;
+  width: 14px;
+  height: 14px;
+  margin-right: 6px;
+  vertical-align: middle;
+  opacity: 0.7;
+}
+.opt-tab.active .opt-tab-icon { opacity: 1; }
+
+/* Manette détectée */
+#gamepad-indicator {
+  animation: fadeIn 0.5s ease forwards;
+}
