@@ -8,6 +8,58 @@
    - Indicateur de chargement
 ════════════════════════════════════════════ */
 
+// ══════════════════════════════════════
+// DÉTECTION MANETTE
+// ══════════════════════════════════════
+function initGamepadDetection() {
+  const indicator = document.getElementById('gamepad-indicator');
+  if (!indicator) return;
+
+  function checkGamepads() {
+    const gps = navigator.getGamepads ? Array.from(navigator.getGamepads()).filter(Boolean) : [];
+    if (gps.length > 0) {
+      indicator.style.display = 'block';
+      indicator.textContent = '● Manette détectée';
+    } else {
+      indicator.style.display = 'none';
+    }
+  }
+
+  checkGamepads();
+  window.addEventListener('gamepadconnected',    checkGamepads);
+  window.addEventListener('gamepaddisconnected', checkGamepads);
+  // Vérifier aussi périodiquement (certains navigateurs ne déclenchent pas l'event)
+  setInterval(checkGamepads, 3000);
+
+  // Gestion manette dans le menu (navigation boutons)
+  let gpMenuInterval = null;
+  let focusIdx = 0;
+  const menuBtns = () => Array.from(document.querySelectorAll('.menu-item:not(.disabled), #btn-options')).filter(b => b.offsetParent !== null);
+
+  function stopGpMenu() { if (gpMenuInterval) { clearInterval(gpMenuInterval); gpMenuInterval = null; } }
+  function startGpMenu() {
+    stopGpMenu();
+    gpMenuInterval = setInterval(() => {
+      const gps = navigator.getGamepads ? Array.from(navigator.getGamepads()).filter(Boolean) : [];
+      if (!gps.length) return;
+      const gp = gps[0];
+      const btns = menuBtns();
+      if (!btns.length) return;
+      // D-pad ou joystick gauche
+      const up   = gp.buttons[12]?.pressed || gp.axes[1] < -0.5;
+      const down  = gp.buttons[13]?.pressed || gp.axes[1] > 0.5;
+      const press = gp.buttons[0]?.pressed || gp.buttons[2]?.pressed; // A/X
+
+      if (up)   { focusIdx = Math.max(0, focusIdx - 1); btns[focusIdx]?.focus(); }
+      if (down)  { focusIdx = Math.min(btns.length - 1, focusIdx + 1); btns[focusIdx]?.focus(); }
+      if (press && document.activeElement?.classList.contains('menu-item')) {
+        document.activeElement.click();
+      }
+    }, 120);
+  }
+  startGpMenu();
+}
+
 function initMenu() {
 
   const noiseCanvas     = document.getElementById('noise');
@@ -215,6 +267,13 @@ function initMenu() {
   });
   document.addEventListener('keydown', e => { if (e.key === 'Escape') closeNightmareModal(); });
 
+  // Initialiser la détection manette et l'indicateur
+  initGamepadDetection();
+
+  // Appliquer les options sauvegardées immédiatement au chargement
+  applyVolumes();
+  applyDisplayMode(loadOption('displayMode', 'pc'));
+
   // ── Options ──
   const btnOptions = document.getElementById('btn-options');
   if (btnOptions) btnOptions.addEventListener('click', openOptionsModal);
@@ -299,10 +358,22 @@ function buildOptionsModal() {
       </div>
 
       <div class="options-tabs">
-        <button class="opt-tab active" data-tab="affichage">🖥 Affichage</button>
-        <button class="opt-tab" data-tab="controles">🎮 Contrôles</button>
-        <button class="opt-tab" data-tab="audio">🔊 Audio</button>
-        <button class="opt-tab" data-tab="accessibilite">♿ Accessibilité</button>
+        <button class="opt-tab active" data-tab="affichage">
+          <svg class="opt-tab-icon" viewBox="0 0 16 16" fill="currentColor"><rect x="1" y="2" width="14" height="10" rx="1.5" fill="none" stroke="currentColor" stroke-width="1.2"/><path d="M5 14h6M8 12v2" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/></svg>
+          Affichage
+        </button>
+        <button class="opt-tab" data-tab="controles">
+          <svg class="opt-tab-icon" viewBox="0 0 16 16" fill="currentColor"><rect x="2" y="5" width="12" height="7" rx="3" fill="none" stroke="currentColor" stroke-width="1.2"/><circle cx="5.5" cy="8.5" r="1" fill="currentColor"/><circle cx="10.5" cy="7.5" r="0.8" fill="currentColor"/><circle cx="10.5" cy="9.5" r="0.8" fill="currentColor"/><path d="M7 8.5h2" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/></svg>
+          Contrôles
+        </button>
+        <button class="opt-tab" data-tab="audio">
+          <svg class="opt-tab-icon" viewBox="0 0 16 16" fill="currentColor"><path d="M3 6h2l3-3v10l-3-3H3V6z" stroke="currentColor" stroke-width="1.1" fill="none"/><path d="M10 5.5c1.2 0.8 1.2 4.2 0 5M12 4c2 1.5 2 6.5 0 8" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" fill="none"/></svg>
+          Audio
+        </button>
+        <button class="opt-tab" data-tab="accessibilite">
+          <svg class="opt-tab-icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.2"><circle cx="8" cy="3" r="1.5"/><path d="M8 5.5v4M5 7.5h6M6 14l2-4.5 2 4.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          Accessibilité
+        </button>
       </div>
 
       <!-- AFFICHAGE -->
@@ -310,17 +381,17 @@ function buildOptionsModal() {
         <div class="opt-section-label">Mode d'affichage</div>
         <div class="opt-modes">
           <button class="opt-mode" data-mode="tv">
-            <span class="opt-mode-icon">📺</span>
+            <span class="opt-mode-icon"><svg width="28" height="24" viewBox="0 0 28 24" fill="none" stroke="currentColor" stroke-width="1.4"><rect x="2" y="2" width="24" height="16" rx="2"/><path d="M10 22h8M14 18v4" stroke-linecap="round"/></svg></span>
             <span>Mode TV</span>
             <span class="opt-mode-desc">Texte agrandi, usage à distance</span>
           </button>
           <button class="opt-mode active" data-mode="pc">
-            <span class="opt-mode-icon">🖥</span>
+            <span class="opt-mode-icon"><svg width="28" height="24" viewBox="0 0 28 24" fill="none" stroke="currentColor" stroke-width="1.4"><rect x="3" y="2" width="22" height="15" rx="2"/><path d="M9 22h10M14 17v5" stroke-linecap="round"/><rect x="10" y="19" width="8" height="3" rx="1"/></svg></span>
             <span>Mode PC</span>
             <span class="opt-mode-desc">Affichage standard</span>
           </button>
           <button class="opt-mode" data-mode="phone">
-            <span class="opt-mode-icon">📱</span>
+            <span class="opt-mode-icon"><svg width="20" height="28" viewBox="0 0 20 28" fill="none" stroke="currentColor" stroke-width="1.4"><rect x="2" y="1" width="16" height="26" rx="3"/><circle cx="10" cy="24" r="1.2" fill="currentColor"/></svg></span>
             <span>Téléphone</span>
             <span class="opt-mode-desc">Interface tactile élargie</span>
           </button>
@@ -331,18 +402,18 @@ function buildOptionsModal() {
       <div class="opt-panel" id="tab-controles">
         <div class="opt-section-label">Type de contrôle</div>
         <div class="opt-ctrl-types">
-          <button class="opt-ctrl active" data-ctrl="mouse">⌨ Clavier / Souris</button>
-          <button class="opt-ctrl" data-ctrl="gamepad">🎮 Manette</button>
-          <button class="opt-ctrl" data-ctrl="touch">👆 Tactile</button>
+          <button class="opt-ctrl active" data-ctrl="mouse"><svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.2" style="margin-right:5px;vertical-align:middle"><rect x="2" y="1" width="10" height="12" rx="5"/><line x1="7" y1="1" x2="7" y2="7"/><circle cx="7" cy="9" r="1" fill="currentColor"/></svg> Clavier / Souris</button>
+          <button class="opt-ctrl" data-ctrl="gamepad"><svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.2" style="margin-right:5px;vertical-align:middle"><rect x="1" y="4" width="12" height="7" rx="3"/><line x1="4" y1="7" x2="4" y2="9"/><line x1="3" y1="8" x2="5" y2="8"/><circle cx="10" cy="7" r="0.8" fill="currentColor"/><circle cx="10" cy="9" r="0.8" fill="currentColor"/></svg> Manette</button>
+          <button class="opt-ctrl" data-ctrl="touch"><svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.2" style="margin-right:5px;vertical-align:middle"><path d="M7 2v6M4 5L7 2l3 3" stroke-linecap="round" stroke-linejoin="round"/><path d="M3 9c0 2 1.5 3 4 3s4-1 4-3V8" stroke-linecap="round"/></svg> Tactile</button>
         </div>
 
         <!-- Sous-menu manette -->
         <div class="opt-gamepad-sub hidden" id="gamepad-sub">
           <div class="opt-section-label" style="margin-top:14px;">Type de manette</div>
           <div class="opt-ctrl-types">
-            <button class="opt-gp active" data-gp="switch">🟥🔵 Nintendo Switch</button>
-            <button class="opt-gp" data-gp="xbox">🟢 Xbox</button>
-            <button class="opt-gp" data-gp="ps">🟦 PlayStation</button>
+            <button class="opt-gp active" data-gp="switch">Switch</button>
+            <button class="opt-gp" data-gp="xbox">Xbox</button>
+            <button class="opt-gp" data-gp="ps">PlayStation</button>
           </div>
           <div class="opt-bindings" id="opt-bindings"></div>
           <div class="opt-no-gamepad hidden" id="opt-no-gamepad">
@@ -358,7 +429,7 @@ function buildOptionsModal() {
 
       <!-- AUDIO -->
       <div class="opt-panel" id="tab-audio">
-        <div class="opt-hint">💡 Certains indices sonores sont discrets. Un volume suffisant est recommandé pour profiter pleinement du jeu.</div>
+        <div class="opt-hint"><svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="#c0a010" stroke-width="1.2" style="margin-right:6px;vertical-align:middle"><circle cx="7" cy="7" r="5.5"/><line x1="7" y1="5" x2="7" y2="7.5" stroke-linecap="round"/><circle cx="7" cy="9.5" r="0.8" fill="#c0a010"/></svg> Certains indices sonores sont discrets. Un volume suffisant est recommandé pour profiter pleinement du jeu.</div>
         <div class="opt-slider-row">
           <label>Volume général</label>
           <input type="range" id="vol-general" min="0" max="100" value="80" />
@@ -594,15 +665,23 @@ function applyVolumes() {
   const general = parseInt(loadOption('vol-general', '80')) / 100;
   const effects = parseInt(loadOption('vol-effects', '80')) / 100;
   const voices  = parseInt(loadOption('vol-voices',  '80')) / 100;
-  // Appliquer aux éléments audio du menu
-  ['audio-menu','audio-nightmare'].forEach(id => {
-    const el = document.getElementById(id);
-    if (el) el.volume = general;
+  // Appliquer immédiatement aux audios du menu
+  document.querySelectorAll('audio').forEach(el => {
+    el.volume = Math.min(1, general);
   });
-  // Stocker pour utilisation dans le jeu
+  // Stocker pour utilisation dans le jeu (lu par game.js au démarrage)
   try {
-    localStorage.setItem('fnaf_vol_general', general);
-    localStorage.setItem('fnaf_vol_effects', effects);
-    localStorage.setItem('fnaf_vol_voices',  voices);
+    localStorage.setItem('fnaf_vol_general', general.toFixed(3));
+    localStorage.setItem('fnaf_vol_effects', effects.toFixed(3));
+    localStorage.setItem('fnaf_vol_voices',  voices.toFixed(3));
   } catch(e) {}
+}
+
+// Lecture des volumes dans le jeu (à appeler en début de startNight)
+function getGameVolumes() {
+  return {
+    general: parseFloat(localStorage.getItem('fnaf_vol_general') || '0.8'),
+    effects: parseFloat(localStorage.getItem('fnaf_vol_effects') || '0.8'),
+    voices:  parseFloat(localStorage.getItem('fnaf_vol_voices')  || '0.8'),
+  };
 }
