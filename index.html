@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no" />
-  <title>Five Nights at Chez Moi — IRL</title>
+  <title>Three Nights at Chez Moi — IRL</title>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700&family=Share+Tech+Mono&display=swap" rel="stylesheet" />
@@ -54,7 +54,7 @@
     <div class="divider"></div>
 
     <div class="right">
-      <div class="game-label">Five Nights at</div>
+      <div class="game-label">Three Nights at</div>
       <div class="game-title">Chez Moi</div>
       <div class="game-irl">IRL</div>
       <div class="game-edition">— ÉDITION 3 —</div>
@@ -84,10 +84,14 @@
 
       <div class="menu-footer">APPUYEZ SUR N'IMPORTE QUELLE TOUCHE</div>
 
-      <button class="menu-options-btn" id="btn-options">Options</button>
+      <button class="menu-item options-menu-item" id="btn-options" style="margin-top:8px;">
+        <span class="arrow">›</span>
+        Options
+        <span class="item-note">affichage · contrôles · audio</span>
+      </button>
 
       <div class="menu-dev-credit">
-        Accès dev. — v1.2.0<br>
+        Accès dev. — v1.2.1<br>
         IMAGINe Studio &amp; HwR Engine
       </div>
     </div>
@@ -110,6 +114,9 @@
 
   <audio id="audio-menu"      src="assets/audio/menu.mp3"      loop preload="auto"></audio>
   <audio id="audio-nightmare" src="assets/audio/nightmare.mp3" loop preload="auto"></audio>
+
+  <!-- Indicateur manette -->
+  <div id="gamepad-indicator" style="display:none;position:fixed;bottom:36px;right:20px;z-index:9000;font-family:'Share Tech Mono',monospace;font-size:9px;color:#2a8a2a;letter-spacing:2px;"></div>
 
   <!-- Indicateur chargement -->
   <div id="loading-indicator" style="display:none;position:fixed;bottom:16px;right:20px;z-index:9999;font-family:'Share Tech Mono',monospace;font-size:11px;color:#555;letter-spacing:3px;align-items:center;gap:6px;">
