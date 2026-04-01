@@ -43,6 +43,9 @@
     'salle-a-manger','salon','couloir','etage',
   ];
 
+  // Exposer les pièces au module manette
+  window._gpRooms = BRAD_PATH.slice();
+
   const CAM_IMAGES = {
     'cellier':        'assets/images/cameras/cellier.jpeg',
     'wc':             'assets/images/cameras/wc.jpeg',
