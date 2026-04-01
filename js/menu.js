@@ -13,51 +13,134 @@
 // ══════════════════════════════════════
 function initGamepadDetection() {
   const indicator = document.getElementById('gamepad-indicator');
-  if (!indicator) return;
 
   function checkGamepads() {
     const gps = navigator.getGamepads ? Array.from(navigator.getGamepads()).filter(Boolean) : [];
-    if (gps.length > 0) {
-      indicator.style.display = 'block';
-      indicator.textContent = '● Manette détectée';
-    } else {
-      indicator.style.display = 'none';
+    if (indicator) {
+      if (gps.length > 0) {
+        indicator.style.display = 'block';
+        indicator.textContent = '● Manette détectée';
+      } else {
+        indicator.style.display = 'none';
+      }
     }
+    return gps;
   }
 
   checkGamepads();
   window.addEventListener('gamepadconnected',    checkGamepads);
   window.addEventListener('gamepaddisconnected', checkGamepads);
-  // Vérifier aussi périodiquement (certains navigateurs ne déclenchent pas l'event)
   setInterval(checkGamepads, 3000);
 
-  // Gestion manette dans le menu (navigation boutons)
-  let gpMenuInterval = null;
+  // ── Navigation manette ──
+  let prevButtons = {};
   let focusIdx = 0;
-  const menuBtns = () => Array.from(document.querySelectorAll('.menu-item:not(.disabled), #btn-options')).filter(b => b.offsetParent !== null);
+  // Debounce : éviter la répétition trop rapide
+  let lastInput = 0;
+  const DEBOUNCE = 200;
 
-  function stopGpMenu() { if (gpMenuInterval) { clearInterval(gpMenuInterval); gpMenuInterval = null; } }
-  function startGpMenu() {
-    stopGpMenu();
-    gpMenuInterval = setInterval(() => {
-      const gps = navigator.getGamepads ? Array.from(navigator.getGamepads()).filter(Boolean) : [];
-      if (!gps.length) return;
-      const gp = gps[0];
-      const btns = menuBtns();
-      if (!btns.length) return;
-      // D-pad ou joystick gauche
-      const up   = gp.buttons[12]?.pressed || gp.axes[1] < -0.5;
-      const down  = gp.buttons[13]?.pressed || gp.axes[1] > 0.5;
-      const press = gp.buttons[0]?.pressed || gp.buttons[2]?.pressed; // A/X
-
-      if (up)   { focusIdx = Math.max(0, focusIdx - 1); btns[focusIdx]?.focus(); }
-      if (down)  { focusIdx = Math.min(btns.length - 1, focusIdx + 1); btns[focusIdx]?.focus(); }
-      if (press && document.activeElement?.classList.contains('menu-item')) {
-        document.activeElement.click();
-      }
-    }, 120);
+  function getMenuFocusables() {
+    return Array.from(document.querySelectorAll(
+      '.menu-item:not([style*="display:none"]):not([style*="display: none"]), #btn-options'
+    )).filter(b => b.offsetParent !== null && !b.classList.contains('disabled'));
   }
-  startGpMenu();
+
+  function getOptionsFocusables() {
+    const modal = document.getElementById('modal-options');
+    if (!modal || modal.classList.contains('hidden')) return [];
+    // Onglets actifs + sliders + boutons dans le panneau actif
+    return Array.from(modal.querySelectorAll(
+      '.opt-tab, .opt-mode, .opt-ctrl, .opt-gp, input[type=range], .opt-reset-btn, #options-close'
+    )).filter(b => b.offsetParent !== null);
+  }
+
+  function isOptionsOpen() {
+    const m = document.getElementById('modal-options');
+    return m && !m.classList.contains('hidden');
+  }
+
+  // Détecter pression unique (pas hold)
+  function justPressed(gp, idx) {
+    const key = 'b' + idx;
+    const pressed = gp.buttons[idx]?.pressed;
+    const was = prevButtons[key] || false;
+    prevButtons[key] = pressed;
+    return pressed && !was;
+  }
+  function justPressedAxis(gp, axis, dir) {
+    const key = 'a' + axis + dir;
+    const val = gp.axes[axis] || 0;
+    const pressed = dir > 0 ? val > 0.6 : val < -0.6;
+    const was = prevButtons[key] || false;
+    prevButtons[key] = pressed;
+    return pressed && !was;
+  }
+
+  setInterval(() => {
+    const gps = navigator.getGamepads ? Array.from(navigator.getGamepads()).filter(Boolean) : [];
+    if (!gps.length) return;
+    const gp = gps[0];
+    const now = Date.now();
+    if (now - lastInput < DEBOUNCE) return;
+
+    const up    = justPressed(gp, 12) || justPressedAxis(gp, 1, -1);
+    const down  = justPressed(gp, 13) || justPressedAxis(gp, 1, 1);
+    const left  = justPressed(gp, 14) || justPressedAxis(gp, 0, -1);
+    const right = justPressed(gp, 15) || justPressedAxis(gp, 0, 1);
+    // A = btn 0 (Xbox/Switch), X = btn 2 (PS), aussi btn 0
+    const confirm = justPressed(gp, 0) || justPressed(gp, 2);
+    // B = btn 1 (Xbox/Switch), Cercle = btn 1 (PS) → retour/fermer
+    const back  = justPressed(gp, 1);
+
+    if (up || down || left || right || confirm || back) lastInput = now;
+
+    if (isOptionsOpen()) {
+      // Navigation dans les options
+      const els = getOptionsFocusables();
+      if (!els.length) return;
+      let ci = els.indexOf(document.activeElement);
+      if (ci < 0) ci = 0;
+
+      if (up || left)    ci = Math.max(0, ci - 1);
+      if (down || right) ci = Math.min(els.length - 1, ci + 1);
+      if (up || down || left || right) els[ci]?.focus();
+
+      if (confirm) {
+        const el = document.activeElement;
+        if (el && el.tagName === 'INPUT' && el.type === 'range') {
+          // Incrémenter/décrémenter le slider
+          // (géré par left/right au-dessus)
+        } else {
+          el?.click();
+        }
+      }
+      // Ajuster slider avec gauche/droite quand slider en focus
+      const focused = document.activeElement;
+      if (focused?.type === 'range') {
+        const step = 5;
+        if (left)  { focused.value = Math.max(0,   parseInt(focused.value) - step); focused.dispatchEvent(new Event('input')); }
+        if (right) { focused.value = Math.min(100, parseInt(focused.value) + step); focused.dispatchEvent(new Event('change')); }
+      }
+      if (back) {
+        document.getElementById('options-close')?.click();
+      }
+      return;
+    }
+
+    // Navigation menu principal
+    const btns = getMenuFocusables();
+    if (!btns.length) return;
+    let ci = btns.indexOf(document.activeElement);
+    if (ci < 0) ci = focusIdx;
+
+    if (up)   ci = Math.max(0, ci - 1);
+    if (down) ci = Math.min(btns.length - 1, ci + 1);
+    if (up || down) { focusIdx = ci; btns[focusIdx]?.focus(); }
+
+    if (confirm && document.activeElement) {
+      document.activeElement.click();
+    }
+  }, 50);
 }
 
 function initMenu() {
@@ -165,7 +248,9 @@ function initMenu() {
 
   // ── Sauvegarde & boutons ──
   const hasAnyData = saveData.nightCompleted > 0 || saveData.currentNight !== null;
-  const nextNight  = saveData.currentNight !== null ? saveData.currentNight : saveData.nightReached;
+  // Continue : nuit max 3 (nightmare = nuit séparée, pas une continuation)
+  const rawNext  = saveData.currentNight !== null ? saveData.currentNight : saveData.nightReached;
+  const nextNight = Math.min(rawNext || 1, 3);
 
   // Continue — grisé si aucune donnée
   if (hasAnyData && nextNight && nextNight >= 1) {
@@ -370,10 +455,7 @@ function buildOptionsModal() {
           <svg class="opt-tab-icon" viewBox="0 0 16 16" fill="currentColor"><path d="M3 6h2l3-3v10l-3-3H3V6z" stroke="currentColor" stroke-width="1.1" fill="none"/><path d="M10 5.5c1.2 0.8 1.2 4.2 0 5M12 4c2 1.5 2 6.5 0 8" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" fill="none"/></svg>
           Audio
         </button>
-        <button class="opt-tab" data-tab="accessibilite">
-          <svg class="opt-tab-icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.2"><circle cx="8" cy="3" r="1.5"/><path d="M8 5.5v4M5 7.5h6M6 14l2-4.5 2 4.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
-          Accessibilité
-        </button>
+
       </div>
 
       <!-- AFFICHAGE -->
@@ -445,34 +527,10 @@ function buildOptionsModal() {
           <input type="range" id="vol-voices" min="0" max="100" value="80" />
           <span id="vol-voices-val">80</span>
         </div>
+        <button class="opt-reset-btn" id="btn-reset-volumes">&#8635; Remettre les volumes par défaut</button>
       </div>
 
-      <!-- ACCESSIBILITÉ -->
-      <div class="opt-panel" id="tab-accessibilite">
-        <div class="opt-section-label">Indices visuels</div>
-        <div class="opt-toggle-row">
-          <label>Flash visuel en cas de danger</label>
-          <label class="opt-toggle-switch">
-            <input type="checkbox" id="acc-flash" />
-            <span class="opt-toggle-track"></span>
-          </label>
-        </div>
-        <div class="opt-toggle-row">
-          <label>Signal lumineux sur sons importants</label>
-          <label class="opt-toggle-switch">
-            <input type="checkbox" id="acc-signal" />
-            <span class="opt-toggle-track"></span>
-          </label>
-        </div>
-        <div class="opt-section-label" style="margin-top:14px;">Gameplay</div>
-        <div class="opt-slider-row">
-          <label>Vitesse navigation caméras</label>
-          <input type="range" id="cam-speed" min="1" max="3" step="1" value="2" />
-          <span id="cam-speed-val">Normal</span>
-        </div>
-      </div>
-
-    </div>
+      
   `;
 
   // Fermer
@@ -568,11 +626,12 @@ function buildOptionsModal() {
   }
 
   // Sliders audio
-  [
-    ['vol-general', 'vol-general-val'],
-    ['vol-effects', 'vol-effects-val'],
-    ['vol-voices',  'vol-voices-val'],
-  ].forEach(([id, valId]) => {
+  const audioSliders = [
+    ['vol-general', 'vol-general-val', null],
+    ['vol-effects', 'vol-effects-val', 'assets/audio/effect/test-sound.wav'],
+    ['vol-voices',  'vol-voices-val',  'assets/audio/effect/test-sound-2.wav'],
+  ];
+  audioSliders.forEach(([id, valId, testSrc]) => {
     const slider = modal.querySelector('#' + id);
     const label  = modal.querySelector('#' + valId);
     slider.addEventListener('input', () => {
@@ -580,7 +639,33 @@ function buildOptionsModal() {
       saveOption(id, slider.value);
       applyVolumes();
     });
+    // Son de test au relâchement du curseur
+    if (testSrc) {
+      slider.addEventListener('change', () => {
+        try {
+          const vol = parseInt(slider.value) / 100;
+          const a = new Audio(testSrc);
+          a.volume = Math.min(1, vol);
+          a.play().catch(() => {});
+        } catch(e) {}
+      });
+    }
   });
+
+  // Bouton reset volumes
+  const resetBtn = modal.querySelector('#btn-reset-volumes');
+  if (resetBtn) {
+    resetBtn.addEventListener('click', () => {
+      ['vol-general','vol-effects','vol-voices'].forEach(id => {
+        saveOption(id, '80');
+        const s = modal.querySelector('#' + id);
+        const l = modal.querySelector('#' + id + '-val');
+        if (s) s.value = '80';
+        if (l) l.textContent = '80';
+      });
+      applyVolumes();
+    });
+  }
 
   // Slider vitesse caméras
   const camSpeed = modal.querySelector('#cam-speed');
