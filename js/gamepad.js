@@ -114,7 +114,30 @@
       if (bMaint) {
         const p=document.getElementById('panel-maintenance');
         if(p&&!p.classList.contains('hidden')) document.getElementById('btn-maintenance-close')?.click();
-        else document.getElementById('btn-maintenance')?.click();
+        else { document.getElementById('btn-maintenance')?.click(); }
+      }
+      // Navigation dans le panneau maintenance
+      const maintPanel = document.getElementById('panel-maintenance');
+      if (maintPanel && !maintPanel.classList.contains('hidden')) {
+        const items = Array.from(maintPanel.querySelectorAll('.maint-item, .maint-reboot, #btn-maintenance-close'))
+          .filter(el => el.offsetParent !== null);
+        const ci = items.indexOf(document.activeElement);
+        if ((up||left) && now-lastNavTime>NAV_DEBOUNCE) {
+          lastNavTime=now;
+          const ni = Math.max(0,(ci<0?0:ci)-1);
+          items[ni]?.focus();
+        }
+        if ((down||right) && now-lastNavTime>NAV_DEBOUNCE) {
+          lastNavTime=now;
+          const ni = Math.min(items.length-1,(ci<0?0:ci)+1);
+          items[ni]?.focus();
+        }
+        // Confirmer = cliquer sur l'item focalisé
+        if ((bConf||bX) && document.activeElement && items.includes(document.activeElement)) {
+          document.activeElement.click();
+        }
+        // Si maintPanel ouvert, ne pas naviguer les caméras
+        return;
       }
       if (bAudio) document.getElementById('btn-audio')?.click();
       // Rembobinage hold
