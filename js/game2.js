@@ -1082,6 +1082,11 @@
 
     playSound(snd.nightStart, 0.8);
 
+    // Afficher les contrôles manette si mode manette actif
+    if (typeof window.showGamepadControlsIfNeeded === 'function') {
+      window.showGamepadControlsIfNeeded(null);
+    }
+
     setTimeout(() => {
       stopSound(snd.nightStart);
       screenNightStart.classList.add('hidden');
