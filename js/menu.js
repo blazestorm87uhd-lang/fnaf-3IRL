@@ -436,7 +436,13 @@ function showLoadingIndicator() {
 
 function openOptionsModal() {
   let modal = document.getElementById('modal-options');
-  if (!modal) { modal = buildOptionsModal(); document.body.appendChild(modal); }
+  if (!modal) {
+    modal = buildOptionsModal();
+    // TOUJOURS dans document.body pour éviter l'overflow:hidden du menu
+    document.body.appendChild(modal);
+  }
+  // Forcer display:flex même si hidden/CSS interfère
+  modal.style.display = 'flex';
   modal.classList.remove('hidden');
   loadOptionsFromStorage();
 }
@@ -544,8 +550,12 @@ function buildOptionsModal() {
   `;
 
   // Fermer
-  modal.addEventListener('click', e => { if (e.target === modal) modal.classList.add('hidden'); });
-  modal.querySelector('#options-close').addEventListener('click', () => modal.classList.add('hidden'));
+  modal.addEventListener('click', e => {
+    if (e.target === modal) { modal.style.display='none'; modal.classList.add('hidden'); }
+  });
+  modal.querySelector('#options-close').addEventListener('click', () => {
+    modal.style.display='none'; modal.classList.add('hidden');
+  });
 
   // Onglets
   modal.querySelectorAll('.opt-tab').forEach(tab => {
