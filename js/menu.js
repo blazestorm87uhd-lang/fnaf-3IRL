@@ -249,6 +249,7 @@ function initMenu() {
   // ── Sauvegarde & boutons ──
   const hasAnyData = saveData.nightCompleted > 0 || saveData.currentNight !== null;
   // Continue : nuit max 3 (nightmare = nuit séparée, pas une continuation)
+  // Continue : nuit max 3 (nightmare = séparé)
   const rawNext  = saveData.currentNight !== null ? saveData.currentNight : saveData.nightReached;
   const nextNight = Math.min(rawNext || 1, 3);
 
@@ -361,7 +362,16 @@ function initMenu() {
 
   // ── Options ──
   const btnOptions = document.getElementById('btn-options');
-  if (btnOptions) btnOptions.addEventListener('click', openOptionsModal);
+  if (btnOptions) {
+    btnOptions.addEventListener('click', openOptionsModal);
+    btnOptions.addEventListener('touchend', e => { e.preventDefault(); openOptionsModal(); });
+  }
+  // Fallback délégation pour s'assurer que le bouton répond
+  document.addEventListener('click', e => {
+    if (e.target && (e.target.id === 'btn-options' || e.target.closest('#btn-options'))) {
+      openOptionsModal();
+    }
+  });
 
   // ── Lancement ──
   function launchGame(night) {
