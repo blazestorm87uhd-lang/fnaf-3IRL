@@ -69,8 +69,13 @@
     const gps = navigator.getGamepads ? Array.from(navigator.getGamepads()).filter(Boolean) : [];
     if (gps.length > 0) {
       const t = getGpType();
-      const btn = t === 'ps' ? 'X' : 'A';
-      gpLoaderHint.textContent = `● Manette — appuyer ${btn} pour continuer`;
+      // PS = bouton X (croix) = btn 0 sur standard mapping mais affiché "X"
+      // Xbox/Switch = bouton A = btn 0
+      let btnLabel;
+      if (t === 'ps') btnLabel = 'X';
+      else if (t === 'switch') btnLabel = 'A';
+      else btnLabel = 'A'; // xbox
+      gpLoaderHint.textContent = `● Manette détectée — appuyer ${btnLabel} pour continuer`;
       gpLoaderHint.style.display = 'block';
     } else {
       gpLoaderHint.style.display = 'none';
@@ -146,16 +151,14 @@
   const gpLoaderInterval = setInterval(() => {
     if (clicked) { clearInterval(gpLoaderInterval); return; }
     const gps = navigator.getGamepads ? Array.from(navigator.getGamepads()).filter(Boolean) : [];
+    if (gps.length > 0) checkLoaderGamepad(); // Mettre à jour le hint si nouvelle manette
     if (!gps.length) return;
     const gp = gps[0];
-    // A (btn 0) ou X/Croix PS (btn 2)
+    // Btn 0 = A sur Xbox/Switch = X (croix) sur PS — tous déclenchent l'action
     const pressed0 = gp.buttons[0]?.pressed;
-    const pressed2 = gp.buttons[2]?.pressed;
     const wasP0 = prevGpBtns[0] || false;
-    const wasP2 = prevGpBtns[2] || false;
-    if ((pressed0 && !wasP0) || (pressed2 && !wasP2)) handleStart();
+    if (pressed0 && !wasP0) handleStart();
     prevGpBtns[0] = pressed0;
-    prevGpBtns[2] = pressed2;
   }, 50);
 
 })();
