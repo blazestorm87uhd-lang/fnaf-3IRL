@@ -61,7 +61,7 @@
 }
 
 /* Modal Nightmare */
-.modal { position: fixed; inset: 0; background: rgba(0,0,0,0.82); z-index: 500; display: flex; align-items: center; justify-content: center; }
+.modal { position: fixed; inset: 0; background: rgba(0,0,0,0.82); z-index: 9000; display: flex; align-items: center; justify-content: center; }
 .modal-box { background: #0d0d0d; border: 0.5px solid rgba(200,30,30,0.4); padding: 40px 44px; max-width: 420px; width: 90%; text-align: center; display: flex; flex-direction: column; gap: 20px; animation: fadeIn 0.2s ease; }
 .modal-title { font-family: var(--font-title); font-size: 28px; font-weight: 700; color: var(--red); letter-spacing: 6px; animation: flicker 4s infinite; }
 .modal-text { font-family: var(--font-mono); font-size: 12px; color: #888; letter-spacing: 2px; line-height: 2; }
@@ -461,3 +461,9 @@ body.display-tv .opt-binding-row       { font-size: 13px; padding: 10px 0; }
 }
 .opt-reset-btn:hover { color: #aaa; border-color: rgba(255,255,255,0.25); }
 body.display-tv .opt-reset-btn { font-size: 13px; padding: 12px 22px; }
+
+/* Overlay contrôles manette */
+@keyframes fadeOut {
+  from { opacity: 1; }
+  to   { opacity: 0; }
+}
