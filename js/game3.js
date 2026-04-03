@@ -918,8 +918,9 @@
     snd.call.onended = () => {
       if (state.callMuted) return;
       state.callPlaying = false; btnMuteCall.classList.add('hidden');
-      resumeAmbiance();
       if (snd.musicBox && state.selectedRoom === 'etage-2') snd.musicBox.volume = 0.65;
+      // Ambiance démarre uniquement après l'appel (nuit 3)
+      startAmbiance();
       // Mama Coco démarre après l'appel
       startMamaCoco();
     };
@@ -929,8 +930,8 @@
     if (state.callMuted) return;
     state.callMuted = true; stopSound(snd.call);
     btnMuteCall.classList.add('hidden'); state.callPlaying = false;
-    resumeAmbiance();
     if (snd.musicBox && state.selectedRoom === 'etage-2') snd.musicBox.volume = 0.65;
+    startAmbiance(); // Ambiance démarre si appel coupé manuellement
     startMamaCoco();
   });
 
@@ -960,7 +961,12 @@
     if (state.mama._lookResetTimer)  clearTimeout(state.mama._lookResetTimer);
     if (state.mama._lookTooLongTimer)clearTimeout(state.mama._lookTooLongTimer);
     if (state._rueWarnInterval)    clearInterval(state._rueWarnInterval);
-    stopSound(snd.musicBox); stopSound(snd.critiqueBox); stopSound(snd.fastrun);
+    // Couper TOUS les sons sauf night-end
+    document.querySelectorAll('audio').forEach(a => {
+      if (a.id !== 'snd-night-end' && a.id !== 'snd-tk4play') {
+        try { a.pause(); a.currentTime = 0; } catch(e) {}
+      }
+    });
   }
 
   function triggerJumpscareBrad() {
@@ -1142,14 +1148,14 @@
       selectRoom('cellier');
       refreshMap();
       updateModuleIndicators();
-      startAmbiance();
+      // startAmbiance() appelée après l'appel (dans snd.call.onended)
       startGameClock();
       scheduleBradMove();
       scheduleNextError();
       // Boîte à musique se vide dès le début
       startMusicBoxDrain();
 
-      // 2 sonneries → appel
+      // 2 sonneries → appel (ambiance démarre après la fin de l'appel)
       setTimeout(() => {
         playRingTimes(2, () => startPhoneCall());
       }, 1000);
