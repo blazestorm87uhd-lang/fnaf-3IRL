@@ -25,10 +25,11 @@
   function mapping() {
     try {
       const t = localStorage.getItem('fnaf_opt_gamepadType') || 'xbox';
-      if (t==='ps')     return {confirm:0,rewind:1,maint:3,audio:4};
-      if (t==='switch') return {confirm:0,rewind:1,maint:2,audio:4};
-      return                   {confirm:0,rewind:1,maint:3,audio:4};
-    } catch(e) { return {confirm:0,rewind:1,maint:3,audio:4}; }
+      // mute = PS:Carré(3), Switch:Y(3), Xbox:X(2)
+      if (t==='ps')     return {confirm:0,rewind:1,maint:3,audio:4,mute:2};  // □=2, △=3
+      if (t==='switch') return {confirm:0,rewind:1,maint:2,audio:4,mute:3};  // Y=3, X=2
+      return                   {confirm:0,rewind:1,maint:3,audio:4,mute:2};  // X=2, Y=3
+    } catch(e) { return {confirm:0,rewind:1,maint:3,audio:4,mute:2}; }
   }
 
   function navigateCam(dir) {
@@ -140,6 +141,13 @@
         return;
       }
       if (bAudio) document.getElementById('btn-audio')?.click();
+
+      // Mute appel en cours (PS=□, Switch=Y, Xbox=X)
+      const bMute = justPressed(gp, m.mute);
+      if (bMute) {
+        const muteBtn = document.getElementById('btn-mute-call');
+        if (muteBtn && !muteBtn.classList.contains('hidden')) muteBtn.click();
+      }
       // Rembobinage hold
       const rb=document.getElementById('btn-rewind-musicbox');
       if(rb&&rb.offsetParent!==null){
