@@ -345,6 +345,32 @@ function initMenu() {
   function openNightmareModal()  { modalNightmare.classList.remove('hidden'); }
   function closeNightmareModal() { modalNightmare.classList.add('hidden'); }
   if (modalCancel)  modalCancel.addEventListener('click', closeNightmareModal);
+
+  // Navigation manette dans la modal nightmare
+  setInterval(() => {
+    const modal = document.getElementById('modal-nightmare');
+    if (!modal || modal.classList.contains('hidden')) return;
+    const gps = navigator.getGamepads ? Array.from(navigator.getGamepads()).filter(Boolean) : [];
+    if (!gps.length) return;
+    const gp = gps[0];
+    // A/X = confirmer (lancer nightmare)
+    if (gp.buttons[0]?.pressed) {
+      if (!modal._gpConfirmCooldown) {
+        modal._gpConfirmCooldown = true;
+        document.getElementById('modal-confirm')?.click();
+        setTimeout(() => { modal._gpConfirmCooldown = false; }, 500);
+      }
+    }
+    // B/Rond = annuler
+    if (gp.buttons[1]?.pressed) {
+      if (!modal._gpCancelCooldown) {
+        modal._gpCancelCooldown = true;
+        closeNightmareModal();
+        setTimeout(() => { modal._gpCancelCooldown = false; }, 500);
+      }
+    }
+  }, 100);
+
   if (modalConfirm) modalConfirm.addEventListener('click', () => {
     closeNightmareModal();
     fadeAudio(audioMenu, 0, 600, () => { audioMenu.pause(); audioMenu.currentTime = 0; });
@@ -361,20 +387,27 @@ function initMenu() {
   applyDisplayMode(loadOption('displayMode', 'pc'));
 
   // ── Options ──
+  // Afficher et connecter le bouton Options (position:fixed, hors du menu)
   const btnOptions = document.getElementById('btn-options');
   if (btnOptions) {
-    btnOptions.addEventListener('click', openOptionsModal);
-    btnOptions.addEventListener('touchend', e => { e.preventDefault(); openOptionsModal(); });
+    btnOptions.style.display = 'block';
+    btnOptions.onclick = openOptionsModal;
+    btnOptions.ontouchend = e => { e.preventDefault(); openOptionsModal(); };
   }
-  // Fallback délégation pour s'assurer que le bouton répond
-  document.addEventListener('click', e => {
-    if (e.target && (e.target.id === 'btn-options' || e.target.closest('#btn-options'))) {
-      openOptionsModal();
-    }
-  });
 
   // ── Lancement ──
   function launchGame(night) {
+    // Afficher l'overlay manette si une manette est connectée
+    if (typeof window.showGamepadControlsOverlay === 'function') {
+      window.showGamepadControlsOverlay(() => {
+        doLaunch(night);
+      });
+    } else {
+      doLaunch(night);
+    }
+  }
+
+  function doLaunch(night) {
     showLoadingIndicator();
     document.body.style.transition = 'opacity 0.5s';
     document.body.style.opacity    = '0';
