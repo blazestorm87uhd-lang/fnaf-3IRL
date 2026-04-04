@@ -870,11 +870,6 @@
   function startNight() {
     playSound(snd.nightStart, 0.8);
 
-    // Afficher les contrôles manette si mode manette actif
-    if (typeof window.showGamepadControlsIfNeeded === 'function') {
-      window.showGamepadControlsIfNeeded(null);
-    }
-
     setTimeout(() => {
       // Couper le night-start au moment où le jeu s'affiche
       stopSound(snd.nightStart);
