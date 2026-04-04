@@ -1,7 +1,9 @@
 /* ═══════════════════════════════════════════
    GAMEPAD-OVERLAY.JS
-   Affiche les contrôles manette au début de la nuit
-   si une manette est connectée et le mode manette activé
+   - Overlay contrôles affiché AVANT la nuit (sur new game / continue)
+   - S'affiche sur l'écran night start (12AM Night 1...)
+   - Joueur appuie sur A/X pour démarrer
+   Emplacement : js/gamepad-overlay.js ✓
 ════════════════════════════════════════════ */
 
 (() => {
@@ -20,117 +22,165 @@
     return null;
   }
 
+  // Mappings visuels par type de manette
   const CONTROLS = {
     ps: [
-      { icon: '✕',  label: 'Valider / Ouvrir' },
-      { icon: '○',  label: 'Rembobiner boîte (maintenir)' },
-      { icon: '△',  label: 'Maintenance' },
-      { icon: 'L1', label: 'Play Audio' },
-      { icon: '←→', label: 'Naviguer caméras' },
+      { icon: '✕',   label: 'Valider / Ouvrir / Démarrer' },
+      { icon: '○',   label: 'Rembobiner boîte à musique (maintenir)' },
+      { icon: '□',   label: 'Mute appel en cours' },
+      { icon: '△',   label: 'Maintenance' },
+      { icon: 'L1',  label: 'Play Audio' },
+      { icon: '←→↑↓', label: 'Naviguer entre caméras' },
     ],
     xbox: [
-      { icon: 'A',  label: 'Valider / Ouvrir' },
-      { icon: 'B',  label: 'Rembobiner boîte (maintenir)' },
-      { icon: 'Y',  label: 'Maintenance' },
-      { icon: 'LB', label: 'Play Audio' },
-      { icon: '←→', label: 'Naviguer caméras' },
+      { icon: 'A',   label: 'Valider / Ouvrir / Démarrer' },
+      { icon: 'B',   label: 'Rembobiner boîte à musique (maintenir)' },
+      { icon: 'X',   label: 'Mute appel en cours' },
+      { icon: 'Y',   label: 'Maintenance' },
+      { icon: 'LB',  label: 'Play Audio' },
+      { icon: '←→↑↓', label: 'Naviguer entre caméras' },
     ],
     switch: [
-      { icon: 'A',  label: 'Valider / Ouvrir' },
-      { icon: 'B',  label: 'Rembobiner boîte (maintenir)' },
-      { icon: 'X',  label: 'Maintenance' },
-      { icon: 'L',  label: 'Play Audio' },
-      { icon: '←→', label: 'Naviguer caméras' },
+      { icon: 'A',   label: 'Valider / Ouvrir / Démarrer' },
+      { icon: 'B',   label: 'Rembobiner boîte à musique (maintenir)' },
+      { icon: 'Y',   label: 'Mute appel en cours' },
+      { icon: 'X',   label: 'Maintenance' },
+      { icon: 'L',   label: 'Play Audio' },
+      { icon: '←→↑↓', label: 'Naviguer entre caméras' },
     ],
   };
 
-  function showGamepadControls(gpType, onDone) {
+  // Couleurs des badges selon manette
+  const GP_COLORS = {
+    ps:     { bg: '#003087', border: '#0070cc', accent: '#fff' },
+    xbox:   { bg: '#107c10', border: '#52b043', accent: '#fff' },
+    switch: { bg: '#e4000f', border: '#ff6b7a', accent: '#fff' },
+  };
+
+  function buildOverlay(gpType, onConfirm) {
+    const colors  = GP_COLORS[gpType] || GP_COLORS.xbox;
+    const bindings = CONTROLS[gpType] || CONTROLS.xbox;
+    const gpLabel = { ps: 'PlayStation', xbox: 'Xbox', switch: 'Nintendo Switch' }[gpType] || 'Manette';
+    const confirmBtn = gpType === 'ps' ? '✕' : 'A';
+
     const overlay = document.createElement('div');
     overlay.id = 'gp-controls-overlay';
     overlay.style.cssText = `
-      position:fixed;inset:0;z-index:8500;
-      background:rgba(0,0,0,0.92);
+      position:fixed;inset:0;z-index:9500;
+      background:rgba(0,0,0,0.95);
       display:flex;flex-direction:column;
       align-items:center;justify-content:center;
-      gap:24px;
-      animation:fadeIn 0.5s ease forwards;
+      gap:20px;
+      font-family:'Share Tech Mono',monospace;
     `;
 
+    // Titre
     const title = document.createElement('div');
-    title.style.cssText = "font-family:'Cinzel',serif;font-size:14px;color:#888;letter-spacing:6px;margin-bottom:8px;";
-    const gpName = gpType === 'ps' ? 'PlayStation' : gpType === 'switch' ? 'Nintendo Switch' : 'Xbox';
-    title.textContent = `CONTRÔLES — ${gpName.toUpperCase()}`;
+    title.style.cssText = `font-family:'Cinzel',serif;font-size:13px;color:#888;letter-spacing:6px;text-align:center;`;
+    title.textContent = `CONTRÔLES — ${gpLabel.toUpperCase()}`;
     overlay.appendChild(title);
 
-    const list = document.createElement('div');
-    list.style.cssText = "display:flex;flex-direction:column;gap:10px;min-width:280px;";
+    // Séparateur
+    const sep = document.createElement('div');
+    sep.style.cssText = `width:200px;height:0.5px;background:rgba(255,255,255,0.1);`;
+    overlay.appendChild(sep);
 
-    const bindings = CONTROLS[gpType] || CONTROLS.xbox;
+    // Liste des contrôles
+    const list = document.createElement('div');
+    list.style.cssText = `display:flex;flex-direction:column;gap:8px;min-width:min(320px,85vw);`;
+
     bindings.forEach(b => {
       const row = document.createElement('div');
-      row.style.cssText = "display:flex;align-items:center;gap:16px;";
+      row.style.cssText = `display:flex;align-items:center;gap:14px;`;
 
       const badge = document.createElement('div');
+      const isLong = b.icon.length > 2;
       badge.style.cssText = `
-        min-width:44px;height:36px;
-        border:1px solid rgba(255,255,255,0.25);
+        min-width:48px;height:34px;padding:0 6px;
+        background:${colors.bg};
+        border:1px solid ${colors.border};
         border-radius:6px;
         display:flex;align-items:center;justify-content:center;
-        font-family:'Share Tech Mono',monospace;
-        font-size:${b.icon.length > 2 ? '10px' : '14px'};
-        color:#ddd;
-        letter-spacing:1px;
+        font-size:${isLong ? '9px' : '13px'};
+        color:${colors.accent};
+        letter-spacing:${isLong ? '1px' : '0'};
         flex-shrink:0;
+        box-shadow:0 0 8px ${colors.border}44;
       `;
       badge.textContent = b.icon;
 
       const lbl = document.createElement('div');
-      lbl.style.cssText = "font-family:'Share Tech Mono',monospace;font-size:11px;color:#666;letter-spacing:2px;";
+      lbl.style.cssText = `font-size:10px;color:#666;letter-spacing:2px;line-height:1.4;`;
       lbl.textContent = b.label;
 
       row.appendChild(badge);
       row.appendChild(lbl);
       list.appendChild(row);
     });
-
     overlay.appendChild(list);
 
-    const skip = document.createElement('div');
-    skip.style.cssText = "font-family:'Share Tech Mono',monospace;font-size:9px;color:#333;letter-spacing:3px;margin-top:16px;animation:blink 1.4s step-start infinite;";
-    const confirmBtn = gpType === 'ps' ? 'X' : 'A';
-    skip.textContent = `APPUYER SUR ${confirmBtn} OU CLIQUER POUR CONTINUER`;
-    overlay.appendChild(skip);
+    // Séparateur bas
+    const sep2 = document.createElement('div');
+    sep2.style.cssText = `width:200px;height:0.5px;background:rgba(255,255,255,0.1);margin-top:8px;`;
+    overlay.appendChild(sep2);
 
-    document.body.appendChild(overlay);
+    // Bouton continuer
+    const hint = document.createElement('div');
+    hint.style.cssText = `
+      font-size:10px;color:#444;letter-spacing:3px;text-align:center;
+      animation:blink 1.4s step-start infinite;
+      cursor:pointer;padding:10px 20px;
+      border:0.5px solid rgba(255,255,255,0.08);
+      transition:color 0.15s,border-color 0.15s;
+    `;
+    hint.textContent = `APPUYER SUR ${confirmBtn} OU CLIQUER POUR CONTINUER`;
+    hint.onmouseenter = () => { hint.style.color='#aaa'; hint.style.borderColor='rgba(255,255,255,0.25)'; };
+    hint.onmouseleave = () => { hint.style.color='#444'; hint.style.borderColor='rgba(255,255,255,0.08)'; };
+    overlay.appendChild(hint);
 
-    // Fermer sur clic ou btn A/X
+    // Auto-close + interactions
     let closed = false;
     function close() {
       if (closed) return; closed = true;
-      overlay.style.animation = 'fadeOut 0.4s ease forwards';
-      setTimeout(() => { overlay.remove(); if (onDone) onDone(); }, 400);
+      overlay.style.opacity = '0';
+      overlay.style.transition = 'opacity 0.3s';
+      setTimeout(() => { overlay.remove(); if (onConfirm) onConfirm(); }, 320);
     }
 
     overlay.addEventListener('click', close);
 
-    // Fermer sur bouton manette
-    const closeInterval = setInterval(() => {
+    // Manette
+    let prevBtn0 = false;
+    const gpInterval = setInterval(() => {
       const gp = getGP(); if (!gp) return;
-      if (gp.buttons[0]?.pressed || gp.buttons[2]?.pressed) {
-        clearInterval(closeInterval); close();
-      }
+      const pressed = gp.buttons[0]?.pressed;
+      if (pressed && !prevBtn0) { clearInterval(gpInterval); close(); }
+      prevBtn0 = pressed;
     }, 50);
 
-    // Auto-close après 8s
-    setTimeout(() => { clearInterval(closeInterval); close(); }, 8000);
+    // Auto-close 10s
+    setTimeout(() => { clearInterval(gpInterval); close(); }, 10000);
+
+    return overlay;
   }
 
-  // Exposer globalement
+  // ── API publique ──────────────────────────
+  // Appelée par menu.js quand joueur clique new game/continue
+  // onConfirm = callback après fermeture (lancer le jeu)
+  window.showGamepadControlsOverlay = function(onConfirm) {
+    const gp = getGP();
+    if (!gp) { if (onConfirm) onConfirm(); return; } // Pas de manette → direct
+    const overlay = buildOverlay(getGpType(), onConfirm);
+    document.body.appendChild(overlay);
+  };
+
+  // Appelée par les fichiers de jeu pour afficher sur night start
+  // (uniquement si manette connectée ET mode manette)
   window.showGamepadControlsIfNeeded = function(onDone) {
     const gp = getGP();
-    // Afficher si manette connectée (mode manette OU manette détectée même sans mode actif)
     if (gp && isGamepadMode()) {
-      showGamepadControls(getGpType(), onDone);
+      const overlay = buildOverlay(getGpType(), onDone);
+      document.body.appendChild(overlay);
     } else {
       if (onDone) onDone();
     }
