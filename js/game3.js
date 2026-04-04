@@ -931,7 +931,8 @@
     state.callMuted = true; stopSound(snd.call);
     btnMuteCall.classList.add('hidden'); state.callPlaying = false;
     if (snd.musicBox && state.selectedRoom === 'etage-2') snd.musicBox.volume = 0.65;
-    startAmbiance(); // Ambiance démarre si appel coupé manuellement
+    // Nuit 3 : l'ambiance démarre dès que l'appel est coupé (manuel ou auto)
+    if (!state.ambiancePaused) startAmbiance();
     startMamaCoco();
   });
 
@@ -1138,11 +1139,6 @@
     if (!state.etage2Visited && roomEtage2) roomEtage2.classList.add('first-visit');
 
     playSound(snd.nightStart, 0.8);
-
-    // Afficher les contrôles manette si mode manette actif
-    if (typeof window.showGamepadControlsIfNeeded === 'function') {
-      window.showGamepadControlsIfNeeded(null);
-    }
 
     setTimeout(() => {
       stopSound(snd.nightStart);
