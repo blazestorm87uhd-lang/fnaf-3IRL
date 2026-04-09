@@ -142,3 +142,25 @@
   object-position: center center;
   transition: opacity 0.05s;
 }
+
+
+/* ══ Mama Coco — portrait centré ══ */
+.mama-img {
+  position: absolute !important;
+  top: 0 !important;
+  left: 50% !important;
+  right: auto !important;
+  transform: translateX(-50%) !important;
+  width: auto !important;
+  height: 100% !important;
+  max-width: none !important;
+  object-fit: contain !important;
+  object-position: center top !important;
+}
+
+/* ══ Modes d'affichage ══ */
+body.display-tv .menu-item    { font-size: clamp(20px, 3vw, 28px); }
+body.display-tv .game-title   { font-size: clamp(28px, 5vw, 44px); }
+body.display-tv .item-note    { font-size: 11px; }
+body.display-tv .game-edition { font-size: 12px; }
+body.display-phone .menu-footer { display: none; }
