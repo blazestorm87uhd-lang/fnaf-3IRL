@@ -155,7 +155,6 @@ function initMenu() {
   const modalConfirm    = document.getElementById('modal-confirm');
   const modalCancel     = document.getElementById('modal-cancel');
   const audioMenu       = document.getElementById('audio-menu');
-  const audioNightmare  = document.getElementById('audio-nightmare');
 
   // ── Bruit statique ──
   const nctx = noiseCanvas.getContext('2d');
@@ -267,8 +266,8 @@ function initMenu() {
   // Nightmare
   if (saveData.nightmareUnlocked) btnNightmare.style.display = 'flex';
 
-  // Bonus — masqué si nightmare est débloqué (nuit 3 terminée)
-  if (saveData.bonusUnlocked && !saveData.nightmareUnlocked) {
+  // Bonus — visible si débloqué (après fin nightmare)
+  if (saveData.bonusUnlocked || saveData.nightmareCompleted) {
     btnBonus.style.display = 'flex';
   }
 
@@ -340,7 +339,11 @@ function initMenu() {
 
   // ── Nightmare ──
   btnNightmare.addEventListener('click', openNightmareModal);
-  btnBonus.addEventListener('click',     () => { console.log('Bonus — à implémenter'); });
+  btnBonus.addEventListener('click', () => {
+    document.body.style.transition = 'opacity 0.3s';
+    document.body.style.opacity = '0';
+    setTimeout(() => { window.location.href = 'bonus.html'; }, 300);
+  });
 
   function openNightmareModal()  { modalNightmare.classList.remove('hidden'); }
   function closeNightmareModal() { modalNightmare.classList.add('hidden'); }
@@ -374,17 +377,15 @@ function initMenu() {
   if (modalConfirm) modalConfirm.addEventListener('click', () => {
     closeNightmareModal();
     fadeAudio(audioMenu, 0, 600, () => { audioMenu.pause(); audioMenu.currentTime = 0; });
-    if (audioNightmare) { audioNightmare.volume = 0; audioNightmare.play().catch(() => {}); fadeAudio(audioNightmare, 0.65, 800); }
     Save.startNight('nightmare'); launchGame('nightmare');
   });
   document.addEventListener('keydown', e => { if (e.key === 'Escape') closeNightmareModal(); });
 
+  // Bouton Options — en position fixe hors du menu
+  _setupOptionsButton();
+
   // Initialiser la détection manette et l'indicateur
   initGamepadDetection();
-
-  // Appliquer les options sauvegardées immédiatement au chargement
-  applyVolumes();
-  applyDisplayMode(loadOption('displayMode', 'pc'));
 
   // ── Options ──
 
@@ -421,4 +422,28 @@ function initMenu() {
       if (step >= steps) { clearInterval(t); if (callback) callback(); }
     }, interval);
   }
+}
+
+
+
+function _setupOptionsButton() {
+  let btn = document.getElementById('btn-options');
+  if (!btn) {
+    btn = document.createElement('button');
+    btn.id = 'btn-options';
+    btn.style.cssText = `
+      position:fixed;bottom:44px;right:18px;z-index:8000;
+      font-family:'Share Tech Mono',monospace;font-size:clamp(14px,2vw,18px);
+      font-weight:700;color:#fff;background:transparent;border:none;
+      border-bottom:0.5px solid rgba(255,255,255,0.07);
+      padding:10px 0;cursor:pointer;letter-spacing:2px;
+      transition:color .15s;text-align:left;display:block;
+    `;
+    btn.innerHTML = '<span style="color:var(--red,#cc2020);margin-right:6px;opacity:0;">›</span>Options<div style="font-family:'Share Tech Mono',monospace;font-size:9px;color:#444;font-weight:400;letter-spacing:2px;margin-top:3px;">affichage · contrôles · audio</div>';
+    document.body.appendChild(btn);
+  }
+  btn.style.display = 'block';
+  btn.onclick = () => {
+    if (typeof window.openOptionsModal === 'function') window.openOptionsModal();
+  };
 }
