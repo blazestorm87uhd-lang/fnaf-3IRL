@@ -266,8 +266,8 @@ function initMenu() {
   // Nightmare
   if (saveData.nightmareUnlocked) btnNightmare.style.display = 'flex';
 
-  // Bonus — visible si débloqué (après fin nightmare)
-  if (saveData.bonusUnlocked || saveData.nightmareCompleted) {
+  // Bonus — visible uniquement si nightmare terminé
+  if (saveData.nightmareCompleted) {
     btnBonus.style.display = 'flex';
   }
 
