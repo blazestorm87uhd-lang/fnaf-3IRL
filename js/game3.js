@@ -931,8 +931,8 @@
     state.callMuted = true; stopSound(snd.call);
     btnMuteCall.classList.add('hidden'); state.callPlaying = false;
     if (snd.musicBox && state.selectedRoom === 'etage-2') snd.musicBox.volume = 0.65;
-    // Nuit 3 : l'ambiance démarre dès que l'appel est coupé (manuel ou auto)
-    if (!state.ambiancePaused) startAmbiance();
+    // Nuit 3 : l'ambiance démarre immédiatement si l'appel est coupé (manette ou souris)
+    startAmbiance();
     startMamaCoco();
   });
 
