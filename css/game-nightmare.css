@@ -1,0 +1,78 @@
+/* ═══════════════════════════════════════════
+   GAME-NIGHTMARE.CSS
+════════════════════════════════════════════ */
+
+.nm-title {
+  color: #cc2020 !important;
+  text-shadow: 0 0 40px rgba(200,30,30,0.5), 0 0 80px rgba(200,30,30,0.2) !important;
+  animation: glitchClip1 5s infinite, flicker 6s infinite !important;
+}
+.nm-glow { text-shadow: 0 0 20px rgba(200,30,30,0.4); }
+
+/* Scanlines rouge sur l'écran nightmare */
+#screen-game .game-scanlines {
+  background: repeating-linear-gradient(
+    to bottom,
+    transparent 0px, transparent 3px,
+    rgba(200,30,30,0.04) 3px, rgba(200,30,30,0.04) 4px
+  );
+}
+
+/* Générique de fin */
+#screen-credits {
+  position: fixed; inset: 0; background: #000; z-index: 9000;
+  display: flex; flex-direction: column;
+  align-items: center; justify-content: center;
+  overflow: hidden;
+}
+.credits-text {
+  position: absolute;
+  text-align: center;
+  font-family: var(--font-mono);
+  display: flex; flex-direction: column; gap: 10px;
+  opacity: 0;
+  transition: opacity 1.2s ease;
+  pointer-events: none;
+}
+.credits-text.visible { opacity: 1; }
+.credits-label {
+  font-size: clamp(10px, 1.5vw, 13px);
+  color: #444;
+  letter-spacing: 4px;
+  text-transform: uppercase;
+}
+.credits-name {
+  font-family: var(--font-title);
+  font-size: clamp(16px, 2.5vw, 24px);
+  color: #aaa;
+  letter-spacing: 3px;
+}
+.credits-name.highlight { color: #c0a010; }
+.credits-sub {
+  font-size: clamp(9px, 1.2vw, 11px);
+  color: #333;
+  letter-spacing: 2px;
+  line-height: 1.8;
+  margin-top: 4px;
+}
+.credits-final {
+  font-family: var(--font-title);
+  font-size: clamp(18px, 3vw, 28px);
+  color: #cc2020;
+  letter-spacing: 4px;
+  text-shadow: 0 0 20px rgba(200,30,30,0.4);
+}
+.credits-continue {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: #555;
+  letter-spacing: 4px;
+  margin-top: 32px;
+  cursor: pointer;
+  padding: 12px 24px;
+  border: 0.5px solid rgba(255,255,255,0.1);
+  pointer-events: all;
+  transition: color 0.2s, border-color 0.2s;
+  animation: blink 1.4s step-start infinite;
+}
+.credits-continue:hover { color: #aaa; border-color: rgba(255,255,255,0.3); }
