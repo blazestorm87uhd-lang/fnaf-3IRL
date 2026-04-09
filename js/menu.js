@@ -246,16 +246,16 @@ function initMenu() {
   }
 
   // ── Sauvegarde & boutons ──
-  const hasAnyData = saveData.nightCompleted > 0 || saveData.currentNight !== null;
-  // Continue : nuit max 3 (nightmare = nuit séparée, pas une continuation)
-  // Continue : nuit max 3 (nightmare = séparé)
-  const rawNext  = saveData.currentNight !== null ? saveData.currentNight : saveData.nightReached;
+  // Continue : grisé si première visite (aucune progression réelle)
+  const hasProgress = saveData.nightCompleted > 0
+    || saveData.currentNight !== null
+    || (saveData.nightReached && saveData.nightReached > 1);
+  const rawNext   = saveData.currentNight !== null ? saveData.currentNight : saveData.nightReached;
   const nextNight = Math.min(rawNext || 1, 3);
 
-  // Continue — grisé si aucune donnée
-  if (hasAnyData && nextNight && nextNight >= 1) {
+  if (hasProgress) {
     btnContinue.classList.remove('disabled');
-    continueNote.textContent = `reprendre — nuit ${nextNight}`;
+    continueNote.textContent = 'reprendre — nuit ' + nextNight;
     continueNote.style.color = '#555';
   } else {
     btnContinue.classList.add('disabled');
