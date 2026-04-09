@@ -99,10 +99,17 @@ body.bonus-page {
 .robot-card:hover { border-color: rgba(42,138,42,0.3); }
 .robot-img {
   flex-shrink: 0;
+  width: 80px;
+  height: 80px;
   object-fit: cover;
+  object-position: center top;
+  border: 0.5px solid rgba(255,255,255,0.07);
 }
-.robot-img.landscape { width: 90px; height: 60px; object-position: center top; }
-.robot-img.portrait  { width: 40px; height: 60px; object-fit: contain; object-position: center; }
+.robot-img.portrait {
+  object-fit: contain;
+  object-position: center center;
+  background: rgba(255,255,255,0.02);
+}
 
 .robot-info { flex: 1; }
 .robot-name {
@@ -164,3 +171,10 @@ body.bonus-page {
   .robot-img.landscape { width: 100%; height: 120px; }
   .robot-img.portrait  { width: 60px; height: 90px; }
 }
+
+/* ══ Mode TV — crédits ══ */
+body.display-tv .credits-label  { font-size: clamp(13px, 2vw, 16px); }
+body.display-tv .credits-name   { font-size: clamp(22px, 3.5vw, 36px); }
+body.display-tv .credits-sub    { font-size: clamp(12px, 1.8vw, 16px); }
+body.display-tv .credits-final  { font-size: clamp(24px, 4vw, 40px); }
+body.display-tv .credits-continue { font-size: 15px; padding: 16px 32px; }
