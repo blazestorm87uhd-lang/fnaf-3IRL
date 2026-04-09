@@ -13,7 +13,7 @@
   const NIGHT_NUMBER     = 'nightmare';
   const NIGHT_DURATION   = 10 * 60 * 1000;
   const HOURS            = ['12 AM','1 AM','2 AM','3 AM','4 AM','5 AM','6 AM'];
-  const BRAD_VISIBLE_HOUR= 1;
+  const BRAD_VISIBLE_HOUR= 0;  // Actif dès 12AM
   const JUMPSCARE_DUR    = 4000;
   const DEATH_MIN        = 6000;
   const REBOOT_ALL_DUR   = 17000;
@@ -657,7 +657,55 @@
     if(S.over) return; S.over=true; cleanup();
     screenGame.classList.add('hidden');
     Save.completeNight('nightmare');
-    showCredits();
+    showNightEndAnimation();
+  }
+
+  function showNightEndAnimation(){
+    // Afficher écran nightend (même structure que les autres nuits)
+    let endScr = document.getElementById('screen-nightend-nm');
+    if(!endScr){
+      endScr = document.createElement('div');
+      endScr.id = 'screen-nightend-nm';
+      endScr.style.cssText = 'position:fixed;inset:0;background:#000;z-index:800;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;';
+      const timeEl = document.createElement('div');
+      timeEl.id = 'nm-end-time';
+      timeEl.style.cssText = "font-family:'Cinzel',serif;font-size:clamp(36px,7vw,72px);font-weight:700;color:#cc2020;letter-spacing:8px;";
+      timeEl.innerHTML = '<span id="nm-end-number">5</span> AM';
+      const nightEl = document.createElement('div');
+      nightEl.style.cssText = "font-family:'Cinzel',serif;font-size:clamp(20px,4vw,40px);font-weight:700;color:#8a1010;letter-spacing:10px;";
+      nightEl.textContent = 'NIGHTMARE';
+      endScr.appendChild(timeEl); endScr.appendChild(nightEl);
+      document.body.appendChild(endScr);
+    }
+    endScr.style.display='flex';
+
+    // Démarrer merci.m4a en fondu progressif
+    if(SND.merci){
+      SND.merci.volume=0; SND.merci.play().catch(()=>{});
+      let vol=0;
+      const fi=setInterval(()=>{
+        vol=Math.min(vol+0.02,0.75); SND.merci.volume=vol;
+        if(vol>=0.75) clearInterval(fi);
+      },80);
+    }
+
+    // Animation 5→6AM
+    const numEl = document.getElementById('nm-end-number');
+    if(numEl){
+      setTimeout(()=>{
+        numEl.style.cssText='display:inline-block;transition:all 1.4s ease;opacity:0;transform:translateY(40px);';
+        setTimeout(()=>{
+          numEl.textContent='6';
+          numEl.style.cssText='display:inline-block;transition:all 1.4s ease;opacity:1;transform:translateY(0);';
+        },1600);
+      },800);
+    }
+
+    // Après animation → générique
+    setTimeout(()=>{
+      endScr.style.transition='opacity 1s'; endScr.style.opacity='0';
+      setTimeout(()=>{ endScr.remove(); showCredits(); },1100);
+    },5000);
   }
 
   // ── DEV SHORTCUT ──
@@ -671,19 +719,20 @@
     const sc=screenCredits;
     sc.classList.remove('hidden');
 
-    // Lancer merci.m4a (continue même après le générique)
-    if(SND.merci){ SND.merci.volume=0.75; SND.merci.play().catch(()=>{}); }
+    // merci.m4a déjà lancé dans showNightEndAnimation avec fondu progressif
+    // On ne le relance pas si déjà en cours
+    if(SND.merci && SND.merci.paused){ SND.merci.volume=0.75; SND.merci.play().catch(()=>{}); }
 
     // Séquence de slides
     const slides = [
       { label:'Développé par :', name:'IMAGINe Studio',     dur:5500 },
       { label:'Développé par :', name:'HwR Engine',          dur:5500 },
-      { label:'Musique par :',   name:'lılyº',               dur:4000, highlight:true },
+      { label:'Musique par :',   name:'lılyO',               dur:4500, highlight:true },
       { label:'Effets sonores par :', name:'The Sounds Resource', sub:'Website by Skyla Doragono', dur:4000 },
       { label:'Contribution aux effets sonores :', name:'MilesTheCreator, IndigoPupper, Cooper', dur:5500 },
-      { label:'Le mec au téléphone :', name:'H.D.N',         dur:3000 },
-      { label:'Propulsé par :',  name:'Netlify',              dur:2000 },
-      { label:'Propulsé par :',  name:'Mixvibes',             dur:2000 },
+      { label:'Le mec au téléphone :', name:'H.D.N',         dur:4000 },
+      { label:'Propulsé par :',  name:'Netlify',              dur:3000 },
+      { label:'Échantillon par :',  name:'Mixvibes',             dur:3000 },
       { label:null, name:null, special:'ia', dur:5000 },
       { label:null, name:null, special:'inspiration', dur:5000 },
       { label:null, name:null, special:'final', dur:0 },
