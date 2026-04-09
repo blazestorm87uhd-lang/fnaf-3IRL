@@ -427,23 +427,31 @@ function initMenu() {
 
 
 function _setupOptionsButton() {
-  let btn = document.getElementById('btn-options');
+  var btn = document.getElementById('btn-options');
   if (!btn) {
     btn = document.createElement('button');
     btn.id = 'btn-options';
-    btn.style.cssText = `
-      position:fixed;bottom:44px;right:18px;z-index:8000;
-      font-family:'Share Tech Mono',monospace;font-size:clamp(14px,2vw,18px);
-      font-weight:700;color:#fff;background:transparent;border:none;
-      border-bottom:0.5px solid rgba(255,255,255,0.07);
-      padding:10px 0;cursor:pointer;letter-spacing:2px;
-      transition:color .15s;text-align:left;display:block;
-    `;
-    btn.innerHTML = '<span style="color:var(--red,#cc2020);margin-right:6px;opacity:0;">›</span>Options<div style="font-family:'Share Tech Mono',monospace;font-size:9px;color:#444;font-weight:400;letter-spacing:2px;margin-top:3px;">affichage · contrôles · audio</div>';
+    // Pas de 'Share Tech Mono' dans cssText pour éviter les conflits de quotes
+    btn.setAttribute('style', [
+      'position:fixed', 'bottom:44px', 'right:18px', 'z-index:8000',
+      "font-family:var(--font-mono,'Share Tech Mono',monospace)",
+      'font-size:clamp(14px,2vw,18px)', 'font-weight:700', 'color:#fff',
+      'background:transparent', 'border:none',
+      'border-bottom:0.5px solid rgba(255,255,255,0.07)',
+      'padding:10px 0', 'cursor:pointer', 'letter-spacing:2px',
+      'transition:color .15s', 'text-align:left', 'display:block'
+    ].join(';'));
+    var title = document.createElement('div');
+    title.textContent = 'Options';
+    var sub = document.createElement('div');
+    sub.setAttribute('style', 'font-size:9px;color:#444;font-weight:400;letter-spacing:2px;margin-top:3px;');
+    sub.textContent = 'affichage · contrôles · audio';
+    btn.appendChild(title);
+    btn.appendChild(sub);
     document.body.appendChild(btn);
   }
   btn.style.display = 'block';
-  btn.onclick = () => {
+  btn.onclick = function() {
     if (typeof window.openOptionsModal === 'function') window.openOptionsModal();
   };
 }
