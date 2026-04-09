@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no" />
+  <title>Three Nights at Chez Moi — Bonus</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700&family=Share+Tech+Mono&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="css/global.css" />
+  <link rel="stylesheet" href="css/bonus.css" />
+</head>
+<body class="bonus-page">
+
+  <div id="bonus-noise"></div>
+  <div class="bonus-scanlines"></div>
+
+  <!-- HEADER -->
+  <div id="bonus-header">
+    <button id="bonus-back" title="Retour au menu">
+      <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5">
+        <path d="M10 3L5 8l5 5" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+      Retour
+    </button>
+    <div id="bonus-title">BONUS</div>
+    <div style="width:80px;"></div>
+  </div>
+
+  <!-- NAVIGATION SECTIONS -->
+  <div id="bonus-nav">
+    <button class="bonus-nav-btn active" data-section="custom">Custom Night</button>
+    <button class="bonus-nav-btn" data-section="credits">Générique</button>
+    <button class="bonus-nav-btn disabled" data-section="coming">Bientôt...</button>
+  </div>
+
+  <!-- SECTION : CUSTOM NIGHT -->
+  <div id="section-custom" class="bonus-section active">
+    <div class="bonus-section-title">Custom Night</div>
+    <div class="bonus-section-sub">Ajuste la difficulté de chaque robot de 1 à 10.</div>
+
+    <div id="custom-robots">
+
+      <div class="robot-card" data-robot="brad">
+        <img src="assets/images/brad-normal.png" alt="Brad Bitt" class="robot-img landscape" />
+        <div class="robot-info">
+          <div class="robot-name">Brad Bitt</div>
+          <div class="robot-level-wrap">
+            <input type="range" class="robot-slider" id="diff-brad" min="1" max="10" value="5" />
+            <span class="robot-level-val" id="diff-brad-val">5</span>
+          </div>
+          <div class="robot-desc" id="diff-brad-desc">Niveau modéré</div>
+        </div>
+      </div>
+
+      <div class="robot-card" data-robot="frank">
+        <img src="assets/images/frank-normal.png" alt="Frank Lebœuf" class="robot-img landscape" />
+        <div class="robot-info">
+          <div class="robot-name">Frank Lebœuf</div>
+          <div class="robot-level-wrap">
+            <input type="range" class="robot-slider" id="diff-frank" min="1" max="10" value="5" />
+            <span class="robot-level-val" id="diff-frank-val">5</span>
+          </div>
+          <div class="robot-desc" id="diff-frank-desc">Niveau modéré</div>
+        </div>
+      </div>
+
+      <div class="robot-card" data-robot="mama">
+        <img src="assets/images/mama-coco-normal.png" alt="Mama Coco" class="robot-img portrait" />
+        <div class="robot-info">
+          <div class="robot-name">Mama Coco</div>
+          <div class="robot-level-wrap">
+            <input type="range" class="robot-slider" id="diff-mama" min="1" max="10" value="5" />
+            <span class="robot-level-val" id="diff-mama-val">5</span>
+          </div>
+          <div class="robot-desc" id="diff-mama-desc">Niveau modéré</div>
+        </div>
+      </div>
+
+    </div>
+
+    <div id="custom-actions">
+      <button class="bonus-action-btn secondary" id="custom-reset">Réinitialiser</button>
+      <button class="bonus-action-btn primary" id="custom-start">▶ Lancer la nuit</button>
+    </div>
+  </div>
+
+  <!-- SECTION : GÉNÉRIQUE -->
+  <div id="section-credits" class="bonus-section" style="display:none;">
+    <div class="bonus-section-title">Générique de fin</div>
+    <div class="bonus-section-sub">Revisionner le générique de fin du jeu.</div>
+    <button class="bonus-action-btn primary" id="replay-credits" style="margin-top:32px;">▶ Lancer le générique</button>
+  </div>
+
+  <!-- SECTION : BIENTÔT -->
+  <div id="section-coming" class="bonus-section" style="display:none;">
+    <div class="bonus-section-title" style="color:#555;">Bientôt...</div>
+    <div class="bonus-section-sub" style="color:#333;">D'autres bonus arriveront prochainement.</div>
+  </div>
+
+  <!-- OVERLAY GÉNÉRIQUE (replay) -->
+  <div id="credits-overlay" style="display:none;position:fixed;inset:0;z-index:9000;background:#000;"></div>
+
+  <audio id="audio-bonus" src="assets/audio/bonus.mp3" loop preload="auto"></audio>
+  <audio id="audio-merci" src="assets/audio/merci.m4a" preload="auto"></audio>
+
+  <script src="js/save.js"></script>
+  <script src="js/options.js"></script>
+  <script src="js/bonus.js"></script>
+</body>
+</html>
