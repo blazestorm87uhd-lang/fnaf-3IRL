@@ -1,189 +1,144 @@
 /* ═══════════════════════════════════════════
-   GAMEPAD-OVERLAY.JS
-   - Overlay contrôles affiché AVANT la nuit (sur new game / continue)
-   - S'affiche sur l'écran night start (12AM Night 1...)
-   - Joueur appuie sur A/X pour démarrer
-   Emplacement : js/gamepad-overlay.js ✓
+   GAMEPAD-OVERLAY.JS — js/gamepad-overlay.js ✓
+   Overlay contrôles manette affiché AVANT de lancer une nuit
+   (déclenché depuis menu.js via window.showGamepadControlsOverlay)
 ════════════════════════════════════════════ */
-
 (() => {
-
-  function isGamepadMode() {
-    try { return localStorage.getItem('fnaf_opt_controlType') === 'gamepad'; } catch(e) { return false; }
-  }
-  function getGpType() {
-    try { return localStorage.getItem('fnaf_opt_gamepadType') || 'xbox'; } catch(e) { return 'xbox'; }
-  }
   function getGP() {
     try {
       const all = navigator.getGamepads();
       for (let i = 0; i < all.length; i++) if (all[i]?.connected) return all[i];
-    } catch(e) {}
-    return null;
+    } catch(e) {} return null;
+  }
+  function getGpType() {
+    try { return localStorage.getItem('fnaf_opt_gamepadType') || 'xbox'; } catch(e) { return 'xbox'; }
   }
 
-  // Mappings visuels par type de manette
   const CONTROLS = {
-    ps: [
-      { icon: '✕',   label: 'Valider / Ouvrir / Démarrer' },
-      { icon: '○',   label: 'Rembobiner boîte à musique (maintenir)' },
-      { icon: '□',   label: 'Mute appel en cours' },
-      { icon: '△',   label: 'Maintenance' },
-      { icon: 'L1',  label: 'Play Audio' },
-      { icon: '←→↑↓', label: 'Naviguer entre caméras' },
+    ps:     [
+      { icon:'✕',   desc:'Valider / Ouvrir / Démarrer' },
+      { icon:'○',   desc:'Rembobiner boîte à musique (maintenir)' },
+      { icon:'□',   desc:'Mute appel en cours' },
+      { icon:'△',   desc:'Panneau Maintenance' },
+      { icon:'L1',  desc:'Play Audio' },
+      { icon:'D-pad', desc:'Naviguer entre caméras' },
     ],
-    xbox: [
-      { icon: 'A',   label: 'Valider / Ouvrir / Démarrer' },
-      { icon: 'B',   label: 'Rembobiner boîte à musique (maintenir)' },
-      { icon: 'X',   label: 'Mute appel en cours' },
-      { icon: 'Y',   label: 'Maintenance' },
-      { icon: 'LB',  label: 'Play Audio' },
-      { icon: '←→↑↓', label: 'Naviguer entre caméras' },
+    xbox:   [
+      { icon:'A',   desc:'Valider / Ouvrir / Démarrer' },
+      { icon:'B',   desc:'Rembobiner boîte à musique (maintenir)' },
+      { icon:'X',   desc:'Mute appel en cours' },
+      { icon:'Y',   desc:'Panneau Maintenance' },
+      { icon:'LB',  desc:'Play Audio' },
+      { icon:'D-pad', desc:'Naviguer entre caméras' },
     ],
     switch: [
-      { icon: 'A',   label: 'Valider / Ouvrir / Démarrer' },
-      { icon: 'B',   label: 'Rembobiner boîte à musique (maintenir)' },
-      { icon: 'Y',   label: 'Mute appel en cours' },
-      { icon: 'X',   label: 'Maintenance' },
-      { icon: 'L',   label: 'Play Audio' },
-      { icon: '←→↑↓', label: 'Naviguer entre caméras' },
+      { icon:'A',   desc:'Valider / Ouvrir / Démarrer' },
+      { icon:'B',   desc:'Rembobiner boîte à musique (maintenir)' },
+      { icon:'Y',   desc:'Mute appel en cours' },
+      { icon:'X',   desc:'Panneau Maintenance' },
+      { icon:'L',   desc:'Play Audio' },
+      { icon:'D-pad', desc:'Naviguer entre caméras' },
     ],
   };
-
-  // Couleurs des badges selon manette
-  const GP_COLORS = {
-    ps:     { bg: '#003087', border: '#0070cc', accent: '#fff' },
-    xbox:   { bg: '#107c10', border: '#52b043', accent: '#fff' },
-    switch: { bg: '#e4000f', border: '#ff6b7a', accent: '#fff' },
+  const GP_STYLE = {
+    ps:     { bg:'#00307a', border:'#0066cc' },
+    xbox:   { bg:'#0a5c0a', border:'#3aa13a' },
+    switch: { bg:'#b50010', border:'#ff3a50' },
   };
 
-  function buildOverlay(gpType, onConfirm) {
-    const colors  = GP_COLORS[gpType] || GP_COLORS.xbox;
-    const bindings = CONTROLS[gpType] || CONTROLS.xbox;
-    const gpLabel = { ps: 'PlayStation', xbox: 'Xbox', switch: 'Nintendo Switch' }[gpType] || 'Manette';
-    const confirmBtn = gpType === 'ps' ? '✕' : 'A';
+  function buildOverlay(gpType, onNext) {
+    const binds  = CONTROLS[gpType] || CONTROLS.xbox;
+    const style  = GP_STYLE[gpType] || GP_STYLE.xbox;
+    const gpName = { ps:'PlayStation', xbox:'Xbox', switch:'Nintendo Switch' }[gpType] || 'Manette';
+    const confirmKey = gpType === 'ps' ? '✕' : 'A';
 
-    const overlay = document.createElement('div');
-    overlay.id = 'gp-controls-overlay';
-    overlay.style.cssText = `
-      position:fixed;inset:0;z-index:9500;
-      background:rgba(0,0,0,0.95);
-      display:flex;flex-direction:column;
-      align-items:center;justify-content:center;
-      gap:20px;
-      font-family:'Share Tech Mono',monospace;
+    const ov = document.createElement('div');
+    ov.id = 'gp-controls-overlay';
+    ov.style.cssText = `
+      position:fixed;inset:0;z-index:9800;background:rgba(0,0,0,0.96);
+      display:flex;flex-direction:column;align-items:center;justify-content:center;
+      gap:16px;font-family:'Share Tech Mono',monospace;
     `;
 
-    // Titre
     const title = document.createElement('div');
-    title.style.cssText = `font-family:'Cinzel',serif;font-size:13px;color:#888;letter-spacing:6px;text-align:center;`;
-    title.textContent = `CONTRÔLES — ${gpLabel.toUpperCase()}`;
-    overlay.appendChild(title);
+    title.style.cssText = `font-family:'Cinzel',serif;font-size:13px;color:#888;letter-spacing:6px;margin-bottom:6px;`;
+    title.textContent = `CONTRÔLES — ${gpName.toUpperCase()}`;
+    ov.appendChild(title);
 
-    // Séparateur
     const sep = document.createElement('div');
-    sep.style.cssText = `width:200px;height:0.5px;background:rgba(255,255,255,0.1);`;
-    overlay.appendChild(sep);
+    sep.style.cssText = `width:min(320px,80vw);height:0.5px;background:rgba(255,255,255,0.1);`;
+    ov.appendChild(sep);
 
-    // Liste des contrôles
     const list = document.createElement('div');
-    list.style.cssText = `display:flex;flex-direction:column;gap:8px;min-width:min(320px,85vw);`;
-
-    bindings.forEach(b => {
+    list.style.cssText = `display:flex;flex-direction:column;gap:7px;width:min(320px,80vw);`;
+    binds.forEach(b => {
       const row = document.createElement('div');
-      row.style.cssText = `display:flex;align-items:center;gap:14px;`;
-
+      row.style.cssText = `display:flex;align-items:center;gap:12px;`;
       const badge = document.createElement('div');
-      const isLong = b.icon.length > 2;
       badge.style.cssText = `
-        min-width:48px;height:34px;padding:0 6px;
-        background:${colors.bg};
-        border:1px solid ${colors.border};
-        border-radius:6px;
+        min-width:46px;height:32px;padding:0 6px;flex-shrink:0;
+        background:${style.bg};border:1px solid ${style.border};border-radius:5px;
         display:flex;align-items:center;justify-content:center;
-        font-size:${isLong ? '9px' : '13px'};
-        color:${colors.accent};
-        letter-spacing:${isLong ? '1px' : '0'};
-        flex-shrink:0;
-        box-shadow:0 0 8px ${colors.border}44;
+        font-size:${b.icon.length > 2 ? '9px' : '12px'};color:#fff;letter-spacing:1px;
       `;
       badge.textContent = b.icon;
-
       const lbl = document.createElement('div');
-      lbl.style.cssText = `font-size:10px;color:#666;letter-spacing:2px;line-height:1.4;`;
-      lbl.textContent = b.label;
-
-      row.appendChild(badge);
-      row.appendChild(lbl);
-      list.appendChild(row);
+      lbl.style.cssText = `font-size:10px;color:#666;letter-spacing:1px;`;
+      lbl.textContent = b.desc;
+      row.appendChild(badge); row.appendChild(lbl); list.appendChild(row);
     });
-    overlay.appendChild(list);
+    ov.appendChild(list);
 
-    // Séparateur bas
     const sep2 = document.createElement('div');
-    sep2.style.cssText = `width:200px;height:0.5px;background:rgba(255,255,255,0.1);margin-top:8px;`;
-    overlay.appendChild(sep2);
+    sep2.style.cssText = sep.style.cssText + 'margin-top:4px;';
+    ov.appendChild(sep2);
 
-    // Bouton continuer
-    const hint = document.createElement('div');
-    hint.style.cssText = `
-      font-size:10px;color:#444;letter-spacing:3px;text-align:center;
-      animation:blink 1.4s step-start infinite;
-      cursor:pointer;padding:10px 20px;
-      border:0.5px solid rgba(255,255,255,0.08);
-      transition:color 0.15s,border-color 0.15s;
+    const nextBtn = document.createElement('button');
+    nextBtn.style.cssText = `
+      font-family:'Share Tech Mono',monospace;font-size:11px;letter-spacing:4px;
+      color:#ccc;background:transparent;border:0.5px solid rgba(255,255,255,0.2);
+      padding:12px 32px;cursor:pointer;margin-top:4px;
+      transition:color .15s,border-color .15s;
     `;
-    hint.textContent = `APPUYER SUR ${confirmBtn} OU CLIQUER POUR CONTINUER`;
-    hint.onmouseenter = () => { hint.style.color='#aaa'; hint.style.borderColor='rgba(255,255,255,0.25)'; };
-    hint.onmouseleave = () => { hint.style.color='#444'; hint.style.borderColor='rgba(255,255,255,0.08)'; };
-    overlay.appendChild(hint);
+    nextBtn.textContent = `▶  SUIVANT  (${confirmKey})`;
+    nextBtn.onmouseenter = () => { nextBtn.style.color='#fff'; nextBtn.style.borderColor='rgba(255,255,255,0.5)'; };
+    nextBtn.onmouseleave = () => { nextBtn.style.color='#ccc'; nextBtn.style.borderColor='rgba(255,255,255,0.2)'; };
+    ov.appendChild(nextBtn);
 
-    // Auto-close + interactions
     let closed = false;
     function close() {
       if (closed) return; closed = true;
-      overlay.style.opacity = '0';
-      overlay.style.transition = 'opacity 0.3s';
-      setTimeout(() => { overlay.remove(); if (onConfirm) onConfirm(); }, 320);
+      clearInterval(gpInt);
+      ov.style.transition = 'opacity 0.3s';
+      ov.style.opacity = '0';
+      setTimeout(() => { ov.remove(); if (onNext) onNext(); }, 320);
     }
 
-    overlay.addEventListener('click', close);
+    nextBtn.addEventListener('click', close);
+    nextBtn.addEventListener('touchend', e => { e.preventDefault(); close(); });
 
-    // Manette
-    let prevBtn0 = false;
-    const gpInterval = setInterval(() => {
+    // Manette : A/X = suivant
+    let prevBtn = false;
+    const gpInt = setInterval(() => {
       const gp = getGP(); if (!gp) return;
       const pressed = gp.buttons[0]?.pressed;
-      if (pressed && !prevBtn0) { clearInterval(gpInterval); close(); }
-      prevBtn0 = pressed;
+      if (pressed && !prevBtn) close();
+      prevBtn = pressed;
     }, 50);
 
-    // Auto-close 10s
-    setTimeout(() => { clearInterval(gpInterval); close(); }, 10000);
+    // Auto-close 12s
+    setTimeout(() => close(), 12000);
 
-    return overlay;
+    return ov;
   }
 
-  // ── API publique ──────────────────────────
-  // Appelée par menu.js quand joueur clique new game/continue
-  // onConfirm = callback après fermeture (lancer le jeu)
-  window.showGamepadControlsOverlay = function(onConfirm) {
+  // API publique — appelée depuis menu.js
+  window.showGamepadControlsOverlay = function(onNext) {
     const gp = getGP();
-    if (!gp) { if (onConfirm) onConfirm(); return; } // Pas de manette → direct
-    const overlay = buildOverlay(getGpType(), onConfirm);
-    document.body.appendChild(overlay);
-  };
-
-  // Appelée par les fichiers de jeu pour afficher sur night start
-  // (uniquement si manette connectée ET mode manette)
-  window.showGamepadControlsIfNeeded = function(onDone) {
-    const gp = getGP();
-    if (gp && isGamepadMode()) {
-      const overlay = buildOverlay(getGpType(), onDone);
-      document.body.appendChild(overlay);
-    } else {
-      if (onDone) onDone();
-    }
+    if (!gp) { if (onNext) onNext(); return; }
+    const existing = document.getElementById('gp-controls-overlay');
+    if (existing) existing.remove();
+    document.body.appendChild(buildOverlay(getGpType(), onNext));
   };
 
 })();
