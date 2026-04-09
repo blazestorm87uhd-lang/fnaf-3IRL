@@ -167,6 +167,11 @@ function openOptionsModal() {
       window._vol_general = Opts.volGeneral();
       window._vol_effects = Opts.volEffects();
       window._vol_voices  = Opts.volVoices();
+      // Appliquer immédiatement aux audios en cours (menu, ambiance...)
+      var gv = window._vol_general;
+      document.querySelectorAll('audio').forEach(function(a) {
+        if (!a.paused) a.volume = Math.min(1, gv);
+      });
     });
     sl.addEventListener('change', function() {
       if (testSrc) {
