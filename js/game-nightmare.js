@@ -727,14 +727,14 @@
     const slides = [
       { label:'Développé par :', name:'IMAGINe Studio',     dur:5500, keepLabel:true },
       { label:'Développé par :', name:'HwR Engine',          dur:5500, keepLabel:false },
-      { label:'Musique par :',   name:'lılyO',               dur:4000, highlight:true },
-      { label:'Effets sonores par :', name:'The Sounds Resource', sub:'Website by Skyla Doragono', dur:4000 },
+      { label:'Musique par :',   name:'lılyo',               dur:4000, highlight:true },
+      { label:'Échantillon par :',  name:'Mixvibes',             dur:4000 },
+      { label:'Effets sonores par :', name:'The Sounds Resource', sub:'Website by Skyla Doragono', dur:5000 },
       { label:'Contribution aux effets sonores :', name:'MilesTheCreator, IndigoPupper, Cooper', dur:5500 },
-      { label:'Le mec au téléphone :', name:'H.D.N',         dur:3000 },
-      { label:'Propulsé par :',  name:'Netlify',              dur:2000 },
-      { label:'Propulsé par :',  name:'Mixvibes',             dur:2000 },
-      { label:null, name:null, special:'ia', dur:5000 },
-      { label:null, name:null, special:'inspiration', dur:5000 },
+      { label:'Le mec au téléphone :', name:'H.D.N',         dur:3500 },
+      { label:'Propulsé par :',  name:'Netlify',              dur:4000 },
+      { label:null, name:null, special:'ia', dur:6000 },
+      { label:null, name:null, special:'inspiration', dur:6000 },
       { label:null, name:null, special:'final', dur:0 },
     ];
 
