@@ -725,14 +725,14 @@
 
     // Séquence de slides
     const slides = [
-      { label:'Développé par :', name:'IMAGINe Studio',     dur:5500 },
-      { label:'Développé par :', name:'HwR Engine',          dur:5500 },
-      { label:'Musique par :',   name:'lılyo',               dur:4500, highlight:true },
-      { label:'Échantillon par :',  name:'Mixvibes',             dur:4000 },
-      { label:'Le mec au téléphone :', name:'H.D.N',         dur:4000 },
-      { label:'Effets sonores par :', name:'The Sounds Resource', sub:'Website by Skyla Doragono', dur:5000 },
+      { label:'Développé par :', name:'IMAGINe Studio',     dur:5500, keepLabel:true },
+      { label:'Développé par :', name:'HwR Engine',          dur:5500, keepLabel:false },
+      { label:'Musique par :',   name:'lılyO',               dur:4000, highlight:true },
+      { label:'Effets sonores par :', name:'The Sounds Resource', sub:'Website by Skyla Doragono', dur:4000 },
       { label:'Contribution aux effets sonores :', name:'MilesTheCreator, IndigoPupper, Cooper', dur:5500 },
-      { label:'Propulsé par :',  name:'Netlify',              dur:4500 },
+      { label:'Le mec au téléphone :', name:'H.D.N',         dur:3000 },
+      { label:'Propulsé par :',  name:'Netlify',              dur:2000 },
+      { label:'Propulsé par :',  name:'Mixvibes',             dur:2000 },
       { label:null, name:null, special:'ia', dur:5000 },
       { label:null, name:null, special:'inspiration', dur:5000 },
       { label:null, name:null, special:'final', dur:0 },
@@ -753,6 +753,8 @@
         showSlide(s);
       }
     }
+
+    let persistentLabel = null; // label "Développé par :" qui reste à l'écran
 
     function showSlide(s){
       const el = document.createElement('div');
@@ -781,7 +783,27 @@
         const btn = document.getElementById('credits-continue-btn');
         if(btn) btn.addEventListener('click',()=>{ window.location.href='index.html'; });
         return; // Pas d'auto-next
+      } else if(s.keepLabel) {
+        // Label reste, seul le nom fait fade in
+        // Afficher/garder le label en position fixe
+        if(!persistentLabel) {
+          persistentLabel = document.createElement('div');
+          persistentLabel.className = 'credits-label';
+          persistentLabel.style.cssText = 'position:absolute;top:calc(50% - 60px);left:50%;transform:translateX(-50%);white-space:nowrap;';
+          persistentLabel.textContent = s.label;
+          sc.appendChild(persistentLabel);
+        }
+        // Juste le nom
+        el.innerHTML = `<div class="credits-name${s.highlight?' highlight':''}">${s.name}</div>`;
+        el.style.marginTop = '20px';
+        sc.appendChild(el);
+        currentEl = el;
+        setTimeout(()=>el.classList.add('visible'), 50);
+        if(s.dur > 0) setTimeout(nextSlide, s.dur);
+        return;
       } else {
+        // Si on était en mode keepLabel, supprimer le label persistant
+        if(persistentLabel && !s.label) { persistentLabel.remove(); persistentLabel = null; }
         el.innerHTML = `
           ${s.label ? `<div class="credits-label">${s.label}</div>` : ''}
           <div class="credits-name${s.highlight?' highlight':''}${!s.label?' credits-final':''}">${s.name}</div>
@@ -808,6 +830,16 @@
       if(localStorage.getItem('fnaf_irl_rue_visited')==='1') S.rueVisited=true;
     }catch(e){}
     if(!S.etage2Visited&&roomEtage2) roomEtage2.classList.add('first-visit');
+
+    // Adapter le texte si Custom Night
+    try {
+      if (localStorage.getItem('fnaf_custom_active')) {
+        const nsTime = screenStart.querySelector('.ns-time');
+        const nsNight = screenStart.querySelector('.ns-night');
+        if (nsNight) nsNight.textContent = 'CUSTOM NIGHT';
+        if (nsTime) nsTime.textContent = '12 AM';
+      }
+    } catch(e) {}
 
     ps(SND.start,0.8);
     setTimeout(()=>{
