@@ -3,12 +3,18 @@
 ════════════════════════════════════════════ */
 (() => {
 
-  // ── Musique bonus ──
+  // ── Musique bonus — lancer après interaction (autoplay policy) ──
   const audioBonus = document.getElementById('audio-bonus');
-  if (audioBonus) {
+  function startBonusMusic() {
+    if (!audioBonus || !audioBonus.paused) return;
     audioBonus.volume = window._vol_general !== undefined ? window._vol_general * 0.6 : 0.6;
     audioBonus.play().catch(() => {});
   }
+  // Essayer immédiatement (fonctionne si on vient de cliquer sur Bonus)
+  startBonusMusic();
+  // Fallback sur premier clic/touch si autoplay bloqué
+  document.addEventListener('click', startBonusMusic, { once: true });
+  document.addEventListener('touchend', startBonusMusic, { once: true });
 
   // ── Retour au menu ──
   document.getElementById('bonus-back').addEventListener('click', () => {
@@ -132,8 +138,8 @@
     overlay.appendChild(closeBtn);
 
     const SLIDES = [
-      { label:'Développé par :', name:'IMAGINe Studio', dur:5500 },
-      { label:'Développé par :', name:'HwR Engine', dur:5500 },
+      { label:'Développé par :', name:'IMAGINe Studio', dur:5500, keepLabel:true },
+      { label:'Développé par :', name:'HwR Engine', dur:5500, keepLabel:false },
       { label:'Musique par :', name:'lılyO', dur:4000, highlight:true },
       { label:'Effets sonores par :', name:'The Sounds Resource', sub:'Website by Skyla Doragono', dur:4000 },
       { label:'Contribution aux effets sonores :', name:'MilesTheCreator, IndigoPupper, Cooper', dur:5500 },
@@ -152,9 +158,24 @@
       if (cur) { cur.style.opacity='0'; setTimeout(()=>{ cur?.remove(); cur=null; show(s); },1300); }
       else show(s);
     }
+    let pLabel = null;
     function show(s) {
       const el = document.createElement('div');
       el.style.cssText = 'position:absolute;text-align:center;font-family:\'Share Tech Mono\',monospace;display:flex;flex-direction:column;gap:10px;opacity:0;transition:opacity 1.2s ease;padding:0 24px;';
+      if (s.keepLabel) {
+        if (!pLabel) {
+          pLabel = document.createElement('div');
+          pLabel.style.cssText = 'position:absolute;top:calc(50% - 60px);left:50%;transform:translateX(-50%);font-size:clamp(9px,1.2vw,11px);color:#444;letter-spacing:4px;white-space:nowrap;';
+          pLabel.textContent = s.label;
+          overlay.appendChild(pLabel);
+        }
+        el.innerHTML = '<div style="font-family:\'Cinzel\',serif;font-size:clamp(16px,2.5vw,24px);color:#aaa;letter-spacing:3px;margin-top:20px;">' + s.name + '</div>';
+        overlay.appendChild(el); cur = el;
+        setTimeout(function(){el.style.opacity='1';}, 50);
+        if (s.dur > 0) setTimeout(next, s.dur);
+        return;
+      }
+      if (pLabel && !s.keepLabel) { pLabel.remove(); pLabel = null; }
       if (s.special==='ia') {
         el.innerHTML = '<div style="font-size:clamp(10px,1.5vw,13px);color:#444;letter-spacing:2px;line-height:2;max-width:340px;">Ce jeu a été développé avec l\'aide de l\'intelligence artificielle.<br>Les idées, la conception et la direction créative<br>restent entièrement humaines.</div>';
       } else if (s.special==='inspiration') {
