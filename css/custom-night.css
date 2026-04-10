@@ -1,0 +1,53 @@
+/* ═══════════════════════════════════════════
+   CUSTOM-NIGHT.CSS
+   Styles propres à la Custom Night
+════════════════════════════════════════════ */
+
+/* Écran night start — vert au lieu de rouge */
+#screen-nightstart .ns-time,
+#screen-nightstart .ns-night {
+  color: #2a8a2a !important;
+  text-shadow: 0 0 20px rgba(42,138,42,0.4) !important;
+  animation: none !important;
+}
+
+/* HUD heure — vert */
+#hud-hour  { color: #2a8a2a !important; }
+#hud-night { color: #1a5a1a !important; font-size: 11px; }
+
+/* Rec dot — vert */
+.rec-dot {
+  background: #2a8a2a !important;
+  box-shadow: 0 0 8px rgba(42,138,42,0.6) !important;
+}
+
+/* Scanlines vertes légères */
+#screen-game .game-scanlines {
+  background: repeating-linear-gradient(
+    to bottom,
+    transparent 0px, transparent 3px,
+    rgba(42,138,42,0.03) 3px, rgba(42,138,42,0.03) 4px
+  );
+}
+
+/* Badge difficulté en haut du panneau droit */
+#custom-diff-badge {
+  font-family: var(--font-mono);
+  font-size: 9px;
+  letter-spacing: 3px;
+  color: #2a8a2a;
+  text-align: right;
+  padding: 4px 0 8px;
+  border-bottom: 0.5px solid rgba(42,138,42,0.15);
+}
+
+/* Gate CUSTOM NIGHT */
+#screen-play-gate .gate-title {
+  color: #2a8a2a !important;
+  text-shadow: 0 0 30px rgba(42,138,42,0.4) !important;
+  animation: none !important;
+}
+#screen-play-gate .gate-sub {
+  color: #2a8a2a !important;
+  animation: blink 2s step-start infinite;
+}
