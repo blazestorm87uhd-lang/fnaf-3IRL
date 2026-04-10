@@ -727,14 +727,14 @@
     const slides = [
       { label:'Développé par :', name:'IMAGINe Studio',     dur:5500, keepLabel:true },
       { label:'Développé par :', name:'HwR Engine',          dur:5500, keepLabel:false },
-      { label:'Musique par :',   name:'lılyo',               dur:4000, highlight:true },
-      { label:'Échantillon par :',  name:'Mixvibes',             dur:4000 },
-      { label:'Effets sonores par :', name:'The Sounds Resource', sub:'Website by Skyla Doragono', dur:5000 },
+      { label:'Musique par :',   name:'lılyO',               dur:4000, highlight:true },
+      { label:'Effets sonores par :', name:'The Sounds Resource', sub:'Website by Skyla Doragono', dur:4000 },
       { label:'Contribution aux effets sonores :', name:'MilesTheCreator, IndigoPupper, Cooper', dur:5500 },
-      { label:'Le mec au téléphone :', name:'H.D.N',         dur:3500 },
-      { label:'Propulsé par :',  name:'Netlify',              dur:4000 },
-      { label:null, name:null, special:'ia', dur:6000 },
-      { label:null, name:null, special:'inspiration', dur:6000 },
+      { label:'Le mec au téléphone :', name:'H.D.N',         dur:3000 },
+      { label:'Propulsé par :',  name:'Netlify',              dur:2000 },
+      { label:'Propulsé par :',  name:'Mixvibes',             dur:2000 },
+      { label:null, name:null, special:'ia', dur:5000 },
+      { label:null, name:null, special:'inspiration', dur:5000 },
       { label:null, name:null, special:'final', dur:0 },
     ];
 
@@ -744,6 +744,14 @@
     function nextSlide(){
       if(i >= slides.length) return;
       const s = slides[i++];
+
+      // Si le slide suivant n'est plus en mode keepLabel, faire disparaître le label persistant
+      const willKeepLabel = s.keepLabel === true;
+      if(!willKeepLabel && persistentLabel) {
+        persistentLabel.style.transition = 'opacity 0.8s ease';
+        persistentLabel.style.opacity = '0';
+        setTimeout(()=>{ if(persistentLabel){ persistentLabel.remove(); persistentLabel=null; } }, 900);
+      }
 
       // Fade out l'élément précédent
       if(currentEl){
@@ -802,8 +810,6 @@
         if(s.dur > 0) setTimeout(nextSlide, s.dur);
         return;
       } else {
-        // Si on était en mode keepLabel, supprimer le label persistant
-        if(persistentLabel && !s.label) { persistentLabel.remove(); persistentLabel = null; }
         el.innerHTML = `
           ${s.label ? `<div class="credits-label">${s.label}</div>` : ''}
           <div class="credits-name${s.highlight?' highlight':''}${!s.label?' credits-final':''}">${s.name}</div>
