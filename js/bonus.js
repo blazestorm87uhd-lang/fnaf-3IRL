@@ -107,7 +107,7 @@
     if (audioBonus) audioBonus.pause();
     document.body.style.transition = 'opacity 0.3s';
     document.body.style.opacity = '0';
-    setTimeout(() => { window.location.href = 'game-nightmare.html'; }, 300);
+    setTimeout(() => { window.location.href = 'custom-night.html'; }, 300);
   });
 
   // ══════════════════════════════════════
@@ -155,7 +155,13 @@
     function next() {
       if (i >= SLIDES.length) return;
       const s = SLIDES[i++];
-      if (cur) { cur.style.opacity='0'; setTimeout(()=>{ cur?.remove(); cur=null; show(s); },1300); }
+      // Supprimer le label persistant si le prochain slide ne le garde pas
+      if (!s.keepLabel && pLabel) {
+        pLabel.style.transition = 'opacity 0.8s ease';
+        pLabel.style.opacity = '0';
+        setTimeout(function(){ if(pLabel){ pLabel.remove(); pLabel=null; } }, 900);
+      }
+      if (cur) { cur.style.opacity='0'; setTimeout(function(){ if(cur){cur.remove();cur=null;} show(s); },1300); }
       else show(s);
     }
     let pLabel = null;
