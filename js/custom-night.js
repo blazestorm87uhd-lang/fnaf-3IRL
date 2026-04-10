@@ -13,24 +13,29 @@
     if (raw) CUSTOM = { ...CUSTOM, ...JSON.parse(raw) };
   } catch(e) {}
 
-  // ── Interpolation niveau 1-10 → valeurs de jeu ──
-  // niveau 1 = très facile, niveau 10 = impossible
+  // ── Interpolation niveau 2-10 → valeurs de jeu ──
+  // niveau 1 = INACTIF (pas d'impact sur le jeu)
+  // niveau 2 = très facile, niveau 10 = très difficile
   function lerp(min, max, level) {
-    return Math.round(min + (max - min) * ((level - 1) / 9));
+    if (level <= 1) return Infinity; // inactif
+    return Math.round(min + (max - min) * ((level - 2) / 8));
   }
 
-  // Brad : intervalle en ms (level 1 = très lent, level 10 = très rapide)
-  const BRAD_MOVE_BASE = lerp(40000, 8000,  CUSTOM.brad);
-  const BRAD_MOVE_MIN  = lerp(20000, 3000,  CUSTOM.brad);
+  // Brad : intervalle en ms
+  const BRAD_INACTIVE   = CUSTOM.brad <= 1;
+  const BRAD_MOVE_BASE  = BRAD_INACTIVE ? Infinity : lerp(40000, 8000,  CUSTOM.brad);
+  const BRAD_MOVE_MIN   = BRAD_INACTIVE ? Infinity : lerp(20000, 3000,  CUSTOM.brad);
 
-  // Frank : drain total en ms (level 1 = très lent, level 10 = très rapide)
-  const MB_DRAIN_MS    = lerp(200000, 60000, CUSTOM.frank);
+  // Frank : drain total en ms (Infinity = pas de drain)
+  const FRANK_INACTIVE  = CUSTOM.frank <= 1;
+  const MB_DRAIN_MS     = FRANK_INACTIVE ? Infinity : lerp(200000, 60000, CUSTOM.frank);
 
-  // Mama : intervalle de vérification en ms (level 1 = lent, level 10 = rapide)
-  const MAMA_CHECK_BASE = lerp(50000, 15000, CUSTOM.mama);
-  const MAMA_CHECK_MIN  = lerp(25000, 8000,  CUSTOM.mama);
-  const MAMA_MAX_LOOK_B = lerp(10000, 4000,  CUSTOM.mama);
-  const MAMA_MAX_LOOK_M = lerp(6000,  2500,  CUSTOM.mama);
+  // Mama : intervalle de vérification en ms
+  const MAMA_INACTIVE   = CUSTOM.mama <= 1;
+  const MAMA_CHECK_BASE = MAMA_INACTIVE ? Infinity : lerp(50000, 15000, CUSTOM.mama);
+  const MAMA_CHECK_MIN  = MAMA_INACTIVE ? Infinity : lerp(25000, 8000,  CUSTOM.mama);
+  const MAMA_MAX_LOOK_B = MAMA_INACTIVE ? Infinity : lerp(10000, 4000,  CUSTOM.mama);
+  const MAMA_MAX_LOOK_M = MAMA_INACTIVE ? Infinity : lerp(6000,  2500,  CUSTOM.mama);
 
   // ── Config fixe ──
   const NIGHT_NUMBER      = 'custom';
@@ -274,7 +279,11 @@
     if(S.selectedRoom===nr)selectRoom(nr);if(S.selectedRoom===BRAD_PATH[S.bradIndex-1])selectRoom(S.selectedRoom);schedBrad();
   }
   let bradTO=null;
-  function schedBrad(){if(S.over)return;clearTimeout(bradTO);const iv=bradInterval(),w=S.selectedRoom===BRAD_PATH[S.bradIndex];bradTO=setTimeout(moveBrad,(w?iv:iv*0.6)+Math.random()*4000);}
+  function schedBrad(){
+    if(S.over) return;
+    if(BRAD_INACTIVE) return; // Brad inactif : ne jamais bouger
+    clearTimeout(bradTO);const iv=bradInterval(),w=S.selectedRoom===BRAD_PATH[S.bradIndex];bradTO=setTimeout(moveBrad,(w?iv:iv*0.6)+Math.random()*4000);
+  }
 
   function trigStair(){if(S.stairActive)return;S.stairActive=true;stairAlert.classList.remove('hidden');ps(SND.pound,0.9);const total=Math.max(STAIR_M,STAIR_B-(STAIR_B-STAIR_M)*S.nightProgress);const start=Date.now();function tick(){if(!S.stairActive)return;const rem=Math.max(0,total-(Date.now()-start));stairFill.style.width=((rem/total)*100)+'%';if(rem<=0)trigJsBrad();else S.stairTimer=requestAnimationFrame(tick);}S.stairTimer=requestAnimationFrame(tick);}
   function resolveStair(){if(!S.stairActive)return;S.stairActive=false;cancelAnimationFrame(S.stairTimer);stairAlert.classList.add('hidden');stairFill.style.width='100%';S.bradIndex=Math.max(0,S.bradIndex-1);S.bradPhase=1;refreshMap();schedBrad();}
@@ -290,7 +299,10 @@
 
   // Boîte à musique
   let mbBlinkIv=null;
-  function startMbDrain(){S.musicBox.draining=true;S.musicBox.lastTick=Date.now();mbLoop();}
+  function startMbDrain(){
+    if(FRANK_INACTIVE){ S.musicBox.draining=false; return; } // Frank inactif : pas de drain
+    S.musicBox.draining=true;S.musicBox.lastTick=Date.now();mbLoop();
+  }
   function mbLoop(){if(S.over||!S.musicBox.draining)return;const now=Date.now();S.musicBox.gauge=Math.max(0,S.musicBox.gauge-(now-S.musicBox.lastTick)/MB_DRAIN_MS);S.musicBox.lastTick=now;drawMbGauge();updateMbWarn();if(S.musicBox.gauge<=0&&!S.musicBox.frankOut&&!S.musicBox.frankTimer){S.musicBox.frankOut=true;if(S.selectedRoom==='etage-2')camImg.src=FRANK_IMG.critical;S.musicBox.frankTimer=setTimeout(()=>trigJsFrank(),MB_FRANK_DELAY+Math.random()*3000);}if(S.selectedRoom==='etage-2')camImg.src=getFrankImg();setTimeout(mbLoop,100);}
   function drawMbGauge(){if(!mbCanvas)return;const ctx=mbCanvas.getContext('2d'),W=mbCanvas.width,H=mbCanvas.height,cx=W/2,cy=H/2,r=W/2-5;ctx.clearRect(0,0,W,H);ctx.beginPath();ctx.arc(cx,cy,r,0,Math.PI*2);ctx.strokeStyle='rgba(255,255,255,0.08)';ctx.lineWidth=5;ctx.stroke();if(S.musicBox.gauge>0){const ea=-Math.PI/2+Math.PI*2*S.musicBox.gauge;const col=S.musicBox.gauge>0.5?'#2a8a2a':S.musicBox.gauge>MB_WARN?'#c0a010':'#cc2020';ctx.beginPath();ctx.arc(cx,cy,r,-Math.PI/2,ea);ctx.strokeStyle=col;ctx.lineWidth=5;ctx.lineCap='round';ctx.stroke();}}
   function updateMbWarn(){const g=S.musicBox.gauge;if(S.musicBox.frankOut){if(S.musicBox.warnState!=='red'){S.musicBox.warnState='red';setMbMapWarn('red');if(SND.mb)SND.mb.pause();if(!S.musicBox.critPlaying&&SND.crit){S.musicBox.critPlaying=true;SND.crit.volume=0.85;SND.crit.play().catch(()=>{});}}}else if(g<=MB_CRIT&&g>0){if(S.musicBox.warnState!=='red'){S.musicBox.warnState='red';setMbMapWarn('red');if(SND.mb)SND.mb.pause();if(!S.musicBox.critPlaying&&SND.crit){S.musicBox.critPlaying=true;SND.crit.volume=0.85;SND.crit.play().catch(()=>{});}}}else if(g<=MB_WARN&&g>MB_CRIT){if(S.musicBox.warnState!=='yellow'){S.musicBox.warnState='yellow';setMbMapWarn('yellow');if(SND.mb)SND.mb.pause();if(!S.musicBox.critPlaying&&SND.crit){S.musicBox.critPlaying=true;SND.crit.volume=0.65;SND.crit.play().catch(()=>{});}}}else if(g>MB_WARN){if(S.musicBox.warnState!=='none'){S.musicBox.warnState='none';setMbMapWarn('none');ss(SND.crit);S.musicBox.critPlaying=false;if(S.selectedRoom==='etage-2'&&SND.mb&&!S.over){SND.mb.volume=S.callPlaying?0.2:0.65;SND.mb.play().catch(()=>{});}}}}
@@ -325,7 +337,10 @@
   // Appel
   function startCall(){if(S.over)return;S.callPlaying=true;pauseAmbiance();if(SND.mb)SND.mb.volume=0.2;SND.call.volume=0.75;SND.call.play().catch(()=>{});setTimeout(()=>{if(S.callPlaying)btnMuteCall.classList.remove('hidden');},5000);SND.call.onended=()=>{if(S.callMuted)return;S.callPlaying=false;btnMuteCall.classList.add('hidden');if(SND.mb&&S.selectedRoom==='etage-2')SND.mb.volume=0.65;S.ambiancePaused=false;startAmbiance();startMbDrain();startMamaCoco();};}
   btnMuteCall.addEventListener('click',()=>{if(S.callMuted)return;S.callMuted=true;ss(SND.call);btnMuteCall.classList.add('hidden');S.callPlaying=false;if(SND.mb&&S.selectedRoom==='etage-2')SND.mb.volume=0.65;S.ambiancePaused=false;startAmbiance();startMbDrain();startMamaCoco();});
-  function startMamaCoco(){if(S.mama.active||S.over)return;S.mama.active=true;schedMamaCheck();}
+  function startMamaCoco(){
+    if(MAMA_INACTIVE) return; // Mama inactive : ne jamais bouger
+    if(S.mama.active||S.over)return;S.mama.active=true;schedMamaCheck();
+  }
   function playRings(n,done){if(n<=0||S.over){if(done)done();return;}ps(SND.ring,0.7);const dur=(SND.ring&&SND.ring.duration>0)?SND.ring.duration*1000:2000;setTimeout(()=>playRings(n-1,done),dur+RING_PAUSE_MS);}
 
   // Jumpscares
@@ -358,7 +373,12 @@
       drawNoise();drawMbGauge();
       // Afficher le badge de difficulté
       const badge=$id('custom-diff-badge');
-      if(badge){badge.textContent=`Brad ${CUSTOM.brad}/10 · Frank ${CUSTOM.frank}/10 · Mama ${CUSTOM.mama}/10`;}
+      if(badge){
+        const bTxt = BRAD_INACTIVE  ? 'Brad : inactif'  : `Brad ${CUSTOM.brad}/10`;
+        const fTxt = FRANK_INACTIVE ? 'Frank : inactif' : `Frank ${CUSTOM.frank}/10`;
+        const mTxt = MAMA_INACTIVE  ? 'Mama : inactive' : `Mama ${CUSTOM.mama}/10`;
+        badge.textContent = bTxt + ' · ' + fTxt + ' · ' + mTxt;
+      }
       selectRoom('cellier');refreshMap();updateModIndicators();
       startMbDrain();
       startClock();schedBrad();schedNextErr();
