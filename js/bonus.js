@@ -138,67 +138,71 @@
     overlay.appendChild(closeBtn);
 
     const SLIDES = [
-      { label:'Développé par :', name:'IMAGINe Studio', dur:5500, keepLabel:true },
-      { label:'Développé par :', name:'HwR Engine', dur:5500, keepLabel:false },
-      { label:'Musique par :', name:'lılyO', dur:4000, highlight:true },
-      { label:'Effets sonores par :', name:'The Sounds Resource', sub:'Website by Skyla Doragono', dur:4000 },
-      { label:'Contribution aux effets sonores :', name:'MilesTheCreator, IndigoPupper, Cooper', dur:5500 },
-      { label:'Le mec au téléphone :', name:'H.D.N', dur:3000 },
-      { label:'Propulsé par :', name:'Netlify', dur:2000 },
-      { label:'Propulsé par :', name:'Mixvibes', dur:2000 },
-      { special:'ia', dur:5000 },
-      { special:'inspiration', dur:5000 },
-      { special:'final', dur:0 },
+      { type:'duo',    label:'Développé par :',                   studios:['IMAGINe Studio','HwR Engine'], dur:6000 },
+      { type:'single', label:'Musique par :',                     name:'lılyO',                             dur:4500, highlight:true },
+      { type:'single', label:'Échantillons par :',                name:'Mixvibes',                          dur:4000 },
+      { type:'single', label:'Effets sonores par :',              name:'The Sounds Resource', sub:'Website by Skyla Doragono', dur:5000 },
+      { type:'single', label:'Contribution aux effets sonores :', name:'MilesTheCreator, IndigoPupper, Cooper', dur:5000 },
+      { type:'single', label:'Le mec au téléphone :',             name:'H.D.N',               dur:4000 },
+      { type:'single', label:'Propulsé par :',                    name:'Netlify',               dur:4000 },
+      { special:'ia',           dur:6000 },
+      { special:'inspiration',  dur:6000 },
+      { special:'final',        dur:0 },
     ];
 
-    let i = 0, cur = null;
-    function next() {
-      if (i >= SLIDES.length) return;
-      const s = SLIDES[i++];
-      // Supprimer le label persistant si le prochain slide ne le garde pas
-      if (!s.keepLabel && pLabel) {
-        pLabel.style.transition = 'opacity 0.8s ease';
-        pLabel.style.opacity = '0';
-        setTimeout(function(){ if(pLabel){ pLabel.remove(); pLabel=null; } }, 900);
-      }
-      if (cur) { cur.style.opacity='0'; setTimeout(function(){ if(cur){cur.remove();cur=null;} show(s); },1300); }
-      else show(s);
+    const wrap = document.createElement('div');
+    wrap.style.cssText = 'position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;text-align:center;padding:0 24px;pointer-events:none;';
+    overlay.appendChild(wrap);
+
+    let i2 = 0;
+
+    function fi(el, dur) {
+      dur = dur || 1000;
+      el.style.opacity = '0'; el.style.transition = 'opacity '+dur+'ms ease';
+      requestAnimationFrame(()=>requestAnimationFrame(()=>{ el.style.opacity='1'; }));
     }
-    let pLabel = null;
-    function show(s) {
-      const el = document.createElement('div');
-      el.style.cssText = 'position:absolute;text-align:center;font-family:\'Share Tech Mono\',monospace;display:flex;flex-direction:column;gap:10px;opacity:0;transition:opacity 1.2s ease;padding:0 24px;';
-      if (s.keepLabel) {
-        if (!pLabel) {
-          pLabel = document.createElement('div');
-          pLabel.style.cssText = 'position:absolute;top:calc(50% - 60px);left:50%;transform:translateX(-50%);font-size:clamp(9px,1.2vw,11px);color:#444;letter-spacing:4px;white-space:nowrap;';
-          pLabel.textContent = s.label;
-          overlay.appendChild(pLabel);
-        }
-        el.innerHTML = '<div style="font-family:\'Cinzel\',serif;font-size:clamp(16px,2.5vw,24px);color:#aaa;letter-spacing:3px;margin-top:20px;">' + s.name + '</div>';
-        overlay.appendChild(el); cur = el;
-        setTimeout(function(){el.style.opacity='1';}, 50);
-        if (s.dur > 0) setTimeout(next, s.dur);
-        return;
+    function clr(cb) {
+      Array.from(wrap.children).forEach(ch=>{ ch.style.transition='opacity 1s ease'; ch.style.opacity='0'; });
+      setTimeout(()=>{ wrap.innerHTML=''; if(cb)cb(); }, 1050);
+    }
+    function next() {
+      if(i2>=SLIDES.length) return;
+      const s=SLIDES[i2++];
+      if(s.special){ clr(()=>showSp(s)); return; }
+      if(s.type==='duo') clr(()=>showDuo(s));
+      else clr(()=>showSin(s));
+    }
+    function showDuo(s) {
+      const lbl=document.createElement('div'); lbl.className='credits-label'; lbl.textContent=s.label; wrap.appendChild(lbl); fi(lbl,800);
+      const nm=document.createElement('div'); nm.className='credits-name'; nm.textContent=s.studios[0]; wrap.appendChild(nm); fi(nm,800);
+      setTimeout(()=>{
+        nm.style.transition='opacity 900ms ease'; nm.style.opacity='0';
+        setTimeout(()=>{ nm.textContent=s.studios[1]; fi(nm,900); setTimeout(()=>clr(next),s.dur); },950);
+      },s.dur);
+    }
+    function showSin(s) {
+      if(s.label){ const lbl=document.createElement('div'); lbl.className='credits-label'; lbl.textContent=s.label; wrap.appendChild(lbl); fi(lbl); }
+      const nm=document.createElement('div'); nm.className='credits-name'+(s.highlight?' highlight':''); nm.textContent=s.name; wrap.appendChild(nm); fi(nm);
+      if(s.sub){ const sub=document.createElement('div'); sub.className='credits-sub'; sub.textContent=s.sub; wrap.appendChild(sub); fi(sub,1200); }
+      if(s.dur>0) setTimeout(()=>clr(next),s.dur);
+    }
+    function showSp(s) {
+      if(s.special==='ia'){
+        const el=document.createElement('div'); el.className='credits-sub'; el.style.cssText='max-width:340px;line-height:2;color:#444;';
+        el.innerHTML="Ce jeu a été développé avec l'aide de l'intelligence artificielle.<br>Les idées, la conception et la direction créative<br>restent entièrement humaines.";
+        wrap.appendChild(el); fi(el); setTimeout(()=>clr(next),s.dur);
+      } else if(s.special==='inspiration'){
+        const el=document.createElement('div'); el.className='credits-sub'; el.style.cssText='max-width:340px;line-height:2;color:#333;';
+        el.innerHTML="Ce jeu est inspiré de <span style='color:#555'>Five Nights at Freddy\'s</span><br>de Scott Cawthon.<br>Il ne s\'agit pas d\'une œuvre officielle.";
+        wrap.appendChild(el); fi(el); setTimeout(()=>clr(next),s.dur);
+      } else if(s.special==='final'){
+        const fe=document.createElement('div'); fe.className='credits-final'; fe.textContent="Brad et ses amis reviendront."; wrap.appendChild(fe); fi(fe);
+        setTimeout(()=>{
+          const btn=document.createElement('button'); btn.className='credits-continue'; btn.style.pointerEvents='all'; btn.textContent='CLIQUEZ POUR CONTINUER';
+          btn.onclick=function(){ overlay.style.display='none'; overlay.innerHTML=''; if(audioMerci){audioMerci.pause();audioMerci.currentTime=0;} if(audioBonus)audioBonus.play().catch(()=>{}); };
+          wrap.appendChild(btn); fi(btn,600);
+        },2000);
       }
-      if (pLabel && !s.keepLabel) { pLabel.remove(); pLabel = null; }
-      if (s.special==='ia') {
-        el.innerHTML = '<div style="font-size:clamp(10px,1.5vw,13px);color:#444;letter-spacing:2px;line-height:2;max-width:340px;">Ce jeu a été développé avec l\'aide de l\'intelligence artificielle.<br>Les idées, la conception et la direction créative<br>restent entièrement humaines.</div>';
-      } else if (s.special==='inspiration') {
-        el.innerHTML = '<div style="font-size:clamp(10px,1.5vw,13px);color:#333;letter-spacing:2px;line-height:2;max-width:340px;">Ce jeu est inspiré de <span style="color:#555">Five Nights at Freddy\'s</span><br>de Scott Cawthon.<br>Il ne s\'agit pas d\'une œuvre officielle.</div>';
-      } else if (s.special==='final') {
-        el.innerHTML = '<div style="font-family:\'Cinzel\',serif;font-size:clamp(18px,3vw,28px);color:#cc2020;letter-spacing:4px;text-shadow:0 0 20px rgba(200,30,30,0.4);">Brad et ses amis reviendront.</div>';
-        overlay.appendChild(el); cur=el; setTimeout(()=>el.style.opacity='1',50); return;
-      } else {
-        el.innerHTML = `
-          ${s.label?`<div style="font-size:clamp(9px,1.2vw,11px);color:#444;letter-spacing:4px;">${s.label}</div>`:''}
-          <div style="font-family:'Cinzel',serif;font-size:clamp(16px,2.5vw,24px);color:${s.highlight?'#c0a010':'#aaa'};letter-spacing:3px;">${s.name}</div>
-          ${s.sub?`<div style="font-size:clamp(9px,1.2vw,11px);color:#333;letter-spacing:2px;">${s.sub}</div>`:''}
-        `;
-      }
-      overlay.appendChild(el); cur=el;
-      setTimeout(()=>el.style.opacity='1',50);
-      if (s.dur>0) setTimeout(next, s.dur);
     }
     next();
   });
