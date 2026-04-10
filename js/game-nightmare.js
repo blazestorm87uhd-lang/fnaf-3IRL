@@ -716,117 +716,137 @@
   // GÉNÉRIQUE DE FIN
   // ══════════════════════════════════════
   function showCredits(){
-    const sc=screenCredits;
+    const sc = screenCredits;
     sc.classList.remove('hidden');
 
-    // merci.m4a déjà lancé dans showNightEndAnimation avec fondu progressif
-    // On ne le relance pas si déjà en cours
     if(SND.merci && SND.merci.paused){ SND.merci.volume=0.75; SND.merci.play().catch(()=>{}); }
 
-    // Séquence de slides
     const slides = [
-      { label:'Développé par :', name:'IMAGINe Studio',     dur:5500, keepLabel:true },
-      { label:'Développé par :', name:'HwR Engine',          dur:5500, keepLabel:false },
-      { label:'Musique par :',   name:'lılyO',               dur:4000, highlight:true },
-      { label:'Effets sonores par :', name:'The Sounds Resource', sub:'Website by Skyla Doragono', dur:4000 },
-      { label:'Contribution aux effets sonores :', name:'MilesTheCreator, IndigoPupper, Cooper', dur:5500 },
-      { label:'Le mec au téléphone :', name:'H.D.N',         dur:3000 },
-      { label:'Propulsé par :',  name:'Netlify',              dur:2000 },
-      { label:'Propulsé par :',  name:'Mixvibes',             dur:2000 },
-      { label:null, name:null, special:'ia', dur:5000 },
-      { label:null, name:null, special:'inspiration', dur:5000 },
-      { label:null, name:null, special:'final', dur:0 },
+      { type:'duo',    label:'Développé par :',                   studios:['IMAGINe Studio','HwR Engine'], dur:6000 },
+      { type:'single', label:'Musique par :',                     name:'lılyO',                             dur:4500, highlight:true },
+      { type:'single', label:'Échantillons par :',                name:'Mixvibes',                          dur:4000 },
+      { type:'single', label:'Effets sonores par :',              name:'The Sounds Resource', sub:'Website by Skyla Doragono', dur:5000 },
+      { type:'single', label:'Contribution aux effets sonores :', name:'MilesTheCreator, IndigoPupper, Cooper', dur:5000 },
+      { type:'single', label:'Le mec au téléphone :',             name:'H.D.N',               dur:4000 },
+      { type:'single', label:'Propulsé par :',                    name:'Netlify',               dur:4000 },
+      { special:'ia',           dur:6000 },
+      { special:'inspiration',  dur:6000 },
+      { special:'final',        dur:0 },
     ];
 
-    let i = 0;
-    let currentEl = null;
+    // Conteneur centré — tout s'affiche ici
+    const wrap = document.createElement('div');
+    wrap.style.cssText = 'position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;text-align:center;padding:0 24px;pointer-events:none;';
+    sc.appendChild(wrap);
 
-    function nextSlide(){
-      if(i >= slides.length) return;
-      const s = slides[i++];
+    let idx = 0;
 
-      // Si le slide suivant n'est plus en mode keepLabel, faire disparaître le label persistant
-      const willKeepLabel = s.keepLabel === true;
-      if(!willKeepLabel && persistentLabel) {
-        persistentLabel.style.transition = 'opacity 0.8s ease';
-        persistentLabel.style.opacity = '0';
-        setTimeout(()=>{ if(persistentLabel){ persistentLabel.remove(); persistentLabel=null; } }, 900);
+    function fadeIn(el, dur) {
+      dur = dur || 1000;
+      el.style.opacity = '0';
+      el.style.transition = 'opacity ' + dur + 'ms ease';
+      requestAnimationFrame(()=>requestAnimationFrame(()=>{ el.style.opacity = '1'; }));
+    }
+    function clearWrap(cb) {
+      const children = Array.from(wrap.children);
+      children.forEach(ch => { ch.style.transition = 'opacity 1s ease'; ch.style.opacity = '0'; });
+      setTimeout(()=>{ wrap.innerHTML = ''; if(cb) cb(); }, 1050);
+    }
+
+    function next() {
+      if(idx >= slides.length) return;
+      const s = slides[idx++];
+      if(s.special) { clearWrap(()=>showSpecial(s)); return; }
+      if(s.type === 'duo') { clearWrap(()=>showDuo(s)); }
+      else                  { clearWrap(()=>showSingle(s)); }
+    }
+
+    // DUO : label fixe + noms alternés
+    function showDuo(s) {
+      // Label fixe
+      const lbl = document.createElement('div');
+      lbl.className = 'credits-label';
+      lbl.textContent = s.label;
+      wrap.appendChild(lbl);
+      fadeIn(lbl, 800);
+
+      // Nom (div réutilisé)
+      const nmEl = document.createElement('div');
+      nmEl.className = 'credits-name';
+      nmEl.textContent = s.studios[0];
+      wrap.appendChild(nmEl);
+      fadeIn(nmEl, 800);
+
+      // Après dur : fade out NOM seulement → afficher studio 2 → fade out TOUT
+      setTimeout(()=>{
+        nmEl.style.transition = 'opacity 900ms ease';
+        nmEl.style.opacity = '0';
+        setTimeout(()=>{
+          nmEl.textContent = s.studios[1];
+          fadeIn(nmEl, 900);
+          setTimeout(()=>clearWrap(next), s.dur);
+        }, 950);
+      }, s.dur);
+    }
+
+    // SINGLE : label + nom ensemble
+    function showSingle(s) {
+      if(s.label) {
+        const lbl = document.createElement('div');
+        lbl.className = 'credits-label';
+        lbl.textContent = s.label;
+        wrap.appendChild(lbl);
+        fadeIn(lbl);
       }
+      const nm = document.createElement('div');
+      nm.className = 'credits-name' + (s.highlight ? ' highlight' : '');
+      nm.textContent = s.name;
+      wrap.appendChild(nm);
+      fadeIn(nm);
+      if(s.sub) {
+        const sub = document.createElement('div');
+        sub.className = 'credits-sub';
+        sub.textContent = s.sub;
+        wrap.appendChild(sub);
+        fadeIn(sub, 1200);
+      }
+      if(s.dur > 0) setTimeout(()=>clearWrap(next), s.dur);
+    }
 
-      // Fade out l'élément précédent
-      if(currentEl){
-        currentEl.classList.remove('visible');
-        setTimeout(()=>{ if(currentEl) currentEl.remove(); currentEl=null; showSlide(s); }, 1300);
-      } else {
-        showSlide(s);
+    // SPECIAL
+    function showSpecial(s) {
+      if(s.special === 'ia') {
+        const el = document.createElement('div');
+        el.className = 'credits-sub';
+        el.style.cssText = 'max-width:340px;line-height:2;color:#444;';
+        el.innerHTML = "Ce jeu a été développé avec l\'aide de l\'intelligence artificielle.<br>Les idées, la conception et la direction créative<br>restent entièrement humaines.";
+        wrap.appendChild(el); fadeIn(el);
+        setTimeout(()=>clearWrap(next), s.dur);
+      } else if(s.special === 'inspiration') {
+        const el = document.createElement('div');
+        el.className = 'credits-sub';
+        el.style.cssText = 'max-width:340px;line-height:2;color:#333;';
+        el.innerHTML = "Ce jeu est inspiré de <span style=\"color:#555\">Five Nights at Freddy\'s</span><br>de Scott Cawthon.<br>Il ne s\'agit pas d\'une œuvre officielle.";
+        wrap.appendChild(el); fadeIn(el);
+        setTimeout(()=>clearWrap(next), s.dur);
+      } else if(s.special === 'final') {
+        const finalEl = document.createElement('div');
+        finalEl.className = 'credits-final';
+        finalEl.textContent = "Brad et ses amis reviendront.";
+        wrap.appendChild(finalEl); fadeIn(finalEl);
+        setTimeout(()=>{
+          const btn = document.createElement('button');
+          btn.className = 'credits-continue';
+          btn.style.pointerEvents = 'all';
+          btn.textContent = 'CLIQUEZ POUR CONTINUER';
+          btn.addEventListener('click', ()=>{ window.location.href='index.html'; });
+          wrap.appendChild(btn); fadeIn(btn, 600);
+        }, 2000);
       }
     }
 
-    let persistentLabel = null; // label "Développé par :" qui reste à l'écran
-
-    function showSlide(s){
-      const el = document.createElement('div');
-      el.className = 'credits-text';
-
-      if(s.special==='ia'){
-        el.innerHTML = `
-          <div class="credits-sub" style="max-width:320px;line-height:2;color:#444;">
-            Ce jeu a été développé avec l'aide de l'intelligence artificielle.<br>
-            Les idées, la conception et la direction créative<br>restent entièrement humaines.
-          </div>`;
-      } else if(s.special==='inspiration'){
-        el.innerHTML = `
-          <div class="credits-sub" style="max-width:320px;line-height:2;color:#333;">
-            Ce jeu est inspiré de <span style="color:#555">Five Nights at Freddy's</span><br>
-            de Scott Cawthon.<br>
-            Il ne s'agit pas d'une œuvre officielle.
-          </div>`;
-      } else if(s.special==='final'){
-        el.innerHTML = `
-          <div class="credits-final">Brad et ses amis reviendront.</div>
-          <button class="credits-continue" id="credits-continue-btn">CLIQUEZ POUR CONTINUER</button>`;
-        sc.appendChild(el);
-        setTimeout(()=>el.classList.add('visible'), 50);
-        currentEl = el;
-        const btn = document.getElementById('credits-continue-btn');
-        if(btn) btn.addEventListener('click',()=>{ window.location.href='index.html'; });
-        return; // Pas d'auto-next
-      } else if(s.keepLabel) {
-        // Label reste, seul le nom fait fade in
-        // Afficher/garder le label en position fixe
-        if(!persistentLabel) {
-          persistentLabel = document.createElement('div');
-          persistentLabel.className = 'credits-label';
-          persistentLabel.style.cssText = 'position:absolute;top:calc(50% - 60px);left:50%;transform:translateX(-50%);white-space:nowrap;';
-          persistentLabel.textContent = s.label;
-          sc.appendChild(persistentLabel);
-        }
-        // Juste le nom
-        el.innerHTML = `<div class="credits-name${s.highlight?' highlight':''}">${s.name}</div>`;
-        el.style.marginTop = '20px';
-        sc.appendChild(el);
-        currentEl = el;
-        setTimeout(()=>el.classList.add('visible'), 50);
-        if(s.dur > 0) setTimeout(nextSlide, s.dur);
-        return;
-      } else {
-        el.innerHTML = `
-          ${s.label ? `<div class="credits-label">${s.label}</div>` : ''}
-          <div class="credits-name${s.highlight?' highlight':''}${!s.label?' credits-final':''}">${s.name}</div>
-          ${s.sub ? `<div class="credits-sub">${s.sub}</div>` : ''}`;
-      }
-
-      sc.appendChild(el);
-      currentEl = el;
-      setTimeout(()=>el.classList.add('visible'), 50);
-
-      if(s.dur > 0) setTimeout(nextSlide, s.dur);
-    }
-
-    // Démarrer
-    nextSlide();
+    next();
   }
-
   // ══════════════════════════════════════
   // DÉMARRAGE
   // ══════════════════════════════════════
