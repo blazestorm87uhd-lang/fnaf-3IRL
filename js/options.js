@@ -111,7 +111,7 @@ function openOptionsModal() {
   ].forEach(function(m) {
     var btn = document.createElement('button');
     btn.style.cssText = _S.mode; btn.dataset.mode = m.id; btn.className = 'opts-mode';
-    btn.innerHTML = m.svg + '<div>' + m.label + '</div><div style="font-size:8px;color:#333;margin-top:2px;">' + m.desc + '</div>';
+    btn.innerHTML = m.svg + '<div>' + m.label + '</div>';
     modesWrap.appendChild(btn);
   });
   pDisp.appendChild(lDisp); pDisp.appendChild(modesWrap);
