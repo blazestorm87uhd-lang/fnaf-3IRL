@@ -260,7 +260,8 @@ function initMenu() {
 
   if (hasProgress) {
     btnContinue.classList.remove('disabled');
-    if (saveData.nightmareCompleted) {
+    // N'afficher "nuit 3" que si nightmare terminé ET la progression n'a pas été réinitialisée
+    if (saveData.nightmareCompleted && saveData.nightCompleted >= 3) {
       continueNote.textContent = 'reprendre — nuit 3';
     } else {
       continueNote.textContent = 'reprendre — nuit ' + nextNight;
