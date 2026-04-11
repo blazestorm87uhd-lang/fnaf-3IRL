@@ -118,8 +118,15 @@
     nextBtn.addEventListener('touchend', e => { e.preventDefault(); close(); });
 
     // Manette : A/X = suivant
-    let prevBtn = false;
+    // Initialiser prevBtn à l'état ACTUEL du bouton pour éviter close() immédiat
+    // si le bouton est déjà enfoncé au moment où l'overlay s'affiche
+    const _initGp = getGP();
+    let prevBtn = _initGp ? !!(_initGp.buttons[0]?.pressed) : false;
+    // Délai court de sécurité avant d'activer la détection
+    let gpReady = false;
+    setTimeout(() => { gpReady = true; }, 300);
     const gpInt = setInterval(() => {
+      if (!gpReady) return;
       const gp = getGP(); if (!gp) return;
       const pressed = gp.buttons[0]?.pressed;
       if (pressed && !prevBtn) close();
