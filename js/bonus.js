@@ -436,3 +436,153 @@
   renderList();
 
 })();
+
+// ══════════════════════════════════════
+// NAVIGATION MANETTE — BONUS
+// ══════════════════════════════════════
+(function initBonusGamepad() {
+  const prev = {};
+  let lastNav = 0;
+  const DEBOUNCE = 200;
+
+  function getGP() {
+    try {
+      const all = navigator.getGamepads();
+      for (let i = 0; i < all.length; i++) if (all[i]?.connected) return all[i];
+    } catch(e) {} return null;
+  }
+  function jp(gp, i) {
+    const k='b'+i, now=!!(gp.buttons[i]?.pressed), was=prev[k]||false;
+    prev[k]=now; return now && !was;
+  }
+  function ja(gp, axis, dir) {
+    const k='a'+axis+dir, v=gp.axes[axis]||0;
+    const now=dir>0?v>0.52:v<-0.52, was=prev[k]||false;
+    prev[k]=now; return now && !was;
+  }
+
+  // Obtenir tous les éléments focusables de la section active
+  function getFocusables() {
+    const activeSection = document.querySelector('.bonus-section[style*="block"]') ||
+                          document.querySelector('.bonus-section.active');
+    if (!activeSection) return [];
+    return Array.from(activeSection.querySelectorAll(
+      'button:not(:disabled), input[type=range], .jk-track, .bonus-nav-btn:not(.disabled), .jk-cat-btn'
+    )).filter(el => el.offsetParent !== null);
+  }
+
+  // Navigation dans les onglets du bonus
+  function getNavBtns() {
+    return Array.from(document.querySelectorAll('.bonus-nav-btn:not(.disabled)'))
+      .filter(b => b.offsetParent !== null);
+  }
+
+  let currentFocusIdx = -1;
+
+  setInterval(() => {
+    const gp = getGP(); if (!gp) return;
+    const now = Date.now();
+
+    const up    = jp(gp,12) || ja(gp,1,-1);
+    const down  = jp(gp,13) || ja(gp,1,1);
+    const left  = jp(gp,14) || ja(gp,0,-1);
+    const right = jp(gp,15) || ja(gp,0,1);
+    const bConf = jp(gp,0) || jp(gp,2);  // A/X ou ✕
+    const bBack = jp(gp,1);              // B/Rond = retour menu
+    const bBump = jp(gp,4);             // L1/LB = onglet précédent
+    const bBump2= jp(gp,5);             // R1/RB = onglet suivant
+
+    // Retour au menu
+    if (bBack) {
+      document.getElementById('bonus-back')?.click();
+      return;
+    }
+
+    // Navigation entre onglets (LB/RB ou L1/R1)
+    if ((bBump || bBump2) && now - lastNav > DEBOUNCE) {
+      lastNav = now;
+      const navBtns = getNavBtns();
+      const ci = navBtns.findIndex(b => b.classList.contains('active'));
+      let ni = ci < 0 ? 0 : ci + (bBump ? -1 : 1);
+      ni = Math.max(0, Math.min(navBtns.length - 1, ni));
+      navBtns[ni]?.click();
+      return;
+    }
+
+    // Navigation dans la section active
+    const els = getFocusables();
+    if (!els.length) return;
+    const ci = els.indexOf(document.activeElement);
+
+    if ((up || left) && now - lastNav > DEBOUNCE) {
+      lastNav = now;
+      const ni = ci <= 0 ? els.length - 1 : ci - 1;
+      els[ni].focus();
+    }
+    if ((down || right) && now - lastNav > DEBOUNCE) {
+      lastNav = now;
+      const ni = ci < 0 || ci >= els.length - 1 ? 0 : ci + 1;
+      els[ni].focus();
+    }
+
+    // Valider / Interagir
+    if (bConf && now - lastNav > DEBOUNCE) {
+      lastNav = now;
+      const focused = document.activeElement;
+      if (!focused) return;
+
+      // Slider de difficulté : left/right déjà géré, confirm = rien de spécial
+      if (focused.type === 'range') {
+        // Incrémenter avec D-pad gauche/droite (déjà géré via left/right nav)
+        return;
+      }
+      focused.click();
+    }
+
+    // Slider : D-pad gauche/droite quand un slider est focusé
+    const focused = document.activeElement;
+    if (focused && focused.type === 'range') {
+      const step = focused.id === 'jk-vol' ? 5 : 1;
+      if (left && now - lastNav > 80) {
+        lastNav = now;
+        focused.value = Math.max(parseInt(focused.min), parseInt(focused.value) - step);
+        focused.dispatchEvent(new Event('input'));
+      }
+      if (right && now - lastNav > 80) {
+        lastNav = now;
+        focused.value = Math.min(parseInt(focused.max), parseInt(focused.value) + step);
+        focused.dispatchEvent(new Event('input'));
+      }
+    }
+
+  }, 16);
+
+  // Afficher hint manette en bas du bonus
+  function showBonusGpHint() {
+    const gp = getGP(); if (!gp) return;
+    let hint = document.getElementById('bonus-gp-hint');
+    if (!hint) {
+      hint = document.createElement('div');
+      hint.id = 'bonus-gp-hint';
+      hint.style.cssText = "position:fixed;bottom:16px;left:50%;transform:translateX(-50%);font-family:'Share Tech Mono',monospace;font-size:9px;color:#333;letter-spacing:2px;z-index:100;text-align:center;";
+      document.body.appendChild(hint);
+    }
+    try {
+      const t = localStorage.getItem('fnaf_opt_gamepadType') || 'xbox';
+      const confirm = t === 'ps' ? '✕' : 'A';
+      hint.textContent = `${confirm}=valider  B=retour  LB/RB=onglets  ↕=naviguer`;
+    } catch(e) {}
+  }
+
+  window.addEventListener('gamepadconnected', showBonusGpHint);
+  setTimeout(() => { if (getGP()) showBonusGpHint(); }, 500);
+
+  // Rendre les pistes jukebox focusables (tabindex)
+  const trackObs = new MutationObserver(() => {
+    document.querySelectorAll('.jk-track').forEach(t => {
+      if (!t.getAttribute('tabindex')) t.setAttribute('tabindex', '0');
+    });
+  });
+  trackObs.observe(document.body, { childList: true, subtree: true });
+
+})();
