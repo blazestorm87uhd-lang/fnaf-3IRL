@@ -70,6 +70,23 @@
     els[ni].click();
   }
 
+  /* ─── Navigation maintenance ─── */
+  function _navMaint(dir) {
+    const panel = document.getElementById('panel-maintenance');
+    if (!panel || panel.classList.contains('hidden')) return;
+    const items = Array.from(panel.querySelectorAll(
+      '.maint-item[data-module], .maint-reboot, #btn-maintenance-close'
+    )).filter(el => el.offsetParent !== null);
+    if (!items.length) return;
+    // S'assurer que tous les items sont focusables
+    items.forEach(el => { if (!el.getAttribute('tabindex')) el.setAttribute('tabindex','0'); });
+    const ci = items.indexOf(document.activeElement);
+    let ni;
+    if (ci < 0) ni = dir > 0 ? 0 : items.length - 1;
+    else ni = Math.max(0, Math.min(items.length - 1, ci + dir));
+    items[ni].focus();
+  }
+
   /* ─── Indicateur manette ─── */
   function updateIndicator(gp) {
     const ind = document.getElementById('gamepad-indicator');
@@ -128,9 +145,17 @@
 
       /* Jeu actif */
 
-      // Navigation (caméras ou maintenance)
-      if ((up||left) && now-lastNav>NAV_MS)   { lastNav=now; navCam(-1); }
-      if ((down||right) && now-lastNav>NAV_MS) { lastNav=now; navCam(1);  }
+      // Navigation : caméras OU maintenance selon contexte
+      const _maintPanel = document.getElementById('panel-maintenance');
+      const _maintOpen  = !!(_maintPanel && !_maintPanel.classList.contains('hidden'));
+      if ((up||left) && now-lastNav>NAV_MS) {
+        lastNav=now;
+        if (_maintOpen) _navMaint(-1); else navCam(-1);
+      }
+      if ((down||right) && now-lastNav>NAV_MS) {
+        lastNav=now;
+        if (_maintOpen) _navMaint(1); else navCam(1);
+      }
 
       // Maintenance toggle
       if (bMaint) {
@@ -139,6 +164,13 @@
           document.getElementById('btn-maintenance-close')?.click();
         } else {
           document.getElementById('btn-maintenance')?.click();
+          // Focus le premier item dès l'ouverture
+          setTimeout(() => {
+            const p = document.getElementById('panel-maintenance');
+            if (!p || p.classList.contains('hidden')) return;
+            const first = p.querySelector('.maint-item[data-module], .maint-reboot, #btn-maintenance-close');
+            if (first) { first.setAttribute('tabindex','0'); first.focus(); }
+          }, 80);
         }
       }
 
