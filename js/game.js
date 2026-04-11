@@ -488,6 +488,7 @@
 
   btnAudio.addEventListener('click', () => {
     if (state.audioCooldown || state.modules.audio.error || state.over) return;
+    state.usedAudio = true;
     playHello();
     if (state.stairActive) {
       startAudioCooldown();
@@ -596,6 +597,7 @@
   }
 
   function rebootModule(mod, duration) {
+    if (window.Achievements) Achievements.unlock('reboot_module');
     const m = state.modules[mod];
     if (!m) return;
     m.rebooting = true; m.error = false;
@@ -674,7 +676,7 @@
         .filter(m => !state.modules[m].error && !state.modules[m].rebooting);
       if (targets.length > 0) {
         const mod = targets[Math.floor(Math.random() * targets.length)];
-        state.modules[mod].error = true;
+        state.modules[mod].error = true; state.hadError = true;
         updateErrorDisplay();
         updateModuleIndicators();
         updateMaintenanceBtnState();
@@ -734,6 +736,7 @@
     btnMuteCall.classList.add('hidden');
     state.callPlaying = false;
     resumeAmbiance();
+    if (window.Achievements) Achievements.unlock('mute_call');
   });
 
   function playRingTimes(times, onDone) {
@@ -750,6 +753,7 @@
   function triggerJumpscare() {
     if (state.over) return;
     state.over = true;
+    if (window.Achievements) { Achievements.unlock('js_brad'); const d=Achievements.loadAll(); if(d.js_frank&&d.js_mama) Achievements.unlock('js_all'); if(state.startTime&&Date.now()-state.startTime<120000) Achievements.unlock('js_fast'); }
     stopAllAmbiance(); clearTimeout(bradMoveTimeout);
     screenGame.classList.add('hidden');
     screenJumpscare.classList.remove('hidden');
@@ -795,7 +799,7 @@
   // ── DEV SHORTCUT : clic sur l'heure pour finir la nuit ──
   const devHour = document.getElementById('hud-hour');
   const devNight = document.getElementById('hud-night');
-  function devFinish() { if (!state.over) triggerNightEnd(); }
+  function devFinish() { if (!state.over) { if(window.Achievements) Achievements.unlock('dev_skip'); triggerNightEnd(); } }
   if (devHour)  devHour.addEventListener('click',  devFinish);
   if (devNight) devNight.addEventListener('click', devFinish);
 
@@ -827,6 +831,12 @@
   function triggerNightEnd() {
     if (state.over) return;
     state.over = true;
+    if (window.Achievements) {
+      Achievements.unlock('night1');
+      if (!state.usedAudio) Achievements.unlock('no_audio');
+      if (!state.hadError)  Achievements.unlock('no_error');
+      if (!state.callMuted) Achievements.unlock('no_mute');
+    }
     stopAllAmbiance(); clearTimeout(bradMoveTimeout);
     screenGame.classList.add('hidden');
     showNightEndScreen();
@@ -873,6 +883,7 @@
   // ══════════════════════════════════════
 
   function startNight() {
+    state.startTime = Date.now(); state.usedAudio = false; state.hadError = false;
     playSound(snd.nightStart, 0.8);
 
     setTimeout(() => {
