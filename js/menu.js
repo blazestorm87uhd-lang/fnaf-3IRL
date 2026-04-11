@@ -247,15 +247,24 @@ function initMenu() {
 
   // ── Sauvegarde & boutons ──
   // Continue : grisé si première visite (aucune progression réelle)
+  // Continue : a des données si au moins une nuit commencée ou nightmare terminé
   const hasProgress = saveData.nightCompleted > 0
     || saveData.currentNight !== null
-    || (saveData.nightReached && saveData.nightReached > 1);
+    || (saveData.nightReached && saveData.nightReached > 1)
+    || saveData.nightmareUnlocked   // a débloqué nightmare = a fini nuit 3
+    || saveData.nightmareCompleted; // a fini nightmare
+
+  // Si nightmare terminé, Continue pointe sur nuit 3 (pas de nuit 4)
   const rawNext   = saveData.currentNight !== null ? saveData.currentNight : saveData.nightReached;
   const nextNight = Math.min(rawNext || 1, 3);
 
   if (hasProgress) {
     btnContinue.classList.remove('disabled');
-    continueNote.textContent = 'reprendre — nuit ' + nextNight;
+    if (saveData.nightmareCompleted) {
+      continueNote.textContent = 'reprendre — nuit 3';
+    } else {
+      continueNote.textContent = 'reprendre — nuit ' + nextNight;
+    }
     continueNote.style.color = '#555';
   } else {
     btnContinue.classList.add('disabled');
@@ -323,16 +332,18 @@ function initMenu() {
   // ── New Game — conserve nightmare/bonus, reset progression ──
   btnNewGame.addEventListener('click', () => {
     const d = Save.load();
-    // Conserver les déblocages acquis
-    const keepNightmare = d.nightmareUnlocked;
-    const keepBonus     = d.bonusUnlocked;
+    // Conserver les déblocages acquis (bonus, nightmare, nightmareCompleted)
+    const keepNightmare          = d.nightmareUnlocked;
+    const keepBonus              = d.bonusUnlocked || d.nightmareCompleted;
+    const keepNightmareCompleted = d.nightmareCompleted;
     // Reset progression (nuits)
     Save.save({
-      nightReached:      1,
-      nightCompleted:    0,
-      nightmareUnlocked: keepNightmare,
-      bonusUnlocked:     keepBonus,
-      currentNight:      1,
+      nightReached:       1,
+      nightCompleted:     0,
+      nightmareUnlocked:  keepNightmare,
+      nightmareCompleted: keepNightmareCompleted,
+      bonusUnlocked:      keepBonus,
+      currentNight:       1,
     });
     launchGame(1);
   });
