@@ -8,10 +8,18 @@
 
   // ── Lire les paramètres custom ──
   let CUSTOM = { brad: 5, frank: 5, mama: 5 };
+  let MODES  = { fast_night:false, radar_map:false, no_camera:false, silent_night:false, frank_blind:false };
   try {
     const raw = localStorage.getItem('fnaf_custom_active');
-    if (raw) CUSTOM = { ...CUSTOM, ...JSON.parse(raw) };
+    if (raw) {
+      const parsed = JSON.parse(raw);
+      CUSTOM = { ...CUSTOM, ...parsed };
+      if (parsed.modes) MODES = { ...MODES, ...parsed.modes };
+    }
   } catch(e) {}
+
+  // Fast Night : durée 2× plus courte
+  const NIGHT_SPEED = MODES.fast_night ? 2 : 1;
 
   // ── Interpolation niveau 2-10 → valeurs de jeu ──
   // niveau 1 = INACTIF (pas d'impact sur le jeu)
@@ -39,7 +47,7 @@
 
   // ── Config fixe ──
   const NIGHT_NUMBER      = 'custom';
-  const NIGHT_DURATION    = 10 * 60 * 1000;
+  const NIGHT_DURATION_BASE = 10 * 60 * 1000;
   const HOURS             = ['12 AM','1 AM','2 AM','3 AM','4 AM','5 AM','6 AM'];
   const BRAD_VISIBLE_HOUR = 1;
   const JUMPSCARE_DUR     = 4000;
@@ -245,10 +253,21 @@
   function getFrankImg(){if(S.musicBox.frankOut)return FRANK_IMG.critical;if(S.musicBox.gauge<=MB_WARN)return FRANK_IMG.warning;return FRANK_IMG.safe;}
   function getMamaImg(){return MAMA_IMG[S.mama.phase]||MAMA_IMG.inactive;}
   function hideMbPanel(){const p=$id('musicbox-panel');if(p)p.style.display='none';}
-  function showMbPanel(){const p=$id('musicbox-panel');if(p)p.style.display='flex';}
+  function showMbPanel(){
+    const p=$id('musicbox-panel');if(!p)return;p.style.display='flex';
+    // Frank Blind : masquer la jauge visuelle
+    const gauge=$id('musicbox-gauge');
+    if(gauge) gauge.style.visibility=MODES.frank_blind?'hidden':'visible';
+  }
 
   function selectRoom(r){
     if(!panelMaint.classList.contains('hidden'))return;
+    // No Camera : toujours afficher no signal
+    if(MODES.no_camera){
+      _setRoom(r,'CAM — ' + r.replace(/-/g,' ').toUpperCase() + ' [NO CAM]');
+      if(r==='etage-2') showMbPanel(); else hideMbPanel();
+      showNoSignal(); if(SND.mb) SND.mb.volume=0; return;
+    }
     if(S.selectedRoom==='rue'&&r!=='rue')stopLookingMama();
     if(r==='etage'){_setRoom(r,'CAM — ACCÈS ÉTAGE 1');showNoSignal();hideMbPanel();if(BRAD_PATH[S.bradIndex]==='etage'&&S.bradVisible)ps(SND.robot,0.6);return;}
     if(S.modules.camera.error||S.modules.camera.rebooting){_setRoom(r,`CAM — ${r.replace(/-/g,' ').toUpperCase()}`);hideMbPanel();if(r==='rue'||r==='etage-2'){hideBlack();showNoSignal();}else{hideNoSignal();showBlack();}if(SND.mb)SND.mb.volume=0;return;}
@@ -265,7 +284,19 @@
   function _setRoom(r,label){S.selectedRoom=r;mapRooms.forEach(el=>el.classList.remove('active'));const el=$id('room-'+r);if(el)el.classList.add('active');camBadge.textContent=label;}
   mapRooms.forEach(el=>el.addEventListener('click',()=>{if(el.dataset.room)selectRoom(el.dataset.room);}));
 
-  function refreshMap(){mapRooms.forEach(r=>r.classList.remove('brad-here'));if(!S.bradVisible||S.bradIndex<BRAD_CAM_SHOW)return;const el=$id('room-'+BRAD_PATH[S.bradIndex]);if(el)el.classList.add('brad-here');}
+  function refreshMap(){
+    mapRooms.forEach(r=>r.classList.remove('brad-here'));
+    if(!S.bradVisible) return;
+    // Radar Map : toujours afficher, sinon seulement si proche
+    if(MODES.radar_map || S.bradIndex>=BRAD_CAM_SHOW){
+      const el=$id('room-'+BRAD_PATH[S.bradIndex]);if(el)el.classList.add('brad-here');
+    }
+    // Mama Coco radar
+    if(MODES.radar_map && S.mama.active && roomRue){
+      if(S.mama.phase==='partie') roomRue.classList.add('mama-alert');
+      else roomRue.classList.remove('mama-alert');
+    }
+  }
 
   // Brad
   function bradInterval(){return Math.max(BRAD_MOVE_MIN,BRAD_MOVE_BASE-(BRAD_MOVE_BASE-BRAD_MOVE_MIN)*S.nightProgress);}
@@ -351,7 +382,7 @@
   function showDeath(){$id('screen-death').classList.remove('hidden');ps(SND.dead,0.9);const dc=$id('death-noise');if(dc){const dctx=dc.getContext('2d');(function dn(){if($id('screen-death').classList.contains('hidden'))return;dc.width=window.innerWidth;dc.height=window.innerHeight;const img=dctx.createImageData(dc.width,dc.height);for(let i=0;i<img.data.length;i+=4){const v=Math.random()>0.5?255:0;img.data[i]=img.data[i+1]=img.data[i+2]=v;img.data[i+3]=Math.random()*20;}dctx.putImageData(img,0,0);requestAnimationFrame(dn);})();}const btn=$id('death-btn-menu');if(btn){btn.style.display='none';setTimeout(()=>{btn.style.display='block';btn.classList.add('visible');},DEATH_MIN);btn.addEventListener('click',()=>{window.location.href='bonus.html';});}}
 
   // Horloge
-  function startClock(){const t0=Date.now(),hiv=NIGHT_DURATION/(HOURS.length-1);function tick(){if(S.over)return;const el=Date.now()-t0;S.nightProgress=Math.min(1,el/NIGHT_DURATION);const hi=Math.min(Math.floor(el/hiv),HOURS.length-1);if(hi!==S.currentHour){S.currentHour=hi;hudHour.textContent=HOURS[hi];if(hi>=BRAD_VISIBLE_HOUR&&!S.bradVisible){S.bradVisible=true;refreshMap();selectRoom(S.selectedRoom);}}if(S.nightProgress>=1){trigNightEnd();return;}requestAnimationFrame(tick);}requestAnimationFrame(tick);}
+  function startClock(){const NIGHT_DURATION=NIGHT_DURATION_BASE/NIGHT_SPEED; const t0=Date.now(),hiv=NIGHT_DURATION/(HOURS.length-1);function tick(){if(S.over)return;const el=Date.now()-t0;S.nightProgress=Math.min(1,el/NIGHT_DURATION);const hi=Math.min(Math.floor(el/hiv),HOURS.length-1);if(hi!==S.currentHour){S.currentHour=hi;hudHour.textContent=HOURS[hi];if(hi>=BRAD_VISIBLE_HOUR&&!S.bradVisible){S.bradVisible=true;refreshMap();selectRoom(S.selectedRoom);}}if(S.nightProgress>=1){trigNightEnd();return;}requestAnimationFrame(tick);}requestAnimationFrame(tick);}
 
   // Fin de nuit — retour bonus
   function trigNightEnd(){if(S.over)return;S.over=true;cleanup();
@@ -368,6 +399,10 @@
 
   // Démarrage
   function startNight(){
+    // Silent Night : muter tous les audios
+    if(MODES.silent_night){
+      document.querySelectorAll('audio').forEach(a=>{ a.volume=0; a.muted=true; });
+    }
     try{if(localStorage.getItem('fnaf_irl_etage2_visited')==='1')S.etage2Visited=true;if(localStorage.getItem('fnaf_irl_rue_visited')==='1')S.rueVisited=true;}catch(e){}
     if(!S.etage2Visited&&roomEtage2)roomEtage2.classList.add('first-visit');
     ps(SND.start,0.8);
@@ -379,10 +414,11 @@
       // Afficher le badge de difficulté
       const badge=$id('custom-diff-badge');
       if(badge){
-        const bTxt = BRAD_INACTIVE  ? 'Brad : inactif'  : `Brad ${CUSTOM.brad}/10`;
-        const fTxt = FRANK_INACTIVE ? 'Frank : inactif' : `Frank ${CUSTOM.frank}/10`;
-        const mTxt = MAMA_INACTIVE  ? 'Mama : inactive' : `Mama ${CUSTOM.mama}/10`;
-        badge.textContent = bTxt + ' · ' + fTxt + ' · ' + mTxt;
+        const bTxt = BRAD_INACTIVE  ? 'Brad : inactif'  : 'Brad ' + CUSTOM.brad + '/10';
+        const fTxt = FRANK_INACTIVE ? 'Frank : inactif' : 'Frank ' + CUSTOM.frank + '/10';
+        const mTxt = MAMA_INACTIVE  ? 'Mama : inactive' : 'Mama ' + CUSTOM.mama + '/10';
+        const activeModes = Object.entries(MODES).filter(([,v])=>v).map(([k])=>k.replace('_',' ')).join(' · ');
+        badge.textContent = bTxt + ' · ' + fTxt + ' · ' + mTxt + (activeModes ? ' | ' + activeModes : '');
       }
       selectRoom('cellier');refreshMap();updateModIndicators();
       startMbDrain();
