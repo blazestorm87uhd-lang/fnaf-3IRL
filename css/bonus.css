@@ -355,3 +355,68 @@ body.display-tv .robot-level-val      { font-size: 24px; }
 body.display-tv .bonus-action-btn     { font-size: 14px; padding: 16px 36px; }
 body.display-tv #bonus-title          { font-size: 26px; letter-spacing: 12px; }
 body.display-tv #bonus-back           { font-size: 14px; }
+
+/* ── Robot sélectionné manette ── */
+.robot-card.gp-selected {
+  border-color: rgba(192,160,16,0.5);
+  background: rgba(192,160,16,0.04);
+}
+.robot-card.gp-selected .robot-name { color: #c0a010; }
+.robot-card.gp-selected .robot-level-val { color: #c0a010 !important; }
+
+/* ══════════════════════════════════════
+   SUCCÈS
+══════════════════════════════════════ */
+#achievements-stats {
+  display: flex; gap: 20px; align-items: center;
+  font-family: var(--font-mono); font-size: 10px; color: #555;
+  letter-spacing: 2px; margin-bottom: 20px;
+}
+#ach-progress-bar {
+  flex: 1; height: 3px; background: rgba(255,255,255,0.08); border-radius: 2px;
+}
+#ach-progress-fill {
+  height: 100%; background: #c0a010; border-radius: 2px; transition: width 0.4s ease;
+}
+#ach-count { color: #c0a010; min-width: 50px; text-align: right; }
+
+.ach-cat-title {
+  font-family: var(--font-mono); font-size: 9px; letter-spacing: 4px; color: #333;
+  text-transform: uppercase; padding: 14px 0 6px;
+  border-bottom: 0.5px solid rgba(255,255,255,0.05);
+  margin-bottom: 4px;
+}
+
+.ach-item {
+  display: flex; align-items: center; gap: 14px;
+  padding: 10px 0;
+  border-bottom: 0.5px solid rgba(255,255,255,0.04);
+  transition: background 0.12s;
+}
+.ach-item.unlocked .ach-icon  { color: #c0a010; }
+.ach-item.locked   .ach-icon  { color: #222; }
+.ach-item.locked   .ach-name  { color: #333; }
+.ach-item.locked   .ach-desc  { color: #222; }
+
+.ach-icon {
+  font-size: 18px; min-width: 26px; text-align: center; flex-shrink: 0;
+}
+.ach-text { display: flex; flex-direction: column; gap: 3px; flex: 1; }
+.ach-name {
+  font-family: var(--font-title); font-size: 13px; color: #aaa; letter-spacing: 2px;
+}
+.ach-desc {
+  font-family: var(--font-mono); font-size: 9px; color: #555; letter-spacing: 1px;
+}
+.ach-date {
+  font-family: var(--font-mono); font-size: 8px; color: #333;
+  letter-spacing: 1px; flex-shrink: 0;
+}
+.ach-item.unlocked .ach-name { color: #ddd; }
+.ach-item.unlocked .ach-desc { color: #666; }
+
+/* Mode TV */
+body.display-tv .ach-name  { font-size: 17px; }
+body.display-tv .ach-desc  { font-size: 12px; }
+body.display-tv .ach-icon  { font-size: 22px; }
+body.display-tv .ach-item  { padding: 14px 0; }
