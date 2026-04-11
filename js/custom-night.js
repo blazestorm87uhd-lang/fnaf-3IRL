@@ -354,7 +354,12 @@
   function startClock(){const t0=Date.now(),hiv=NIGHT_DURATION/(HOURS.length-1);function tick(){if(S.over)return;const el=Date.now()-t0;S.nightProgress=Math.min(1,el/NIGHT_DURATION);const hi=Math.min(Math.floor(el/hiv),HOURS.length-1);if(hi!==S.currentHour){S.currentHour=hi;hudHour.textContent=HOURS[hi];if(hi>=BRAD_VISIBLE_HOUR&&!S.bradVisible){S.bradVisible=true;refreshMap();selectRoom(S.selectedRoom);}}if(S.nightProgress>=1){trigNightEnd();return;}requestAnimationFrame(tick);}requestAnimationFrame(tick);}
 
   // Fin de nuit — retour bonus
-  function trigNightEnd(){if(S.over)return;S.over=true;cleanup();screenGame.classList.add('hidden');screenNightEnd.classList.remove('hidden');// Nettoyer le flag custom
+  function trigNightEnd(){if(S.over)return;S.over=true;cleanup();
+    if(window.Achievements){
+      Achievements.unlock('custom_win');
+      const d=JSON.parse(localStorage.getItem('fnaf_custom_diffs')||'{}');
+      if(d.brad>=10&&d.frank>=10&&d.mama>=10) Achievements.unlock('custom_max');
+    }screenGame.classList.add('hidden');screenNightEnd.classList.remove('hidden');// Nettoyer le flag custom
     try{localStorage.removeItem('fnaf_custom_active');}catch(e){}
     ps(SND.end,0.8);const audioDur=(SND.end&&SND.end.duration>0)?SND.end.duration*1000:4000;setTimeout(()=>{window.location.href='bonus.html';},audioDur+3000);}
 
