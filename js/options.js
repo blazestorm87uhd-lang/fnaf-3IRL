@@ -234,6 +234,7 @@ function openOptionsModal() {
   modal.querySelectorAll('.opts-gp').forEach(function(btn) {
     btn.addEventListener('click', function() {
       Opts.set('gamepadType', btn.dataset.gp);
+      try { localStorage.setItem('fnaf_opt_gamepadType_manual', '1'); } catch(e) {}
       highlightActive(modal.querySelectorAll('.opts-gp'), btn, 'ctrl');
       renderBindings(btn.dataset.gp);
     });
