@@ -72,3 +72,21 @@
   0%   { opacity: 0; transform: translateY(-50px); }
   100% { opacity: 1; transform: translateY(0); }
 }
+
+/* ── Focus manette — surbrillance maintenance ── */
+.maint-item:focus,
+.maint-reboot:focus,
+#btn-maintenance-close:focus {
+  outline: none;
+  background: rgba(192,160,16,0.12);
+  border-color: rgba(192,160,16,0.5);
+  color: #c0a010;
+}
+.maint-item:focus .maint-status.ok   { color: #2a8a2a; }
+.maint-item:focus .maint-name        { color: #c0a010; }
+.maint-reboot:focus                  { color: #c0a010; }
+#btn-maintenance-close:focus         { background: rgba(192,160,16,0.08); border-color: rgba(192,160,16,0.4); color: #c0a010; }
+
+/* Rendre focusable au clavier/manette */
+.maint-item     { tabindex: 0; }
+.maint-reboot   { tabindex: 0; }
