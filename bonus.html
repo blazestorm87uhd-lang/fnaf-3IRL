@@ -81,6 +81,49 @@
 
     </div>
 
+    <!-- Modes spéciaux -->
+    <div id="custom-modes">
+      <div class="custom-modes-title">Modes spéciaux</div>
+      <div id="custom-modes-list">
+        <label class="custom-mode-item" data-mode="fast_night">
+          <input type="checkbox" id="mode-fast_night" />
+          <div class="custom-mode-info">
+            <div class="custom-mode-name">Fast Night</div>
+            <div class="custom-mode-desc">La nuit passe 2× plus vite</div>
+          </div>
+        </label>
+        <label class="custom-mode-item" data-mode="radar_map">
+          <input type="checkbox" id="mode-radar_map" />
+          <div class="custom-mode-info">
+            <div class="custom-mode-name">Radar Map</div>
+            <div class="custom-mode-desc">Position des robots visible en permanence sur la carte</div>
+          </div>
+        </label>
+        <label class="custom-mode-item" data-mode="no_camera">
+          <input type="checkbox" id="mode-no_camera" />
+          <div class="custom-mode-info">
+            <div class="custom-mode-name">No Camera</div>
+            <div class="custom-mode-desc">Flux vidéo désactivé — jouer uniquement au son</div>
+          </div>
+        </label>
+        <label class="custom-mode-item" data-mode="silent_night">
+          <input type="checkbox" id="mode-silent_night" />
+          <div class="custom-mode-info">
+            <div class="custom-mode-name">Silent Night</div>
+            <div class="custom-mode-desc">Aucun son — jouer uniquement à la vue</div>
+          </div>
+        </label>
+        <label class="custom-mode-item" data-mode="frank_blind">
+          <input type="checkbox" id="mode-frank_blind" />
+          <div class="custom-mode-info">
+            <div class="custom-mode-name">Frank Aveugle</div>
+            <div class="custom-mode-desc">Boîte à musique sans jauge — uniquement le son pour s'orienter</div>
+          </div>
+        </label>
+      </div>
+      <div id="custom-difficulty-badge">Difficulté globale : <span id="custom-diff-score">—</span></div>
+    </div>
+
     <div id="custom-actions">
       <button class="bonus-action-btn secondary" id="custom-reset">Réinitialiser</button>
       <button class="bonus-action-btn primary" id="custom-start">▶ Lancer la nuit</button>
@@ -159,7 +202,8 @@
   <audio id="audio-bonus" src="assets/audio/bonus.mp3" loop preload="auto"></audio>
   <audio id="audio-merci" src="assets/audio/merci.m4a" preload="auto"></audio>
 
-  <script src="js/save.js"></script>  <script src="js/achievements.js"></script>
+  <script src="js/save.js"></script>
+  <script src="js/achievements.js"></script>
 
   <script src="js/options.js"></script>
   <script src="js/bonus.js"></script>
