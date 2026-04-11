@@ -30,6 +30,7 @@
   <!-- NAVIGATION SECTIONS -->
   <div id="bonus-nav">
     <button class="bonus-nav-btn active" data-section="custom">Custom Night</button>
+    <button class="bonus-nav-btn" data-section="achievements">Succès</button>
     <button class="bonus-nav-btn" data-section="jukebox">Jukebox</button>
     <button class="bonus-nav-btn" data-section="credits">Générique</button>
     <button class="bonus-nav-btn disabled" data-section="coming">Bientôt...</button>
@@ -93,10 +94,21 @@
     <button class="bonus-action-btn primary" id="replay-credits" style="margin-top:32px;">▶ Lancer le générique</button>
   </div>
 
+  <!-- SECTION : SUCCÈS -->
+  <div id="section-achievements" class="bonus-section" style="display:none;">
+    <div class="bonus-section-title">Succès</div>
+    <div id="achievements-stats">
+      <span id="ach-count">0 / 0</span>
+      <div id="ach-progress-bar"><div id="ach-progress-fill" style="width:0%"></div></div>
+      <span id="ach-pct">0%</span>
+    </div>
+    <div id="achievements-list"></div>
+  </div>
+
   <!-- SECTION : JUKEBOX -->
   <div id="section-jukebox" class="bonus-section" style="display:none;">
     <div class="bonus-section-title">Jukebox</div>
-    <div class="bonus-section-sub">Système audio de la maison — tous les fichiers sonores du jeu.</div>
+    <div class="bonus-section-sub">Système audio du bâtiment — tous les fichiers sonores du jeu.</div>
     <div id="jukebox-wrap">
       <!-- Catégories -->
       <div id="jukebox-cats"></div>
@@ -147,7 +159,8 @@
   <audio id="audio-bonus" src="assets/audio/bonus.mp3" loop preload="auto"></audio>
   <audio id="audio-merci" src="assets/audio/merci.m4a" preload="auto"></audio>
 
-  <script src="js/save.js"></script>
+  <script src="js/save.js"></script>  <script src="js/achievements.js"></script>
+
   <script src="js/options.js"></script>
   <script src="js/bonus.js"></script>
 </body>
