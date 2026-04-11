@@ -65,17 +65,31 @@
   function getGpType() {
     try { return localStorage.getItem('fnaf_opt_gamepadType') || 'xbox'; } catch(e) { return 'xbox'; }
   }
+  function detectGpType(gp) {
+    if (!gp || !gp.id) return getGpType(); // fallback sur le setting sauvegardé
+    const id = gp.id.toLowerCase();
+    if (id.includes('sony') || id.includes('playstation') || id.includes('dualshock') ||
+        id.includes('dualsense') || id.includes('054c') || id.includes('wireless controller')) return 'ps';
+    if (id.includes('nintendo') || id.includes('057e') || id.includes('joy-con') ||
+        id.includes('pro controller') || id.includes('switch')) return 'switch';
+    return 'xbox';
+  }
+
   function checkLoaderGamepad() {
     const gps = navigator.getGamepads ? Array.from(navigator.getGamepads()).filter(Boolean) : [];
     if (gps.length > 0) {
-      const t = getGpType();
-      // PS = bouton X (croix) = btn 0 sur standard mapping mais affiché "X"
-      // Xbox/Switch = bouton A = btn 0
-      let btnLabel;
-      if (t === 'ps') btnLabel = 'X';
-      else if (t === 'switch') btnLabel = 'A';
-      else btnLabel = 'A'; // xbox
-      gpLoaderHint.textContent = `● Manette détectée — appuyer ${btnLabel} pour continuer`;
+      // Détecter automatiquement via l'id de la manette
+      const autoType = detectGpType(gps[0]);
+      // Sauvegarder le type détecté si pas encore défini manuellement
+      try {
+        if (!localStorage.getItem('fnaf_opt_gamepadType_manual')) {
+          localStorage.setItem('fnaf_opt_gamepadType', autoType);
+          localStorage.setItem('fnaf_opt_controlType', 'gamepad');
+        }
+      } catch(e) {}
+      const btnLabel = autoType === 'ps' ? 'X' : 'A';
+      const gpName   = autoType === 'ps' ? 'PlayStation' : autoType === 'switch' ? 'Switch' : 'Xbox';
+      gpLoaderHint.textContent = `● Manette ${gpName} — appuyer ${btnLabel} pour continuer`;
       gpLoaderHint.style.display = 'block';
     } else {
       gpLoaderHint.style.display = 'none';
