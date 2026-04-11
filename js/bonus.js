@@ -208,3 +208,221 @@
   });
 
 })();
+
+// ══════════════════════════════════════
+// JUKEBOX
+// ══════════════════════════════════════
+(function initJukebox() {
+
+  // ── Catalogue des pistes ──
+  const TRACKS = [
+    // Catégorie : Appels
+    { cat:'Appels',     name:'Appel — Nuit 1',         src:'assets/audio/effect/night1-call.m4a' },
+    { cat:'Appels',     name:'Appel — Nuit 2',         src:'assets/audio/effect/night2-call.m4a' },
+    { cat:'Appels',     name:'Appel — Nuit 3',         src:'assets/audio/effect/night-3-call.m4a' },
+    { cat:'Appels',     name:'Appel — Nightmare',      src:'assets/audio/effect/nightmare-call.m4a' },
+    // Catégorie : Ambiances
+    { cat:'Ambiances',  name:'Ambiance 1',             src:'assets/audio/effect/ambiance-1.mp3' },
+    { cat:'Ambiances',  name:'Ambiance 2',             src:'assets/audio/effect/ambiance-2.mp3' },
+    { cat:'Ambiances',  name:'Ambiance 3',             src:'assets/audio/effect/ambiance-3.mp3' },
+    { cat:'Ambiances',  name:'Ambiance 4',             src:'assets/audio/effect/ambiance-4.wav' },
+    { cat:'Ambiances',  name:'Ambiance 5',             src:'assets/audio/effect/ambiance-5.wav' },
+    // Catégorie : Musiques
+    { cat:'Musiques',   name:'Menu principal',         src:'assets/audio/menu.mp3' },
+    { cat:'Musiques',   name:'Bonus',                  src:'assets/audio/bonus.mp3' },
+    { cat:'Musiques',   name:'Générique de fin',       src:'assets/audio/merci.m4a' },
+    { cat:'Musiques',   name:'Boîte à musique',        src:'assets/audio/effect/music-box/music-box.mp3' },
+    // Catégorie : Effets
+    { cat:'Effets',     name:'Démarrage nuit',         src:'assets/audio/effect/night-start.mp3' },
+    { cat:'Effets',     name:'Fin de nuit',            src:'assets/audio/effect/night-end.mp3' },
+    { cat:'Effets',     name:'Alarme',                 src:'assets/audio/effect/alarm.mp3' },
+    { cat:'Effets',     name:'Bruit de pas',           src:'assets/audio/effect/bruit-pas.wav' },
+    { cat:'Effets',     name:'Course rapide',          src:'assets/audio/effect/fastrun.wav' },
+    { cat:'Effets',     name:'Robot',                  src:'assets/audio/effect/robot.mp3' },
+    { cat:'Effets',     name:'Sonnerie',               src:'assets/audio/effect/ring.mp3' },
+    { cat:'Effets',     name:'tk4play',                src:'assets/audio/effect/tk4play.wav' },
+  ];
+
+  const CATS = [...new Set(TRACKS.map(t => t.cat))];
+
+  // ── État ──
+  let currentTrack  = null;  // index dans TRACKS
+  let currentCat    = CATS[0];
+  let isPlaying     = false;
+  let jkAudio       = new Audio();
+  let progressRaf   = null;
+
+  // ── Éléments DOM ──
+  const catsEl    = document.getElementById('jukebox-cats');
+  const listEl    = document.getElementById('jukebox-tracklist');
+  const nameEl    = document.getElementById('jk-track-name');
+  const curEl     = document.getElementById('jk-time-cur');
+  const durEl     = document.getElementById('jk-time-dur');
+  const fillEl    = document.getElementById('jk-progress-fill');
+  const barEl     = document.getElementById('jk-progress-bar');
+  const playBtn   = document.getElementById('jk-play');
+  const prevBtn   = document.getElementById('jk-prev');
+  const nextBtn   = document.getElementById('jk-next');
+  const volEl     = document.getElementById('jk-vol');
+
+  if (!catsEl || !listEl) return; // Pas encore dans le DOM
+
+  // ── Utilitaires ──
+  function fmt(s) {
+    if (!s || isNaN(s) || !isFinite(s)) return '0:00';
+    const m = Math.floor(s / 60), sec = Math.floor(s % 60);
+    return m + ':' + (sec < 10 ? '0' : '') + sec;
+  }
+  function getVol() { return parseInt(volEl.value) / 100; }
+
+  // ── Rendu des catégories ──
+  function renderCats() {
+    catsEl.innerHTML = '';
+    CATS.forEach(cat => {
+      const btn = document.createElement('button');
+      btn.className = 'jk-cat-btn' + (cat === currentCat ? ' active' : '');
+      btn.textContent = cat;
+      btn.onclick = () => { currentCat = cat; renderCats(); renderList(); };
+      catsEl.appendChild(btn);
+    });
+  }
+
+  // ── Rendu de la liste ──
+  function renderList() {
+    listEl.innerHTML = '';
+    const filtered = TRACKS.map((t, i) => ({...t, idx: i})).filter(t => t.cat === currentCat);
+    filtered.forEach((t, n) => {
+      const row = document.createElement('div');
+      row.className = 'jk-track' + (t.idx === currentTrack ? ' active' : '');
+      row.setAttribute('tabindex', '0');
+      row.innerHTML =
+        '<span class="jk-track-num">' + (n+1) + '</span>' +
+        '<span class="jk-track-lbl">' + t.name + '</span>' +
+        '<span class="jk-track-dur" id="jk-dur-' + t.idx + '">—</span>';
+      row.onclick = () => loadTrack(t.idx, true);
+      row.onkeydown = e => { if(e.key==='Enter'||e.key===' ') { e.preventDefault(); loadTrack(t.idx, true); } };
+      listEl.appendChild(row);
+      // Charger la durée en avance
+      const probe = new Audio(t.src);
+      probe.preload = 'metadata';
+      probe.addEventListener('loadedmetadata', () => {
+        const d = document.getElementById('jk-dur-' + t.idx);
+        if (d) d.textContent = fmt(probe.duration);
+      });
+    });
+  }
+
+  // ── Charger une piste ──
+  function loadTrack(idx, autoplay) {
+    currentTrack = idx;
+    const t = TRACKS[idx];
+    jkAudio.pause();
+    cancelAnimationFrame(progressRaf);
+    jkAudio = new Audio(t.src);
+    jkAudio.volume = getVol();
+    nameEl.textContent = t.name;
+    nameEl.className = 'playing';
+    fillEl.style.width = '0%';
+    curEl.textContent = '0:00';
+    durEl.textContent = '—';
+    jkAudio.addEventListener('loadedmetadata', () => { durEl.textContent = fmt(jkAudio.duration); });
+    jkAudio.addEventListener('ended', () => { isPlaying = false; updatePlayBtn(); nextTrack(); });
+    renderList();
+    // Mettre en évidence la piste dans la liste
+    setTimeout(() => {
+      const active = listEl.querySelector('.jk-track.active');
+      if (active) active.scrollIntoView({ block: 'nearest' });
+    }, 50);
+    if (autoplay) play();
+    else { isPlaying = false; updatePlayBtn(); }
+  }
+
+  // ── Lecture / Pause ──
+  function play() {
+    if (!currentTrack !== null && currentTrack === null) { if (TRACKS.length) loadTrack(0, true); return; }
+    jkAudio.volume = getVol();
+    jkAudio.play().catch(() => {});
+    isPlaying = true;
+    updatePlayBtn();
+    updateProgress();
+  }
+  function pause() {
+    jkAudio.pause();
+    isPlaying = false;
+    updatePlayBtn();
+    cancelAnimationFrame(progressRaf);
+  }
+  function togglePlay() {
+    if (currentTrack === null) { loadTrack(0, true); return; }
+    if (isPlaying) pause(); else play();
+  }
+
+  // ── Navigation ──
+  function prevTrack() {
+    if (currentTrack === null) return;
+    const filtered = TRACKS.map((t,i)=>({...t,idx:i})).filter(t=>t.cat===currentCat);
+    const pos = filtered.findIndex(t=>t.idx===currentTrack);
+    if (pos > 0) loadTrack(filtered[pos-1].idx, isPlaying);
+    else if (filtered.length) loadTrack(filtered[filtered.length-1].idx, isPlaying);
+  }
+  function nextTrack() {
+    if (currentTrack === null) { loadTrack(0, true); return; }
+    const filtered = TRACKS.map((t,i)=>({...t,idx:i})).filter(t=>t.cat===currentCat);
+    const pos = filtered.findIndex(t=>t.idx===currentTrack);
+    if (pos < filtered.length - 1) loadTrack(filtered[pos+1].idx, true);
+    else loadTrack(filtered[0].idx, false); // Retour au début, pause
+  }
+
+  // ── Progression ──
+  function updateProgress() {
+    if (!isPlaying) return;
+    const dur = jkAudio.duration;
+    const cur = jkAudio.currentTime;
+    if (dur && isFinite(dur)) {
+      fillEl.style.width = ((cur/dur)*100) + '%';
+      curEl.textContent = fmt(cur);
+    }
+    progressRaf = requestAnimationFrame(updateProgress);
+  }
+
+  function updatePlayBtn() {
+    if (isPlaying) { playBtn.innerHTML = '&#9646;&#9646;'; playBtn.classList.add('playing'); }
+    else           { playBtn.innerHTML = '&#9654;';        playBtn.classList.remove('playing'); }
+  }
+
+  // ── Events contrôles ──
+  playBtn.onclick = togglePlay;
+  prevBtn.onclick = prevTrack;
+  nextBtn.onclick = nextTrack;
+  volEl.oninput = () => { jkAudio.volume = getVol(); };
+
+  // Barre de progression — seek au clic
+  barEl.addEventListener('click', e => {
+    if (!jkAudio.duration || !isFinite(jkAudio.duration)) return;
+    const rect = barEl.getBoundingClientRect();
+    const pct  = Math.max(0, Math.min(1, (e.clientX - rect.left) / rect.width));
+    jkAudio.currentTime = pct * jkAudio.duration;
+    curEl.textContent = fmt(jkAudio.currentTime);
+    fillEl.style.width = (pct * 100) + '%';
+  });
+
+  // Navigation clavier dans la liste
+  listEl.addEventListener('keydown', e => {
+    const tracks = listEl.querySelectorAll('.jk-track');
+    const cur2 = Array.from(tracks).indexOf(document.activeElement);
+    if (e.key === 'ArrowDown') { e.preventDefault(); tracks[Math.min(tracks.length-1, cur2+1)]?.focus(); }
+    if (e.key === 'ArrowUp')   { e.preventDefault(); tracks[Math.max(0, cur2-1)]?.focus(); }
+  });
+
+  // Arrêter le jukebox quand on quitte la section
+  document.querySelectorAll('.bonus-nav-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      if (btn.dataset.section !== 'jukebox') { pause(); }
+    });
+  });
+
+  // ── Init ──
+  renderCats();
+  renderList();
+
+})();
