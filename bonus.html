@@ -30,8 +30,8 @@
   <!-- NAVIGATION SECTIONS -->
   <div id="bonus-nav">
     <button class="bonus-nav-btn active" data-section="custom">Custom Night</button>
-    <button class="bonus-nav-btn" data-section="credits">Générique</button>
     <button class="bonus-nav-btn" data-section="jukebox">Jukebox</button>
+    <button class="bonus-nav-btn" data-section="credits">Générique</button>
     <button class="bonus-nav-btn disabled" data-section="coming">Bientôt...</button>
   </div>
 
@@ -96,7 +96,7 @@
   <!-- SECTION : JUKEBOX -->
   <div id="section-jukebox" class="bonus-section" style="display:none;">
     <div class="bonus-section-title">Jukebox</div>
-    <div class="bonus-section-sub">Système audio du bâtiment — tous les fichiers sonores du jeu.</div>
+    <div class="bonus-section-sub">Système audio de la maison — tous les fichiers sonores du jeu.</div>
     <div id="jukebox-wrap">
       <!-- Catégories -->
       <div id="jukebox-cats"></div>
@@ -119,7 +119,13 @@
           <button class="jk-btn jk-main" id="jk-play">&#9654;</button>
           <button class="jk-btn" id="jk-next" title="Suivant">&#9654;&#9654;</button>
           <div id="jk-vol-wrap">
-            <span class="jk-vol-icon">&#128266;</span>
+            <span class="jk-vol-icon">
+              <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.3">
+                <path d="M2 4.5h2l3-2.5v9l-3-2.5H2V4.5z"/>
+                <path d="M9.5 4.5c1.2 0.9 1.2 4.1 0 5" stroke-linecap="round"/>
+                <path d="M11.5 3c2 1.5 2 6.5 0 8" stroke-linecap="round"/>
+              </svg>
+            </span>
             <input type="range" id="jk-vol" min="0" max="100" value="75" />
           </div>
         </div>
