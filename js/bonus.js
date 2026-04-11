@@ -110,12 +110,78 @@
       const sl = document.getElementById('diff-' + r);
       if (sl) { sl.value = 5; sl.dispatchEvent(new Event('input')); }
     });
+    // Réinitialiser aussi les modes
+    document.querySelectorAll('#custom-modes-list input[type=checkbox]').forEach(cb => {
+      cb.checked = false;
+    });
+    updateDiffScore();
+  });
+
+  // ── Modes enrichis — persistance et score ──
+  const MODE_WEIGHTS = {
+    fast_night: 2, radar_map: -1, no_camera: 3, silent_night: 2, frank_blind: 1
+  };
+
+  function loadModes() {
+    try { return JSON.parse(localStorage.getItem('fnaf_custom_modes') || '{}'); } catch(e) { return {}; }
+  }
+  function saveModes(m) {
+    try { localStorage.setItem('fnaf_custom_modes', JSON.stringify(m)); } catch(e) {}
+  }
+
+  // Charger les modes sauvegardés
+  const savedModes = loadModes();
+  document.querySelectorAll('#custom-modes-list input[type=checkbox]').forEach(cb => {
+    const modeId = cb.id.replace('mode-', '');
+    if (savedModes[modeId]) cb.checked = true;
+    cb.addEventListener('change', () => {
+      const m = loadModes();
+      m[modeId] = cb.checked;
+      saveModes(m);
+      updateDiffScore();
+    });
+  });
+
+  function updateDiffScore() {
+    const scoreEl = document.getElementById('custom-diff-score');
+    if (!scoreEl) return;
+    const diffs = loadDiffs();
+    const modes = loadModes();
+    // Score de base : moyenne des robots actifs
+    let base = 0, robotCount = 0;
+    ['brad','frank','mama'].forEach(r => {
+      if (diffs[r] > 1) { base += diffs[r]; robotCount++; }
+    });
+    const avgRobot = robotCount > 0 ? base / robotCount : 0;
+    // Bonus/malus des modes
+    let modeBonus = 0;
+    Object.entries(MODE_WEIGHTS).forEach(([id, w]) => { if (modes[id]) modeBonus += w; });
+    const total = Math.max(0, Math.min(20, Math.round(avgRobot + modeBonus)));
+    // Label
+    let label, color;
+    if (total <= 3)       { label = 'Très facile';    color = '#2a8a2a'; }
+    else if (total <= 6)  { label = 'Facile';         color = '#5aaa5a'; }
+    else if (total <= 9)  { label = 'Modéré';         color = '#c0a010'; }
+    else if (total <= 12) { label = 'Difficile';      color = '#cc6010'; }
+    else if (total <= 15) { label = 'Très difficile'; color = '#cc2020'; }
+    else                  { label = 'CAUCHEMAR';      color = '#aa0000'; }
+    scoreEl.textContent = label + ' (' + total + '/20)';
+    scoreEl.style.color = color;
+  }
+  updateDiffScore();
+
+  // Recalculer quand les sliders changent
+  document.querySelectorAll('.robot-slider').forEach(sl => {
+    sl.addEventListener('input', updateDiffScore);
   });
 
   // Lancer
   document.getElementById('custom-start')?.addEventListener('click', () => {
     const d = loadDiffs();
-    try { localStorage.setItem('fnaf_custom_active', JSON.stringify(d)); } catch(e) {}
+    const m = loadModes();
+    try {
+      localStorage.setItem('fnaf_custom_active', JSON.stringify({ ...d, modes: m }));
+    } catch(e) {}
     if (audioBonus) audioBonus.pause();
     document.body.style.transition = 'opacity 0.3s';
     document.body.style.opacity = '0';
