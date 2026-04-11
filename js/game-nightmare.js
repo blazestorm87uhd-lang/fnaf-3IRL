@@ -617,6 +617,12 @@
   }
   function doJumpscare(video, deathMsg, onDone){
     if(S.over) return; S.over=true; cleanup();
+    // Succès selon le robot
+    if (window.Achievements) {
+      if (video === JV_brad)  { Achievements.unlock('js_brad');  const d=Achievements.loadAll(); if(d.js_frank&&d.js_mama) Achievements.unlock('js_all'); if(S.startTime&&Date.now()-S.startTime<120000) Achievements.unlock('js_fast'); }
+      if (video === JV_frank) { Achievements.unlock('js_frank'); const d=Achievements.loadAll(); if(d.js_brad&&d.js_mama) Achievements.unlock('js_all'); }
+      if (video === JV_mama)  { Achievements.unlock('js_mama');  const d=Achievements.loadAll(); if(d.js_brad&&d.js_frank) Achievements.unlock('js_all'); }
+    }
     screenGame.classList.add('hidden');
     video.closest('[id^="screen-jumpscare"]').classList.remove('hidden');
     video.muted=false; video.volume=1; video.play().catch(()=>{});
@@ -657,6 +663,11 @@
     if(S.over) return; S.over=true; cleanup();
     screenGame.classList.add('hidden');
     Save.completeNight('nightmare');
+    if (window.Achievements) {
+      Achievements.unlock('nightmare');
+      if (!S.callMuted)  Achievements.unlock('nm_no_mute');
+      if (!S.hadError)   Achievements.unlock('nm_no_error');
+    }
     showNightEndAnimation();
   }
 
@@ -861,6 +872,7 @@
   // DÉMARRAGE
   // ══════════════════════════════════════
   function startNight(){
+    S.startTime = Date.now(); S.hadError = false;
     try{
       if(localStorage.getItem('fnaf_irl_etage2_visited')==='1') S.etage2Visited=true;
       if(localStorage.getItem('fnaf_irl_rue_visited')==='1') S.rueVisited=true;
