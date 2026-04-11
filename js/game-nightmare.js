@@ -701,11 +701,11 @@
       },800);
     }
 
-    // Après animation → générique
+    // Après animation → pause de 3s → fondu → générique
     setTimeout(()=>{
-      endScr.style.transition='opacity 1s'; endScr.style.opacity='0';
-      setTimeout(()=>{ endScr.remove(); showCredits(); },1100);
-    },5000);
+      endScr.style.transition='opacity 1.5s'; endScr.style.opacity='0';
+      setTimeout(()=>{ endScr.remove(); showCredits(); },1600);
+    },8000);  // 8s total : animation (2s) + pause contemplative (6s)
   }
 
   // ── DEV SHORTCUT ──
@@ -839,8 +839,18 @@
           btn.className = 'credits-continue';
           btn.style.pointerEvents = 'all';
           btn.textContent = 'CLIQUEZ POUR CONTINUER';
-          btn.addEventListener('click', ()=>{ window.location.href='index.html'; });
+          const goMenu = () => { window.location.href='index.html'; };
+          btn.addEventListener('click', goMenu);
           wrap.appendChild(btn); fadeIn(btn, 600);
+          // Manette : A/X pour continuer
+          let prevBtn = false;
+          const iv = setInterval(() => {
+            const gps = navigator.getGamepads ? Array.from(navigator.getGamepads()).filter(Boolean) : [];
+            if (!gps.length) return;
+            const pressed = gps[0].buttons[0]?.pressed || gps[0].buttons[2]?.pressed;
+            if (pressed && !prevBtn) { clearInterval(iv); goMenu(); }
+            prevBtn = pressed;
+          }, 50);
         }, 2000);
       }
     }
