@@ -229,6 +229,9 @@
 
   function startAmbiance() {
     if (state.ambiancePaused || state.over) return;
+    // Garde-fou : ne pas démarrer si une ambiance joue déjà
+    if (currentAmbiance && !currentAmbiance.paused) return;
+    stopCurrentAmbiance(); // Nettoyer l'état précédent
     const idx = Math.floor(Math.random() * 3);
     currentAmbiance = snd.ambiance[idx];
     currentAmbiance.volume = 0.35;
@@ -250,6 +253,8 @@
   function resumeAmbiance() {
     if (!state.ambiancePaused) return;
     state.ambiancePaused = false;
+    // Garde-fou : ne relancer que si rien ne joue
+    if (currentAmbiance && !currentAmbiance.paused) return;
     setTimeout(() => { if (!state.over && !state.ambiancePaused) startAmbiance(); }, 2000);
   }
   function stopAllAmbiance() { state.ambiancePaused = true; stopCurrentAmbiance(); }
@@ -887,9 +892,7 @@
       setTimeout(() => {
         playRingTimes(3, () => {
           startPhoneCall();
-          setTimeout(() => {
-            if (!state.callPlaying && !state.over) startAmbiance();
-          }, 30000);
+          // L'ambiance démarre depuis resumeAmbiance() à la fin de l'appel
         });
       }, 1000);
     }, 3000);
