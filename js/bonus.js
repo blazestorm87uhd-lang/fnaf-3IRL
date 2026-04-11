@@ -32,6 +32,8 @@
       btn.classList.add('active');
       const sec = document.getElementById('section-' + btn.dataset.section);
       if (sec) sec.style.display = 'block';
+      // Restaurer le focus de la section
+      setTimeout(restoreFocus, 80);
       // Muter la musique bonus dans le Jukebox, la relancer ailleurs
       if (audioBonus) {
         if (btn.dataset.section === 'jukebox') {
@@ -437,6 +439,108 @@
 
 })();
 
+// Surbrillance robot sélectionné (manette)
+  document.querySelectorAll('.robot-slider').forEach(sl => {
+    sl.addEventListener('focus', () => {
+      document.querySelectorAll('.robot-card').forEach(c => c.classList.remove('gp-selected'));
+      sl.closest('.robot-card')?.classList.add('gp-selected');
+    });
+    sl.addEventListener('blur', () => {
+      sl.closest('.robot-card')?.classList.remove('gp-selected');
+    });
+  });
+
+// ══════════════════════════════════════
+// SECTION SUCCÈS
+// ══════════════════════════════════════
+(function initAchievements() {
+  function render() {
+    if (!window.Achievements) return;
+    const listEl  = document.getElementById('achievements-list');
+    const countEl = document.getElementById('ach-count');
+    const fillEl  = document.getElementById('ach-progress-fill');
+    const pctEl   = document.getElementById('ach-pct');
+    if (!listEl) return;
+
+    const stats   = Achievements.getStats();
+    const unlData = Achievements.loadAll();
+
+    if (countEl) countEl.textContent = stats.unlocked + ' / ' + stats.total;
+    if (fillEl)  fillEl.style.width  = stats.pct + '%';
+    if (pctEl)   pctEl.textContent   = stats.pct + '%';
+
+    // Grouper par catégorie
+    const cats = {};
+    Achievements.CATALOGUE.forEach(a => {
+      if (!cats[a.cat]) cats[a.cat] = [];
+      cats[a.cat].push(a);
+    });
+
+    listEl.innerHTML = '';
+    Object.entries(cats).forEach(([cat, items]) => {
+      const title = document.createElement('div');
+      title.className = 'ach-cat-title';
+      title.textContent = cat;
+      listEl.appendChild(title);
+
+      items.forEach(a => {
+        const isUnlocked = !!unlData[a.id];
+        const ts = unlData[a.id]?.ts;
+
+        const item = document.createElement('div');
+        item.className = 'ach-item ' + (isUnlocked ? 'unlocked' : 'locked');
+        item.setAttribute('tabindex', '0');
+
+        const icon = document.createElement('div');
+        icon.className = 'ach-icon';
+        icon.textContent = isUnlocked ? a.icon : (a.secret ? '?' : a.icon);
+
+        const text = document.createElement('div');
+        text.className = 'ach-text';
+
+        const name = document.createElement('div');
+        name.className = 'ach-name';
+        name.textContent = isUnlocked ? a.name : (a.secret ? '???' : a.name);
+
+        const desc = document.createElement('div');
+        desc.className = 'ach-desc';
+        if (isUnlocked) {
+          desc.textContent = a.secret ? (a.realDesc || a.desc) : a.desc;
+        } else {
+          desc.textContent = a.secret ? '???' : a.desc;
+        }
+
+        text.appendChild(name);
+        text.appendChild(desc);
+        item.appendChild(icon);
+        item.appendChild(text);
+
+        if (isUnlocked && ts) {
+          const date = document.createElement('div');
+          date.className = 'ach-date';
+          const d = new Date(ts);
+          date.textContent = d.getDate()+'/'+(d.getMonth()+1)+'/'+d.getFullYear();
+          item.appendChild(date);
+        }
+
+        listEl.appendChild(item);
+      });
+    });
+  }
+
+  // Rendre quand on entre dans la section succès
+  document.addEventListener('click', e => {
+    const btn = e.target.closest('.bonus-nav-btn');
+    if (btn && btn.dataset.section === 'achievements') {
+      setTimeout(render, 50);
+    }
+  });
+
+  // Rendre immédiatement si on est déjà sur la section
+  setTimeout(render, 200);
+
+})();
+
 // ══════════════════════════════════════
 // NAVIGATION MANETTE — BONUS
 // ══════════════════════════════════════
@@ -469,6 +573,23 @@
     return Array.from(activeSection.querySelectorAll(
       'button:not(:disabled), input[type=range], .jk-track, .bonus-nav-btn:not(.disabled), .jk-cat-btn'
     )).filter(el => el.offsetParent !== null);
+  }
+
+  // Mémoriser le dernier élément focusé par section
+  const _sectionFocus = {};
+  function saveFocus(el) {
+    const sec = document.querySelector('.bonus-nav-btn.active');
+    if (sec) _sectionFocus[sec.dataset.section] = el;
+  }
+  function restoreFocus() {
+    const sec = document.querySelector('.bonus-nav-btn.active');
+    if (!sec) return null;
+    const saved = _sectionFocus[sec.dataset.section];
+    if (saved && saved.offsetParent !== null) { saved.focus(); return saved; }
+    // Sinon focus le premier élément
+    const els = getFocusables();
+    if (els.length) { els[0].focus(); return els[0]; }
+    return null;
   }
 
   // Navigation dans les onglets du bonus
@@ -517,12 +638,12 @@
     if ((up || left) && now - lastNav > DEBOUNCE) {
       lastNav = now;
       const ni = ci <= 0 ? els.length - 1 : ci - 1;
-      els[ni].focus();
+      els[ni].focus(); saveFocus(els[ni]);
     }
     if ((down || right) && now - lastNav > DEBOUNCE) {
       lastNav = now;
       const ni = ci < 0 || ci >= els.length - 1 ? 0 : ci + 1;
-      els[ni].focus();
+      els[ni].focus(); saveFocus(els[ni]);
     }
 
     // Valider / Interagir
