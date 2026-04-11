@@ -261,6 +261,8 @@
 
   function startAmbiance() {
     if (state.ambiancePaused || state.over) return;
+    if (currentAmbiance && !currentAmbiance.paused) return; // garde-fou
+    stopCurrentAmbiance();
     const idx = Math.floor(Math.random() * 3);
     currentAmbiance = snd.ambiance[idx];
     currentAmbiance.volume = 0.35;
@@ -282,6 +284,7 @@
   function resumeAmbiance() {
     if (!state.ambiancePaused) return;
     state.ambiancePaused = false;
+    if (currentAmbiance && !currentAmbiance.paused) return;
     setTimeout(() => { if (!state.over && !state.ambiancePaused) startAmbiance(); }, 2000);
   }
   function stopAllAmbiance() { state.ambiancePaused = true; stopCurrentAmbiance(); }
