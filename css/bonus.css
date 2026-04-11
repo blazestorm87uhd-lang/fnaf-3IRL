@@ -344,3 +344,14 @@ body.display-tv #jk-cam-badge { font-size: 13px; }
 body.display-tv .jk-btn       { width: 48px; height: 42px; font-size: 16px; }
 body.display-tv .jk-btn.jk-main { width: 56px; height: 48px; font-size: 20px; }
 body.display-tv .jk-track    { padding: 12px 18px; font-size: 13px; }
+
+/* ══ Mode TV — Bonus ══ */
+body.display-tv .bonus-section-title  { font-size: clamp(26px, 4vw, 36px); }
+body.display-tv .bonus-section-sub    { font-size: 14px; letter-spacing: 3px; }
+body.display-tv .bonus-nav-btn        { font-size: 13px; padding: 18px 28px; }
+body.display-tv .robot-name           { font-size: 18px; }
+body.display-tv .robot-desc           { font-size: 12px; }
+body.display-tv .robot-level-val      { font-size: 24px; }
+body.display-tv .bonus-action-btn     { font-size: 14px; padding: 16px 36px; }
+body.display-tv #bonus-title          { font-size: 26px; letter-spacing: 12px; }
+body.display-tv #bonus-back           { font-size: 14px; }
