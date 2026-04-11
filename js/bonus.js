@@ -32,6 +32,16 @@
       btn.classList.add('active');
       const sec = document.getElementById('section-' + btn.dataset.section);
       if (sec) sec.style.display = 'block';
+      // Muter la musique bonus dans le Jukebox, la relancer ailleurs
+      if (audioBonus) {
+        if (btn.dataset.section === 'jukebox') {
+          audioBonus.volume = 0;
+        } else {
+          const gv = window._vol_general !== undefined ? window._vol_general : 1;
+          audioBonus.volume = gv * 0.6;
+          if (audioBonus.paused) audioBonus.play().catch(() => {});
+        }
+      }
     });
   });
 
