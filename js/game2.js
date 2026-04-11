@@ -640,6 +640,7 @@
 
   function startRewind() {
     if (rewindActive || state.over) return;
+    if (window.Achievements) Achievements.unlock('rewind_first');
     // Ne pas rembobiner si Frank est déjà sorti (trop tard)
     if (state.musicBox.frankOut) return;
     rewindActive = true;
@@ -866,7 +867,7 @@
       const targets = ['audio','camera'].filter(m => !state.modules[m].error && !state.modules[m].rebooting);
       if (targets.length > 0) {
         const mod = targets[Math.floor(Math.random() * targets.length)];
-        state.modules[mod].error = true;
+        state.modules[mod].error = true; state.hadError = true;
         updateErrorDisplay(); updateModuleIndicators(); updateMaintenanceBtnState(); startAlarm();
       }
       scheduleNextError();
@@ -939,6 +940,7 @@
   function triggerJumpscareBrad() {
     if (state.over) return;
     state.over = true;
+    if (window.Achievements) { Achievements.unlock('js_brad'); const d=Achievements.loadAll(); if(d.js_frank&&d.js_mama) Achievements.unlock('js_all'); }
     cleanup();
     screenGame.classList.add('hidden');
     screenJumpscare.classList.remove('hidden');
@@ -951,6 +953,7 @@
   function triggerJumpscareFrank() {
     if (state.over) return;
     state.over = true;
+    if (window.Achievements) { Achievements.unlock('js_frank'); const d=Achievements.loadAll(); if(d.js_brad&&d.js_mama) Achievements.unlock('js_all'); }
     cleanup();
     screenGame.classList.add('hidden');
     screenJumpscareFrank.classList.remove('hidden');
@@ -1037,6 +1040,12 @@
     if (state.over) return;
     state.over = true;
     cleanup();
+    if (window.Achievements) {
+      Achievements.unlock('night2');
+      if (!state.usedAudio) Achievements.unlock('no_audio');
+      if (!state.hadError)  Achievements.unlock('no_error');
+      if (!state.callMuted) Achievements.unlock('no_mute');
+    }
     screenGame.classList.add('hidden');
     showNightEndScreen();
   }
@@ -1071,6 +1080,7 @@
   // ══════════════════════════════════════
 
   function startNight() {
+    state.startTime = Date.now(); state.usedAudio = false; state.hadError = false;
     // Vérifier si étage-2 a déjà été visité (sauvegarder entre sessions)
     try {
       if (localStorage.getItem('fnaf_irl_etage2_visited') === '1') {
