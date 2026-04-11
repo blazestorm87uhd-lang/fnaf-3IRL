@@ -1053,6 +1053,17 @@
     showNightEndScreen();
   }
 
+  function _startEndGamepadWait(onConfirm) {
+    let prevBtn = false;
+    const iv = setInterval(() => {
+      const gps = navigator.getGamepads ? Array.from(navigator.getGamepads()).filter(Boolean) : [];
+      if (!gps.length) return;
+      const pressed = gps[0].buttons[0]?.pressed || gps[0].buttons[2]?.pressed;
+      if (pressed && !prevBtn) { clearInterval(iv); onConfirm(); }
+      prevBtn = pressed;
+    }, 50);
+  }
+
   function showNightEndScreen() {
     screenNightEnd.classList.remove('hidden');
     Save.completeNight(NIGHT_NUMBER);
@@ -1109,6 +1120,8 @@
           click.classList.remove('hidden');
           click.addEventListener('click', () => { window.location.href = 'index.html'; });
           click.addEventListener('touchend', () => { window.location.href = 'index.html'; });
+          // Manette : A/X pour continuer
+          _startEndGamepadWait(() => { window.location.href = 'index.html'; });
         }
       }, tk4dur + 1500);
 
