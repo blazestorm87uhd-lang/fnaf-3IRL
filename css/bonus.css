@@ -420,3 +420,40 @@ body.display-tv .ach-name  { font-size: 17px; }
 body.display-tv .ach-desc  { font-size: 12px; }
 body.display-tv .ach-icon  { font-size: 22px; }
 body.display-tv .ach-item  { padding: 14px 0; }
+
+/* ══ Custom Night enrichie — modes ══ */
+#custom-modes { margin-top: 20px; }
+.custom-modes-title {
+  font-family: var(--font-mono); font-size: 9px; letter-spacing: 4px;
+  color: #444; text-transform: uppercase; margin-bottom: 10px;
+}
+#custom-modes-list { display: flex; flex-direction: column; gap: 6px; }
+.custom-mode-item {
+  display: flex; align-items: center; gap: 14px;
+  padding: 10px 14px; cursor: pointer;
+  border: 0.5px solid rgba(255,255,255,0.07);
+  transition: border-color .15s, background .15s;
+}
+.custom-mode-item:hover { border-color: rgba(42,138,42,0.3); background: rgba(42,138,42,0.03); }
+.custom-mode-item:has(input:checked) { border-color: rgba(42,138,42,0.5); background: rgba(42,138,42,0.06); }
+.custom-mode-item:focus-within { border-color: rgba(192,160,16,0.5); }
+.custom-mode-item input[type=checkbox] {
+  width: 16px; height: 16px; accent-color: #2a8a2a; flex-shrink: 0; cursor: pointer;
+}
+.custom-mode-name {
+  font-family: var(--font-mono); font-size: 11px; color: #888; letter-spacing: 2px;
+}
+.custom-mode-item:has(input:checked) .custom-mode-name { color: #2a8a2a; }
+.custom-mode-desc {
+  font-family: var(--font-mono); font-size: 9px; color: #444; letter-spacing: 1px; margin-top: 3px;
+}
+#custom-difficulty-badge {
+  font-family: var(--font-mono); font-size: 10px; color: #555;
+  letter-spacing: 2px; margin-top: 12px; padding: 8px 0;
+  border-top: 0.5px solid rgba(255,255,255,0.06);
+}
+#custom-diff-score { color: #c0a010; font-weight: bold; }
+
+body.display-tv .custom-mode-name { font-size: 14px; }
+body.display-tv .custom-mode-desc { font-size: 12px; }
+body.display-tv #custom-difficulty-badge { font-size: 13px; }
