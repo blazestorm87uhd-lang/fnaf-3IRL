@@ -607,6 +607,7 @@
     if (state.over || !state.musicBox.draining) return;
     const now = Date.now();
     state.musicBox.gauge = Math.max(0, state.musicBox.gauge - (now - state.musicBox.lastDrainTick) / MUSICBOX_DRAIN_MS);
+    if (state.mbMinGauge === undefined || state.musicBox.gauge < state.mbMinGauge) state.mbMinGauge = state.musicBox.gauge;
     state.musicBox.lastDrainTick = now;
     drawMusicBoxGauge();
     updateMusicBoxWarning();
@@ -690,6 +691,7 @@
   function startRewind() {
     if (rewindActive || state.over || state.musicBox.frankOut) return;
     rewindActive = true; btnRewind.classList.add('holding');
+    if (window.Achievements) Achievements.unlock('rewind_first');
     rewindInterval = setInterval(() => {
       state.musicBox.gauge = Math.min(1, state.musicBox.gauge + REWIND_RATE);
       if (!rewindSoundCD && snd.rewindBox) {
@@ -972,6 +974,7 @@
 
   function triggerJumpscareBrad() {
     if (state.over) return; state.over = true; cleanup();
+    if (window.Achievements) { Achievements.unlock('js_brad'); const d=Achievements.loadAll(); if(d.js_frank&&d.js_mama) Achievements.unlock('js_all'); }
     screenGame.classList.add('hidden'); screenJumpscare.classList.remove('hidden');
     jumpscareVideo.muted = false; jumpscareVideo.volume = 1; jumpscareVideo.play().catch(() => {});
     const d = document.getElementById('death-sub'); if (d) d.textContent = 'Brad Bitt vous a trouvé.';
@@ -980,6 +983,7 @@
 
   function triggerJumpscareFrank() {
     if (state.over) return; state.over = true; cleanup();
+    if (window.Achievements) { Achievements.unlock('js_frank'); const d=Achievements.loadAll(); if(d.js_brad&&d.js_frank&&d.js_mama) Achievements.unlock('js_all'); }
     screenGame.classList.add('hidden'); screenJumpscareFrank.classList.remove('hidden');
     jumpscareFrankVideo.muted = false; jumpscareFrankVideo.volume = 1; jumpscareFrankVideo.play().catch(() => {});
     const d = document.getElementById('death-sub'); if (d) d.textContent = 'Frank Lebœuf vous a trouvé.';
@@ -988,6 +992,7 @@
 
   function triggerJumpscareMama() {
     if (state.over) return; state.over = true; cleanup();
+    if (window.Achievements) { Achievements.unlock('js_mama'); const d=Achievements.loadAll(); if(d.js_brad&&d.js_frank&&d.js_mama) Achievements.unlock('js_all'); }
     screenGame.classList.add('hidden'); screenJumpscareMama.classList.remove('hidden');
     jumpscareMamaVideo.muted = false; jumpscareMamaVideo.volume = 1; jumpscareMamaVideo.play().catch(() => {});
     const d = document.getElementById('death-sub'); if (d) d.textContent = 'Mama Coco vous a trouvé.';
@@ -1132,7 +1137,7 @@
   // DEV SHORTCUT — clic sur l'heure
   // ══════════════════════════════════════
 
-  if (hudHour) hudHour.addEventListener('click', () => { if (!state.over) triggerNightEnd(); });
+  if (hudHour) hudHour.addEventListener('click', () => { if (!state.over) { if(window.Achievements) Achievements.unlock('dev_skip'); triggerNightEnd(); } });
   const hudNight = document.getElementById('hud-night');
   if (hudNight) hudNight.addEventListener('click', () => { if (!state.over) triggerNightEnd(); });
 
@@ -1141,6 +1146,7 @@
   // ══════════════════════════════════════
 
   function startNight() {
+    state.startTime = Date.now(); state.usedAudio = false; state.hadError = false; state.mbMinGauge = 1;
     // Vérifier visites précédentes
     try {
       if (localStorage.getItem('fnaf_irl_etage2_visited') === '1') state.etage2Visited = true;
