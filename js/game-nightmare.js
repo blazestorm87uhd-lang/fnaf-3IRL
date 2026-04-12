@@ -863,8 +863,8 @@
               if (pressed && !prevBtn) { clearInterval(iv); goMenu(); }
               prevBtn = pressed;
             }, 50);
-          }, 5000);
-        }, 7000);
+          }, 7000);
+        }, 6000);
       }
     }
 
