@@ -841,28 +841,30 @@
         wrap.appendChild(el); fadeIn(el);
         setTimeout(()=>clearWrap(next), s.dur);
       } else if(s.special === 'final') {
-        const finalEl = document.createElement('div');
-        finalEl.className = 'credits-final';
-        finalEl.textContent = "Brad et ses amis reviendront.";
-        wrap.appendChild(finalEl); fadeIn(finalEl);
-        setTimeout(()=>{
-          const btn = document.createElement('button');
-          btn.className = 'credits-continue';
-          btn.style.pointerEvents = 'all';
-          btn.textContent = 'CLIQUEZ POUR CONTINUER';
-          const goMenu = () => { window.location.href='index.html'; };
-          btn.addEventListener('click', goMenu);
-          wrap.appendChild(btn); fadeIn(btn, 600);
-          // Manette : A/X pour continuer
-          let prevBtn = false;
-          const iv = setInterval(() => {
-            const gps = navigator.getGamepads ? Array.from(navigator.getGamepads()).filter(Boolean) : [];
-            if (!gps.length) return;
-            const pressed = gps[0].buttons[0]?.pressed || gps[0].buttons[2]?.pressed;
-            if (pressed && !prevBtn) { clearInterval(iv); goMenu(); }
-            prevBtn = pressed;
-          }, 50);
-        }, 2000);
+        // 7s avant "Brad reviendront", 5s avant le bouton
+        setTimeout(() => {
+          const finalEl = document.createElement('div');
+          finalEl.className = 'credits-final';
+          finalEl.textContent = "Brad et ses amis reviendront.";
+          wrap.appendChild(finalEl); fadeIn(finalEl);
+          setTimeout(()=>{
+            const btn = document.createElement('button');
+            btn.className = 'credits-continue';
+            btn.style.pointerEvents = 'all';
+            btn.textContent = 'CLIQUEZ POUR CONTINUER';
+            const goMenu = () => { window.location.href='index.html'; };
+            btn.addEventListener('click', goMenu);
+            wrap.appendChild(btn); fadeIn(btn, 600);
+            let prevBtn = false;
+            const iv = setInterval(() => {
+              const gps = navigator.getGamepads ? Array.from(navigator.getGamepads()).filter(Boolean) : [];
+              if (!gps.length) return;
+              const pressed = gps[0].buttons[0]?.pressed || gps[0].buttons[2]?.pressed;
+              if (pressed && !prevBtn) { clearInterval(iv); goMenu(); }
+              prevBtn = pressed;
+            }, 50);
+          }, 5000);
+        }, 7000);
       }
     }
 
