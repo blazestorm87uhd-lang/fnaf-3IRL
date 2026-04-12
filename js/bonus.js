@@ -3,16 +3,24 @@
 ════════════════════════════════════════════ */
 (() => {
 
-  // ── Musique bonus — lancer après interaction (autoplay policy) ──
+  // ── Musique bonus ──
   const audioBonus = document.getElementById('audio-bonus');
+
   function startBonusMusic() {
     if (!audioBonus || !audioBonus.paused) return;
+    // Ne pas démarrer si le jukebox est actif
+    const activeNav = document.querySelector('.bonus-nav-btn.active');
+    if (activeNav && activeNav.dataset.section === 'jukebox') return;
     audioBonus.volume = window._vol_general !== undefined ? window._vol_general * 0.6 : 0.6;
     audioBonus.play().catch(() => {});
   }
-  // Essayer immédiatement (fonctionne si on vient de cliquer sur Bonus)
+  function stopBonusMusic() {
+    if (!audioBonus) return;
+    audioBonus.pause();
+    // Ne pas réinitialiser currentTime pour reprendre où on était
+  }
+
   startBonusMusic();
-  // Fallback sur premier clic/touch si autoplay bloqué
   document.addEventListener('click', startBonusMusic, { once: true });
   document.addEventListener('touchend', startBonusMusic, { once: true });
 
@@ -26,15 +34,16 @@
 
   // ── Navigation sections ──
   function handleBonusAudio(section) {
-    if (!audioBonus) return;
     if (section === 'jukebox') {
-      // Dans le jukebox : pause complète de la musique bonus
-      audioBonus.pause();
+      stopBonusMusic();
     } else {
-      // Ailleurs : relancer si en pause
-      const gv = window._vol_general !== undefined ? window._vol_general : 1;
-      audioBonus.volume = gv * 0.6;
-      if (audioBonus.paused) audioBonus.play().catch(() => {});
+      // Arrêter aussi le jukebox si il jouait
+      const jkAudioEl = window._jkCurrentAudio;
+      if (jkAudioEl && !jkAudioEl.paused) {
+        jkAudioEl.pause();
+        window._jkCurrentAudio = null;
+      }
+      startBonusMusic();
     }
   }
 
@@ -402,6 +411,7 @@
     jkAudio.pause();
     cancelAnimationFrame(progressRaf);
     jkAudio = new Audio(t.src);
+    window._jkCurrentAudio = jkAudio; // Exposer pour handleBonusAudio
     jkAudio.volume = getVol();
     nameEl.textContent = t.name;
     nameEl.className = 'playing';
@@ -423,6 +433,8 @@
   // ── Lecture / Pause ──
   function play() {
     if (!currentTrack !== null && currentTrack === null) { if (TRACKS.length) loadTrack(0, true); return; }
+    // S'assurer que la musique bonus est coupée
+    if (audioBonus && !audioBonus.paused) audioBonus.pause();
     jkAudio.volume = getVol();
     jkAudio.play().catch(() => {});
     isPlaying = true;
@@ -642,7 +654,7 @@
                           document.querySelector('.bonus-section.active');
     if (!activeSection) return [];
     return Array.from(activeSection.querySelectorAll(
-      'button:not(:disabled), input[type=range], .jk-track, .bonus-nav-btn:not(.disabled), .jk-cat-btn'
+      'button:not(:disabled), input[type=range], .jk-track, .bonus-nav-btn:not(.disabled), .jk-cat-btn, input[type=checkbox]'
     )).filter(el => el.offsetParent !== null);
   }
 
@@ -731,9 +743,10 @@
       const focused = document.activeElement;
       if (!focused) return;
 
-      // Slider de difficulté : left/right déjà géré, confirm = rien de spécial
-      if (focused.type === 'range') {
-        // Incrémenter avec D-pad gauche/droite (déjà géré via left/right nav)
+      if (focused.type === 'range') return; // Géré par les axes
+      if (focused.type === 'checkbox') {
+        focused.checked = !focused.checked;
+        focused.dispatchEvent(new Event('change', { bubbles: true }));
         return;
       }
       focused.click();
