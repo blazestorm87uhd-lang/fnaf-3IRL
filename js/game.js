@@ -387,7 +387,7 @@
     if (bradHere) {
       let bradKey = roomId;
       if (roomId === 'cellier') bradKey = 'cellier-' + state.bradPhase;
-      if (roomId === 'cuisine' && Math.random() < 0.05) bradKey = 'cuisine-rare';
+      if (roomId === 'cuisine' && Math.random() < 0.05) { bradKey = 'cuisine-rare'; if(window.Achievements) Achievements.unlock('brad_dab'); }
       if (roomId === 'couloir') playSound(snd.robot, 0.6);
       camImg.src = BRAD_IMAGES[bradKey] || baseSrc;
     } else {
