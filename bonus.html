@@ -32,6 +32,7 @@
     <button class="bonus-nav-btn active" data-section="custom">Custom Night</button>
     <button class="bonus-nav-btn" data-section="achievements">Succès</button>
     <button class="bonus-nav-btn" data-section="jukebox">Jukebox</button>
+    <button class="bonus-nav-btn" data-section="cameras">Caméras</button>
     <button class="bonus-nav-btn" data-section="credits">Générique</button>
     <button class="bonus-nav-btn disabled" data-section="coming">Bientôt...</button>
   </div>
@@ -127,6 +128,49 @@
     <div id="custom-actions">
       <button class="bonus-action-btn secondary" id="custom-reset">Réinitialiser</button>
       <button class="bonus-action-btn primary" id="custom-start">▶ Lancer la nuit</button>
+    </div>
+  </div>
+
+  <!-- SECTION : GALERIE CAMÉRAS -->
+  <div id="section-cameras" class="bonus-section" style="display:none;">
+    <div class="bonus-section-title">Galerie Caméras</div>
+    <div class="bonus-section-sub">Système de surveillance — accès aux caméras hors ligne.</div>
+
+    <!-- Barre de contrôle -->
+    <div id="cam-gallery-controls">
+      <div id="cam-gallery-mode-wrap">
+        <button class="cam-gallery-mode active" data-mode="robots">Avec robots</button>
+        <button class="cam-gallery-mode" data-mode="empty">Sans robots</button>
+      </div>
+      <div id="cam-gallery-status">
+        <span class="rec-dot" style="background:#2a8a2a;box-shadow:0 0 8px rgba(42,138,42,0.5);"></span>
+        <span id="cam-gallery-label">— AUCUNE CAMÉRA —</span>
+      </div>
+    </div>
+
+    <!-- Vue caméra principale -->
+    <div id="cam-gallery-view">
+      <canvas id="cam-gallery-noise"></canvas>
+      <div class="cam-gallery-scanlines"></div>
+      <div class="cam-gallery-glitch" id="cam-gallery-glitch"></div>
+      <img id="cam-gallery-img" src="" alt="" />
+      <div class="cam-gallery-overlay"></div>
+      <div class="cam-gallery-placeholder">
+        <div>SÉLECTIONNER UNE CAMÉRA</div>
+      </div>
+    </div>
+
+    <!-- Sélecteur de caméras -->
+    <div id="cam-gallery-rooms">
+      <div class="cam-gallery-room" data-cam="cellier"        tabindex="0">Cellier</div>
+      <div class="cam-gallery-room" data-cam="wc"             tabindex="0">WC</div>
+      <div class="cam-gallery-room" data-cam="salle-de-bain"  tabindex="0">Salle de bain</div>
+      <div class="cam-gallery-room" data-cam="cuisine"        tabindex="0">Cuisine</div>
+      <div class="cam-gallery-room" data-cam="salle-a-manger" tabindex="0">Salle à manger</div>
+      <div class="cam-gallery-room" data-cam="salon"          tabindex="0">Salon</div>
+      <div class="cam-gallery-room" data-cam="couloir"        tabindex="0">Couloir</div>
+      <div class="cam-gallery-room" data-cam="rue"            tabindex="0">Extérieur rue</div>
+      <div class="cam-gallery-room" data-cam="etage-2"        tabindex="0">Chambre d'ami</div>
     </div>
   </div>
 
