@@ -464,3 +464,120 @@ body.display-tv .ach-item  { padding: 14px 0; }
 body.display-tv .custom-mode-name { font-size: 14px; }
 body.display-tv .custom-mode-desc { font-size: 12px; }
 body.display-tv #custom-difficulty-badge { font-size: 13px; }
+
+/* ══════════════════════════════════════
+   GALERIE CAMÉRAS
+══════════════════════════════════════ */
+
+#cam-gallery-controls {
+  display: flex; align-items: center; justify-content: space-between;
+  margin-bottom: 12px; flex-wrap: wrap; gap: 10px;
+}
+
+#cam-gallery-mode-wrap { display: flex; gap: 6px; }
+.cam-gallery-mode {
+  font-family: var(--font-mono); font-size: 9px; letter-spacing: 3px;
+  color: #555; background: transparent;
+  border: 0.5px solid rgba(255,255,255,0.1);
+  padding: 7px 14px; cursor: pointer;
+  transition: all .15s;
+}
+.cam-gallery-mode:hover { color: #aaa; border-color: rgba(255,255,255,0.25); }
+.cam-gallery-mode.active { color: #2a8a2a; border-color: rgba(42,138,42,0.5); }
+
+#cam-gallery-status {
+  display: flex; align-items: center; gap: 8px;
+  font-family: var(--font-mono); font-size: 10px;
+  color: #555; letter-spacing: 2px;
+}
+
+/* Vue caméra */
+#cam-gallery-view {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 16/9;
+  background: #000;
+  overflow: hidden;
+  border: 0.5px solid rgba(255,255,255,0.08);
+  margin-bottom: 12px;
+}
+
+#cam-gallery-img {
+  position: absolute; inset: 0;
+  width: 100%; height: 100%;
+  object-fit: cover;
+  z-index: 2;
+  filter: brightness(0.85) contrast(1.05);
+}
+
+#cam-gallery-noise {
+  position: absolute; inset: 0;
+  width: 100%; height: 100%;
+  z-index: 3; pointer-events: none;
+  opacity: 0.06;
+}
+
+.cam-gallery-scanlines {
+  position: absolute; inset: 0; z-index: 4; pointer-events: none;
+  background: repeating-linear-gradient(
+    to bottom,
+    transparent 0px, transparent 3px,
+    rgba(0,0,0,0.15) 3px, rgba(0,0,0,0.15) 4px
+  );
+}
+
+.cam-gallery-overlay {
+  position: absolute; inset: 0; z-index: 5; pointer-events: none;
+  background: radial-gradient(ellipse at center, transparent 60%, rgba(0,0,0,0.4) 100%);
+}
+
+.cam-gallery-glitch {
+  position: absolute; inset: 0; z-index: 6; pointer-events: none;
+  opacity: 0;
+}
+
+.cam-gallery-placeholder {
+  position: absolute; inset: 0; z-index: 7;
+  display: flex; align-items: center; justify-content: center;
+  font-family: var(--font-mono); font-size: 11px;
+  color: #333; letter-spacing: 4px;
+  background: #050505;
+}
+
+/* Sélecteur de caméras */
+#cam-gallery-rooms {
+  display: flex; flex-wrap: wrap; gap: 6px;
+}
+
+.cam-gallery-room {
+  font-family: var(--font-mono); font-size: 9px;
+  letter-spacing: 2px; color: #555;
+  padding: 7px 12px;
+  border: 0.5px solid rgba(255,255,255,0.08);
+  cursor: pointer; transition: all .15s;
+  outline: none;
+}
+.cam-gallery-room:hover { color: #aaa; border-color: rgba(255,255,255,0.25); }
+.cam-gallery-room.active {
+  color: #2a8a2a; border-color: rgba(42,138,42,0.5);
+  background: rgba(42,138,42,0.05);
+}
+.cam-gallery-room:focus {
+  color: #c0a010; border-color: rgba(192,160,16,0.5);
+  background: rgba(192,160,16,0.04);
+}
+
+/* Glitch animation */
+@keyframes glitchShift {
+  0%   { transform: translateX(0);   filter: none; }
+  10%  { transform: translateX(-4px); filter: hue-rotate(60deg) saturate(2); }
+  20%  { transform: translateX(3px);  filter: none; }
+  30%  { transform: translateX(-2px); filter: hue-rotate(-30deg); }
+  40%  { transform: translateX(0);   filter: none; }
+  100% { transform: translateX(0);   filter: none; }
+}
+
+/* Mode TV */
+body.display-tv .cam-gallery-mode  { font-size: 12px; padding: 10px 20px; }
+body.display-tv .cam-gallery-room  { font-size: 12px; padding: 10px 16px; }
+body.display-tv #cam-gallery-status { font-size: 13px; }
