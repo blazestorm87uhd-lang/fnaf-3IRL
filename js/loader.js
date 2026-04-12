@@ -133,22 +133,25 @@
       src.buffer = buf; src.connect(ac.destination); src.start(0);
     } catch(e) {}
 
-    if (audioMenu) {
+    // Exposer une fonction globale pour relancer la musique menu
+    window._playMenuAudio = function() {
+      if (!audioMenu || !audioMenu.paused) return;
       audioMenu.volume = 0;
-      const playPromise = audioMenu.play();
-      if (playPromise) {
-        playPromise.catch(() => {
-          // Autoplay bloqué — relancer au premier clic utilisateur sur le menu
-          window._menuAudioPending = true;
-        });
-      }
-      let vol = 0;
-      const fi = setInterval(() => {
-        if (audioMenu.paused) return; // Attendre que la lecture commence
-        vol = Math.min(vol + 0.03, 0.65);
-        audioMenu.volume = vol;
-        if (vol >= 0.65) clearInterval(fi);
-      }, 80);
+      audioMenu.play().then(() => {
+        let vol = 0;
+        const fi = setInterval(() => {
+          vol = Math.min(vol + 0.03, 0.65);
+          audioMenu.volume = vol;
+          if (vol >= 0.65) clearInterval(fi);
+        }, 80);
+      }).catch(() => {});
+    };
+
+    // Essayer immédiatement
+    window._playMenuAudio();
+    // Si ça a raté, marquer comme en attente
+    if (audioMenu && audioMenu.paused) {
+      window._menuAudioPending = true;
     }
 
     loader.classList.add('glitch-out');
