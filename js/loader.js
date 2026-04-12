@@ -135,9 +135,16 @@
 
     if (audioMenu) {
       audioMenu.volume = 0;
-      audioMenu.play().catch(() => {});
+      const playPromise = audioMenu.play();
+      if (playPromise) {
+        playPromise.catch(() => {
+          // Autoplay bloqué — relancer au premier clic utilisateur sur le menu
+          window._menuAudioPending = true;
+        });
+      }
       let vol = 0;
       const fi = setInterval(() => {
+        if (audioMenu.paused) return; // Attendre que la lecture commence
         vol = Math.min(vol + 0.03, 0.65);
         audioMenu.volume = vol;
         if (vol >= 0.65) clearInterval(fi);
