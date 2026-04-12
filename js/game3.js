@@ -1055,6 +1055,13 @@
   function triggerNightEnd() {
     if (state.over) return; state.over = true;
     cleanup(); screenGame.classList.add('hidden');
+    if (window.Achievements) {
+      Achievements.unlock('night3');
+      if (!state.usedAudio) Achievements.unlock('no_audio');
+      if (!state.hadError)  Achievements.unlock('no_error');
+      if (!state.callMuted) Achievements.unlock('no_mute');
+      if (state.mbMinGauge !== undefined && state.mbMinGauge >= 0.5) Achievements.unlock('mb_above50');
+    }
     showNightEndScreen();
   }
 
