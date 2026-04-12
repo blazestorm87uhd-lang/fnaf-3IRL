@@ -24,6 +24,11 @@ function initGamepadDetection() {
         indicator.style.display = 'none';
       }
     }
+    // Si la musique menu n'a pas démarré, la relancer dès qu'une manette est là
+    if (gps.length > 0 && typeof window._tryMenuAudio === 'function') {
+      window._tryMenuAudio();
+      window._tryMenuAudio = null; // Une seule fois
+    }
     return gps;
   }
 
@@ -156,26 +161,21 @@ function initMenu() {
   const modalCancel     = document.getElementById('modal-cancel');
   const audioMenu       = document.getElementById('audio-menu');
 
-  // Relancer la musique si elle n'a pas pu démarrer (autoplay bloqué via manette)
-  if (window._menuAudioPending && audioMenu) {
-    window._menuAudioPending = false;
-    const tryPlay = () => {
-      if (!audioMenu.paused) return; // Déjà en lecture
-      audioMenu.volume = 0;
-      audioMenu.play().catch(() => {});
-      let vol = 0;
-      const fi = setInterval(() => {
-        if (audioMenu.paused) return;
-        vol = Math.min(vol + 0.03, 0.65);
-        audioMenu.volume = vol;
-        if (vol >= 0.65) clearInterval(fi);
-      }, 80);
+  // Relancer la musique si elle n'a pas pu démarrer (autoplay bloqué)
+  // Essayer immédiatement, puis au premier clic/touch/manette
+  if (audioMenu && audioMenu.paused) {
+    const tryMenuAudio = () => {
+      if (typeof window._playMenuAudio === 'function') window._playMenuAudio();
+      else if (audioMenu.paused) { audioMenu.volume = 0.65; audioMenu.play().catch(()=>{}); }
     };
-    // Essayer immédiatement + au premier clic
-    setTimeout(tryPlay, 100);
-    document.addEventListener('click', tryPlay, { once: true });
-    document.addEventListener('touchend', tryPlay, { once: true });
+    setTimeout(tryMenuAudio, 150);
+    document.addEventListener('click',    tryMenuAudio, { once: true });
+    document.addEventListener('touchend', tryMenuAudio, { once: true });
+    document.addEventListener('keydown',  tryMenuAudio, { once: true });
+    // Aussi sur interaction manette : polled dans initGamepadDetection
+    window._tryMenuAudio = tryMenuAudio;
   }
+  window._menuAudioPending = false;
 
   // ── Bruit statique ──
   const nctx = noiseCanvas.getContext('2d');
@@ -352,7 +352,13 @@ function initMenu() {
   }
 
   // ── New Game — conserve nightmare/bonus, reset progression ──
+  // S'assurer que la musique joue dès la première action
+  function ensureMenuAudio() {
+    if (typeof window._playMenuAudio === 'function') window._playMenuAudio();
+  }
+
   btnNewGame.addEventListener('click', () => {
+    ensureMenuAudio();
     const d = Save.load();
     // Conserver les déblocages acquis (bonus, nightmare, nightmareCompleted)
     const keepNightmare          = d.nightmareUnlocked;
