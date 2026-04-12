@@ -423,7 +423,12 @@
       selectRoom('cellier');refreshMap();updateModIndicators();
       startMbDrain();
       startClock();schedBrad();schedNextErr();
-      setTimeout(()=>playRings(2,()=>startCall()),1000);
+      // Custom Night : pas d'appel téléphonique — démarrer directement
+      startMbDrain();
+      startMamaCoco();
+      // Démarrer l'ambiance immédiatement
+      S.ambiancePaused = false;
+      startAmbiance();
     },3000);
   }
 })();
