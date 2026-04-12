@@ -6,6 +6,7 @@ body.bonus-page {
   background: #000;
   min-height: 100vh;
   overflow-x: hidden;
+  overflow-y: auto;
   animation: slideInFromRight 0.4s ease forwards;
 }
 
@@ -71,8 +72,14 @@ body.bonus-page {
 /* ── Sections ── */
 .bonus-section {
   max-width: 800px; margin: 0 auto;
-  padding: 120px 24px 60px;
+  padding: 120px 24px 80px;
   position: relative; z-index: 10;
+}
+
+/* Body scrollable sur les pages bonus */
+body.bonus-page {
+  overflow-y: auto !important;
+  overflow-x: hidden;
 }
 .bonus-section-title {
   font-family: var(--font-title);
