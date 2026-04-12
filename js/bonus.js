@@ -25,6 +25,19 @@
   });
 
   // ── Navigation sections ──
+  function handleBonusAudio(section) {
+    if (!audioBonus) return;
+    if (section === 'jukebox') {
+      // Dans le jukebox : pause complète de la musique bonus
+      audioBonus.pause();
+    } else {
+      // Ailleurs : relancer si en pause
+      const gv = window._vol_general !== undefined ? window._vol_general : 1;
+      audioBonus.volume = gv * 0.6;
+      if (audioBonus.paused) audioBonus.play().catch(() => {});
+    }
+  }
+
   document.querySelectorAll('.bonus-nav-btn:not(.disabled)').forEach(btn => {
     btn.addEventListener('click', () => {
       document.querySelectorAll('.bonus-nav-btn').forEach(b => b.classList.remove('active'));
@@ -34,16 +47,8 @@
       if (sec) sec.style.display = 'block';
       // Restaurer le focus de la section
       setTimeout(restoreFocus, 80);
-      // Muter la musique bonus dans le Jukebox, la relancer ailleurs
-      if (audioBonus) {
-        if (btn.dataset.section === 'jukebox') {
-          audioBonus.volume = 0;
-        } else {
-          const gv = window._vol_general !== undefined ? window._vol_general : 1;
-          audioBonus.volume = gv * 0.6;
-          if (audioBonus.paused) audioBonus.play().catch(() => {});
-        }
-      }
+      // Muter/démarrer la musique bonus selon la section
+      handleBonusAudio(btn.dataset.section);
     });
   });
 
@@ -696,7 +701,13 @@
       return;
     }
 
-    // Navigation dans la section active
+    // Scroll de page avec le joystick DROIT (axes 2 et 3)
+    const rightY = gp.axes[3] || 0;
+    if (Math.abs(rightY) > 0.25) {
+      window.scrollBy({ top: rightY * 20, behavior: 'auto' });
+    }
+
+    // Navigation dans la section active avec joystick GAUCHE / D-pad
     const els = getFocusables();
     if (!els.length) return;
     const ci = els.indexOf(document.activeElement);
@@ -705,11 +716,13 @@
       lastNav = now;
       const ni = ci <= 0 ? els.length - 1 : ci - 1;
       els[ni].focus(); saveFocus(els[ni]);
+      els[ni].scrollIntoView({ block: 'nearest', behavior: 'smooth' });
     }
     if ((down || right) && now - lastNav > DEBOUNCE) {
       lastNav = now;
       const ni = ci < 0 || ci >= els.length - 1 ? 0 : ci + 1;
       els[ni].focus(); saveFocus(els[ni]);
+      els[ni].scrollIntoView({ block: 'nearest', behavior: 'smooth' });
     }
 
     // Valider / Interagir
@@ -726,19 +739,25 @@
       focused.click();
     }
 
-    // Slider : D-pad gauche/droite quand un slider est focusé
+    // Slider : joystick DROIT (axe 2) OU D-pad gauche/droite quand slider focusé
     const focused = document.activeElement;
     if (focused && focused.type === 'range') {
+      const rightX = gp.axes[2] || 0; // joystick droit horizontal
       const step = focused.id === 'jk-vol' ? 5 : 1;
-      if (left && now - lastNav > 80) {
+      // D-pad ou joystick droit
+      const slLeft  = (left  || rightX < -0.3) && now - lastNav > 80;
+      const slRight = (right || rightX > 0.3)  && now - lastNav > 80;
+      if (slLeft) {
         lastNav = now;
         focused.value = Math.max(parseInt(focused.min), parseInt(focused.value) - step);
         focused.dispatchEvent(new Event('input'));
+        focused.dispatchEvent(new Event('change'));
       }
-      if (right && now - lastNav > 80) {
+      if (slRight) {
         lastNav = now;
         focused.value = Math.min(parseInt(focused.max), parseInt(focused.value) + step);
         focused.dispatchEvent(new Event('input'));
+        focused.dispatchEvent(new Event('change'));
       }
     }
 
