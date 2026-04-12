@@ -45,6 +45,7 @@ const Achievements = (() => {
     // ── Secrets ──
     { id:'js_fast',      cat:'Secret',      icon:'?', name:'???',                     desc:'Découvrir le secret de la nuit.',                     secret:true, realDesc:'Subir un jumpscare dans les 2 premières minutes.' },
     { id:'dev_skip',     cat:'Secret',      icon:'?', name:'Tricheur',                desc:'???',                                                 secret:true, realDesc:'Utiliser le raccourci développeur pour passer une nuit.' },
+    { id:'brad_dab',     cat:'Secret',      icon:'?', name:'???',                     desc:'???',                                                 secret:true, realDesc:'Apercevoir Brad faire un Dab sur la caméra Cuisine.' },
   ];
 
   // ── Stockage ──
