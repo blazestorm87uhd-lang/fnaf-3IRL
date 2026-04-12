@@ -156,6 +156,27 @@ function initMenu() {
   const modalCancel     = document.getElementById('modal-cancel');
   const audioMenu       = document.getElementById('audio-menu');
 
+  // Relancer la musique si elle n'a pas pu démarrer (autoplay bloqué via manette)
+  if (window._menuAudioPending && audioMenu) {
+    window._menuAudioPending = false;
+    const tryPlay = () => {
+      if (!audioMenu.paused) return; // Déjà en lecture
+      audioMenu.volume = 0;
+      audioMenu.play().catch(() => {});
+      let vol = 0;
+      const fi = setInterval(() => {
+        if (audioMenu.paused) return;
+        vol = Math.min(vol + 0.03, 0.65);
+        audioMenu.volume = vol;
+        if (vol >= 0.65) clearInterval(fi);
+      }, 80);
+    };
+    // Essayer immédiatement + au premier clic
+    setTimeout(tryPlay, 100);
+    document.addEventListener('click', tryPlay, { once: true });
+    document.addEventListener('touchend', tryPlay, { once: true });
+  }
+
   // ── Bruit statique ──
   const nctx = noiseCanvas.getContext('2d');
   function resizeNoise() { noiseCanvas.width = window.innerWidth; noiseCanvas.height = window.innerHeight; }
