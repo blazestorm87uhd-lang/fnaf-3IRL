@@ -426,20 +426,36 @@
       const active = listEl.querySelector('.jk-track.active');
       if (active) active.scrollIntoView({ block: 'nearest' });
     }, 50);
-    if (autoplay) play();
-    else { isPlaying = false; updatePlayBtn(); }
+    if (autoplay) {
+      // Couper la musique bonus avant de jouer
+      if (audioBonus && !audioBonus.paused) audioBonus.pause();
+      play();
+    } else { isPlaying = false; updatePlayBtn(); }
   }
 
   // ── Lecture / Pause ──
   function play() {
-    if (!currentTrack !== null && currentTrack === null) { if (TRACKS.length) loadTrack(0, true); return; }
-    // S'assurer que la musique bonus est coupée
+    if (currentTrack === null) { if (TRACKS.length) loadTrack(0, true); return; }
+    // Couper la musique bonus
     if (audioBonus && !audioBonus.paused) audioBonus.pause();
-    jkAudio.volume = getVol();
-    jkAudio.play().catch(() => {});
-    isPlaying = true;
-    updatePlayBtn();
-    updateProgress();
+    jkAudio.volume = Math.max(0.01, getVol()); // volume > 0 requis
+    const p = jkAudio.play();
+    if (p && p.catch) {
+      p.then(() => {
+        isPlaying = true;
+        updatePlayBtn();
+        updateProgress();
+      }).catch(err => {
+        // Si autoplay bloqué, marquer comme en attente d'interaction
+        window._jkPendingPlay = true;
+        isPlaying = false;
+        updatePlayBtn();
+      });
+    } else {
+      isPlaying = true;
+      updatePlayBtn();
+      updateProgress();
+    }
   }
   function pause() {
     jkAudio.pause();
@@ -490,6 +506,14 @@
   prevBtn.onclick = prevTrack;
   nextBtn.onclick = nextTrack;
   volEl.oninput = () => { jkAudio.volume = getVol(); };
+
+  // Si le play était en attente (autoplay bloqué), relancer au prochain clic
+  document.getElementById('section-jukebox')?.addEventListener('click', () => {
+    if (window._jkPendingPlay) {
+      window._jkPendingPlay = false;
+      if (currentTrack !== null && !isPlaying) play();
+    }
+  });
 
   // Barre de progression — seek au clic
   barEl.addEventListener('click', e => {
@@ -625,6 +649,195 @@
 })();
 
 // ══════════════════════════════════════
+// GALERIE CAMÉRAS
+// ══════════════════════════════════════
+(function initCamGallery() {
+
+  // ── Catalogue des images par caméra ──
+  const CAMS = {
+    cellier:        { base:'assets/images/cameras/cellier.jpeg',         label:'CAM — CELLIER' },
+    wc:             { base:'assets/images/cameras/wc.jpeg',              label:'CAM — WC' },
+    'salle-de-bain':{ base:'assets/images/cameras/salle-de-bain-ferme.jpeg', label:'CAM — SALLE DE BAIN' },
+    cuisine:        { base:'assets/images/cameras/cuisine-ferme.jpeg',   label:'CAM — CUISINE' },
+    'salle-a-manger':{ base:'assets/images/cameras/salle-a-manger.jpeg', label:'CAM — SALLE À MANGER' },
+    salon:          { base:'assets/images/cameras/salon.jpeg',           label:'CAM — SALON' },
+    couloir:        { base:'assets/images/cameras/couloir.jpeg',         label:'CAM — COULOIR' },
+    rue:            { base:'assets/images/cameras/mama-coco/mama-coco-inactive.png', label:'CAM — EXTÉRIEUR RUE' },
+    'etage-2':      { base:'assets/images/cameras/frank/boite-ferme.png', label:"CAM — CHAMBRE D'AMI" },
+  };
+
+  // Images robots par caméra
+  const ROBOT_IMGS = {
+    cellier:        ['assets/images/cameras/brad/cellier-brad-1.png','assets/images/cameras/brad/cellier-brad-2.png'],
+    wc:             ['assets/images/cameras/brad/wc-brad.png'],
+    'salle-de-bain':['assets/images/cameras/brad/salle-de-bain-brad.png'],
+    cuisine:        ['assets/images/cameras/brad/cuisine-brad.png','assets/images/cameras/brad/cuisine-brad-rare.png'],
+    'salle-a-manger':['assets/images/cameras/brad/salle-a-manger-brad.png'],
+    salon:          ['assets/images/cameras/brad/salon-brad.png'],
+    couloir:        ['assets/images/cameras/brad/couloir-brad.png'],
+    rue:            ['assets/images/cameras/mama-coco/mama-coco-debout.png'],
+    'etage-2':      ['assets/images/cameras/frank/boite-frank.png'],
+  };
+
+  // Événements rares par caméra (probabilité faible)
+  const RARE_EVENTS = {
+    cuisine:  { img:'assets/images/cameras/brad/cuisine-brad-rare.png', label:'⚠ ANOMALIE DÉTECTÉE', prob:0.08 },
+    cellier:  { img:'assets/images/cameras/brad/cellier-brad-2.png',    label:'⚠ MOUVEMENT DÉTECTÉ', prob:0.06 },
+    couloir:  { img:'assets/images/cameras/brad/couloir-brad.png',      label:'⚠ PRÉSENCE DÉTECTÉE', prob:0.07 },
+  };
+
+  // ── DOM ──
+  const imgEl       = document.getElementById('cam-gallery-img');
+  const labelEl     = document.getElementById('cam-gallery-label');
+  const placeholder = document.querySelector('.cam-gallery-placeholder');
+  const noiseCanvas = document.getElementById('cam-gallery-noise');
+  const glitchEl    = document.getElementById('cam-gallery-glitch');
+  const roomBtns    = document.querySelectorAll('.cam-gallery-room');
+  const modeBtns    = document.querySelectorAll('.cam-gallery-mode');
+
+  if (!imgEl) return;
+
+  let currentMode = 'robots';
+  let currentCam  = null;
+  let noiseRaf    = null;
+  let glitchTimer = null;
+  let rareTimer   = null;
+  let isRareActive= false;
+
+  // ── Bruit statique ──
+  function drawNoise() {
+    if (!noiseCanvas) return;
+    const ctx = noiseCanvas.getContext('2d');
+    noiseCanvas.width  = noiseCanvas.offsetWidth  || 400;
+    noiseCanvas.height = noiseCanvas.offsetHeight || 225;
+    const img = ctx.createImageData(noiseCanvas.width, noiseCanvas.height);
+    for (let i = 0; i < img.data.length; i += 4) {
+      const v = Math.random() > 0.5 ? 255 : 0;
+      img.data[i] = img.data[i+1] = img.data[i+2] = v;
+      img.data[i+3] = Math.random() * 22;
+    }
+    ctx.putImageData(img, 0, 0);
+    if (currentCam) noiseRaf = requestAnimationFrame(drawNoise);
+  }
+
+  // ── Glitch aléatoire ──
+  function scheduleGlitch() {
+    clearTimeout(glitchTimer);
+    glitchTimer = setTimeout(() => {
+      if (!currentCam || !glitchEl) { scheduleGlitch(); return; }
+      // Flash de glitch sur l'image
+      imgEl.style.animation = 'glitchShift 0.4s ease';
+      if (glitchEl) {
+        glitchEl.style.opacity = '0.3';
+        glitchEl.style.background = `rgba(${Math.random()>0.5?'0,255,170':'255,0,80'},0.08)`;
+      }
+      setTimeout(() => {
+        imgEl.style.animation = '';
+        if (glitchEl) glitchEl.style.opacity = '0';
+      }, 400);
+      scheduleGlitch();
+    }, 4000 + Math.random() * 12000);
+  }
+
+  // ── Événement rare ──
+  function scheduleRare(camId) {
+    clearTimeout(rareTimer);
+    isRareActive = false;
+    const rare = RARE_EVENTS[camId];
+    if (!rare || currentMode !== 'robots') return;
+    rareTimer = setTimeout(() => {
+      if (currentCam !== camId) return;
+      isRareActive = true;
+      imgEl.src = rare.img;
+      const prevLabel = labelEl.textContent;
+      labelEl.textContent = rare.label;
+      labelEl.style.color = '#cc2020';
+      setTimeout(() => {
+        if (currentCam === camId) {
+          isRareActive = false;
+          showCam(camId); // Remettre l'image normale
+          labelEl.style.color = '';
+        }
+      }, 3000 + Math.random() * 2000);
+    }, 15000 + Math.random() * 30000);
+  }
+
+  // ── Afficher une caméra ──
+  function showCam(camId) {
+    currentCam = camId;
+    const cam = CAMS[camId];
+    if (!cam) return;
+
+    // Masquer placeholder
+    if (placeholder) placeholder.style.display = 'none';
+    imgEl.style.display = 'block';
+
+    // Choisir l'image selon le mode
+    let src = cam.base;
+    if (currentMode === 'robots') {
+      const robots = ROBOT_IMGS[camId];
+      if (robots && robots.length) {
+        // Probabilité d'événement rare
+        const rare = RARE_EVENTS[camId];
+        if (rare && Math.random() < rare.prob && !isRareActive) {
+          src = rare.img;
+          isRareActive = true;
+          setTimeout(() => { isRareActive = false; if(currentCam===camId) showCam(camId); }, 4000);
+        } else {
+          src = robots[Math.floor(Math.random() * robots.length)];
+        }
+      }
+    }
+
+    imgEl.src = src;
+    labelEl.textContent = cam.label;
+    labelEl.style.color = '';
+
+    // Bruit
+    cancelAnimationFrame(noiseRaf);
+    drawNoise();
+
+    // Glitch + rare
+    scheduleGlitch();
+    if (currentMode === 'robots') scheduleRare(camId);
+  }
+
+  // ── Boutons mode ──
+  modeBtns.forEach(btn => {
+    btn.addEventListener('click', () => {
+      modeBtns.forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      currentMode = btn.dataset.mode;
+      if (currentCam) showCam(currentCam);
+    });
+  });
+
+  // ── Boutons caméras ──
+  roomBtns.forEach(btn => {
+    btn.addEventListener('click', () => {
+      roomBtns.forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      showCam(btn.dataset.cam);
+    });
+    btn.addEventListener('keydown', e => {
+      if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); btn.click(); }
+    });
+  });
+
+  // ── Arrêter quand on quitte la section ──
+  document.querySelectorAll('.bonus-nav-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      if (btn.dataset.section !== 'cameras') {
+        clearTimeout(glitchTimer);
+        clearTimeout(rareTimer);
+        cancelAnimationFrame(noiseRaf);
+      }
+    });
+  });
+
+})();
+
+// ══════════════════════════════════════
 // NAVIGATION MANETTE — BONUS
 // ══════════════════════════════════════
 (function initBonusGamepad() {
@@ -654,7 +867,7 @@
                           document.querySelector('.bonus-section.active');
     if (!activeSection) return [];
     return Array.from(activeSection.querySelectorAll(
-      'button:not(:disabled), input[type=range], .jk-track, .bonus-nav-btn:not(.disabled), .jk-cat-btn, input[type=checkbox]'
+      'button:not(:disabled), input[type=range], .jk-track, .bonus-nav-btn:not(.disabled), .jk-cat-btn, input[type=checkbox], .ach-item, .cam-gallery-room'
     )).filter(el => el.offsetParent !== null);
   }
 
