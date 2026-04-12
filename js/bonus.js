@@ -5,6 +5,7 @@
 
   // ── Musique bonus ──
   const audioBonus = document.getElementById('audio-bonus');
+  window._bonusAudio = audioBonus;
 
   function startBonusMusic() {
     if (!audioBonus || !audioBonus.paused) return;
@@ -55,7 +56,7 @@
       const sec = document.getElementById('section-' + btn.dataset.section);
       if (sec) sec.style.display = 'block';
       // Restaurer le focus de la section
-      setTimeout(restoreFocus, 80);
+      setTimeout(() => { if(typeof window._bonusRestoreFocus==='function') window._bonusRestoreFocus(); }, 80);
       // Muter/démarrer la musique bonus selon la section
       handleBonusAudio(btn.dataset.section);
     });
@@ -288,12 +289,15 @@
         el.innerHTML="Ce jeu est inspiré de <span style='color:#555'>Five Nights at Freddy\'s</span><br>de Scott Cawthon.<br>Il ne s\'agit pas d\'une œuvre officielle.";
         wrap.appendChild(el); fi(el); setTimeout(()=>clr(next),s.dur);
       } else if(s.special==='final'){
-        const fe=document.createElement('div'); fe.className='credits-final'; fe.textContent="Brad et ses amis reviendront."; wrap.appendChild(fe); fi(fe);
+        // 7s avant "Brad reviendront", 5s avant bouton
         setTimeout(()=>{
-          const btn=document.createElement('button'); btn.className='credits-continue'; btn.style.pointerEvents='all'; btn.textContent='CLIQUEZ POUR CONTINUER';
-          btn.onclick=function(){ overlay.style.display='none'; overlay.innerHTML=''; if(audioMerci){audioMerci.pause();audioMerci.currentTime=0;} if(audioBonus)audioBonus.play().catch(()=>{}); };
-          wrap.appendChild(btn); fi(btn,600);
-        },2000);
+          const fe=document.createElement('div'); fe.className='credits-final'; fe.textContent="Brad et ses amis reviendront."; wrap.appendChild(fe); fi(fe);
+          setTimeout(()=>{
+            const btn=document.createElement('button'); btn.className='credits-continue'; btn.style.pointerEvents='all'; btn.textContent='CLIQUEZ POUR CONTINUER';
+            btn.onclick=function(){ overlay.style.display='none'; overlay.innerHTML=''; if(audioMerci){audioMerci.pause();audioMerci.currentTime=0;} if(window._bonusAudio)window._bonusAudio.play().catch(()=>{}); };
+            wrap.appendChild(btn); fi(btn,600);
+          },5000);
+        },7000);
       }
     }
     next();
@@ -428,7 +432,7 @@
     }, 50);
     if (autoplay) {
       // Couper la musique bonus avant de jouer
-      if (audioBonus && !audioBonus.paused) audioBonus.pause();
+      if (window._bonusAudio && !window._bonusAudio.paused) window._bonusAudio.pause();
       play();
     } else { isPlaying = false; updatePlayBtn(); }
   }
@@ -437,7 +441,7 @@
   function play() {
     if (currentTrack === null) { if (TRACKS.length) loadTrack(0, true); return; }
     // Couper la musique bonus
-    if (audioBonus && !audioBonus.paused) audioBonus.pause();
+    if (window._bonusAudio && !window._bonusAudio.paused) window._bonusAudio.pause();
     jkAudio.volume = Math.max(0.01, getVol()); // volume > 0 requis
     const p = jkAudio.play();
     if (p && p.catch) {
@@ -681,7 +685,8 @@
 
   // Événements rares par caméra (probabilité faible)
   const RARE_EVENTS = {
-    cuisine:  { img:'assets/images/cameras/brad/cuisine-brad-rare.png', label:'⚠ ANOMALIE DÉTECTÉE', prob:0.08 },
+    // Cuisine : image robot de base (pas la rare), juste un changement d'état
+    cuisine:  { img:'assets/images/cameras/brad/cuisine-brad.png',      label:'⚠ MOUVEMENT DÉTECTÉ', prob:0.08 },
     cellier:  { img:'assets/images/cameras/brad/cellier-brad-2.png',    label:'⚠ MOUVEMENT DÉTECTÉ', prob:0.06 },
     couloir:  { img:'assets/images/cameras/brad/couloir-brad.png',      label:'⚠ PRÉSENCE DÉTECTÉE', prob:0.07 },
   };
@@ -887,6 +892,7 @@
     if (els.length) { els[0].focus(); return els[0]; }
     return null;
   }
+  window._bonusRestoreFocus = restoreFocus;
 
   // Navigation dans les onglets du bonus
   function getNavBtns() {
