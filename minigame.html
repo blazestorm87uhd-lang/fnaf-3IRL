@@ -491,7 +491,21 @@ function drawTitle(){
   cx.fillText('ÉTÉ 2026',CW/2,CH/2+52);
   cx.globalAlpha=1;
   // Bouton retour après 5s
-  if(titleT>400){document.getElementById('back-btn').style.display='block';}
+  if(titleT>400){
+    const backBtn=document.getElementById('back-btn');
+    if(backBtn&&backBtn.style.display==='none'||backBtn&&!backBtn._gpReady){
+      backBtn.style.display='block';
+      backBtn._gpReady=true;
+      // Manette : n'importe quel bouton pour retourner au bonus
+      const _gpBack=setInterval(()=>{
+        const gps=navigator.getGamepads?Array.from(navigator.getGamepads()).filter(Boolean):[];
+        if(!gps.length)return;const gp=gps[0];
+        if(gp.buttons[0]?.pressed||gp.buttons[1]?.pressed||gp.buttons[2]?.pressed){
+          clearInterval(_gpBack);location.href='bonus.html';
+        }
+      },100);
+    }
+  }
 }
 
 // ═══════════════════════════════════════
