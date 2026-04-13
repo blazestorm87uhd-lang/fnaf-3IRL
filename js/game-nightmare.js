@@ -523,12 +523,14 @@
   }));
   $id('maint-reboot-all').addEventListener('click',()=>{
     if(S.rebootingAll) return; S.rebootingAll=true;
+    if(window.Achievements) Achievements.unlock('reboot_all');
     ['audio','camera'].forEach(m=>{if(S.modules[m]&&!S.modules[m].rebooting){S.modules[m].rebooting=true;S.modules[m].error=false;}});
     rebootSnd();updateModIndicators();updateMaintBtn();selectRoom(S.selectedRoom);
     setTimeout(()=>{['audio','camera'].forEach(m=>{if(S.modules[m])S.modules[m].rebooting=false;});S.rebootingAll=false;updateErrDisp();updateModIndicators();updateMaintBtn();selectRoom(S.selectedRoom);},REBOOT_ALL_DUR);
   });
   function rebootMod(m,dur){
     const mod=S.modules[m];if(!mod) return;
+    if(window.Achievements) Achievements.unlock('reboot_module');
     mod.rebooting=true;mod.error=false;rebootSnd();updateModIndicators();updateMaintBtn();
     if(m==='camera') selectRoom(S.selectedRoom);
     setTimeout(()=>{mod.rebooting=false;updateErrDisp();updateModIndicators();updateMaintBtn();if(m==='camera')selectRoom(S.selectedRoom);},dur||8000);
@@ -863,8 +865,8 @@
               if (pressed && !prevBtn) { clearInterval(iv); goMenu(); }
               prevBtn = pressed;
             }, 50);
-          }, 7000);
-        }, 6000);
+          }, 5000);
+        }, 7000);
       }
     }
 
