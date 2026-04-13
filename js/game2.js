@@ -995,7 +995,18 @@
     const btn = document.getElementById('death-btn-menu');
     if (btn) {
       btn.style.display = 'none';
-      setTimeout(() => { btn.style.display = 'block'; btn.classList.add('visible'); }, DEATH_SCREEN_MIN);
+      setTimeout(() => {
+        btn.style.display = 'block'; btn.classList.add('visible');
+        // Manette : n'importe quel bouton principal pour retourner au menu
+        const _gpDI = setInterval(() => {
+          const gps = navigator.getGamepads ? Array.from(navigator.getGamepads()).filter(Boolean) : [];
+          if (!gps.length) return;
+          const gp = gps[0];
+          if (gp.buttons[0]?.pressed || gp.buttons[1]?.pressed || gp.buttons[2]?.pressed) {
+            clearInterval(_gpDI); btn.click();
+          }
+        }, 100);
+      }, DEATH_SCREEN_MIN);
       btn.addEventListener('click', () => { window.location.href = 'index.html'; });
     }
   }
