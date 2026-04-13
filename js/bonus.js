@@ -872,7 +872,7 @@
                           document.querySelector('.bonus-section.active');
     if (!activeSection) return [];
     return Array.from(activeSection.querySelectorAll(
-      'button:not(:disabled), input[type=range], .jk-track, .bonus-nav-btn:not(.disabled), .jk-cat-btn, input[type=checkbox], .ach-item, .cam-gallery-room'
+      'button:not(:disabled), input[type=range], .jk-track, .bonus-nav-btn:not(.disabled), .jk-cat-btn, input[type=checkbox], .ach-item, .cam-gallery-room, #minigame-launch'
     )).filter(el => el.offsetParent !== null);
   }
 
