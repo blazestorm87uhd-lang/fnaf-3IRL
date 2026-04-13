@@ -810,6 +810,7 @@
   maintRebootAll.addEventListener('click', () => {
     if (state.rebootingAll) return;
     state.rebootingAll = true;
+    if (window.Achievements) Achievements.unlock('reboot_all');
     ['audio','camera'].forEach(m => { if (state.modules[m] && !state.modules[m].rebooting) { state.modules[m].rebooting = true; state.modules[m].error = false; } });
     playRebootSound();
     updateModuleIndicators(); updateMaintenanceBtnState();
@@ -822,6 +823,7 @@
   });
 
   function rebootModule(mod, duration) {
+    if (window.Achievements) Achievements.unlock('reboot_module');
     const m = state.modules[mod]; if (!m) return;
     m.rebooting = true; m.error = false;
     playRebootSound(); updateModuleIndicators(); updateMaintenanceBtnState();
