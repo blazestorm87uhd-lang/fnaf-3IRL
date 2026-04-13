@@ -640,7 +640,15 @@
     const dc=$id('death-noise');
     if(dc){const dctx=dc.getContext('2d');(function dn(){if($id('screen-death').classList.contains('hidden')) return;dc.width=window.innerWidth;dc.height=window.innerHeight;const img=dctx.createImageData(dc.width,dc.height);for(let i=0;i<img.data.length;i+=4){const v=Math.random()>0.5?255:0;img.data[i]=img.data[i+1]=img.data[i+2]=v;img.data[i+3]=Math.random()*20;}dctx.putImageData(img,0,0);requestAnimationFrame(dn);})();}
     const btn=$id('death-btn-menu');
-    if(btn){btn.style.display='none';setTimeout(()=>{btn.style.display='block';btn.classList.add('visible');},DEATH_MIN);btn.addEventListener('click',()=>{window.location.href='index.html';});}
+    if(btn){btn.style.display='none';setTimeout(()=>{
+      btn.style.display='block';btn.classList.add('visible');
+      // Manette : n'importe quel bouton
+      const _gpDI=setInterval(()=>{
+        const gps=navigator.getGamepads?Array.from(navigator.getGamepads()).filter(Boolean):[];
+        if(!gps.length)return;const gp=gps[0];
+        if(gp.buttons[0]?.pressed||gp.buttons[1]?.pressed||gp.buttons[2]?.pressed){clearInterval(_gpDI);btn.click();}
+      },100);
+    },DEATH_MIN);btn.addEventListener('click',()=>{window.location.href='index.html';});}
   }
 
   // ── Horloge ──
@@ -736,7 +744,7 @@
 
     const slides = [
       { type:'duo',    label:'Développé par :',                   studios:['IMAGINe Studio','HwR Engine'], dur:6000 },
-      { type:'single', label:'Musique par :',                     name:'lılyo',                             dur:4500, highlight:true },
+      { type:'single', label:'Musique par :',                     name:'lılyO',                             dur:4500, highlight:true },
       { type:'single', label:'Échantillons par :',                name:'Mixvibes',                          dur:4000 },
       { type:'single', label:'Effets sonores par :',              name:'The Sounds Resource', sub:'Website by Skyla Doragono', dur:5000 },
       { type:'single', label:'Contribution aux effets sonores :', name:'MilesTheCreator, IndigoPupper, Cooper', dur:5000 },
@@ -865,8 +873,8 @@
               if (pressed && !prevBtn) { clearInterval(iv); goMenu(); }
               prevBtn = pressed;
             }, 50);
-          }, 7500);
-        }, 6000);
+          }, 5000);
+        }, 7000);
       }
     }
 
