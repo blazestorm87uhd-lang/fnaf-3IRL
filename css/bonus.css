@@ -581,3 +581,24 @@ body.display-tv #custom-difficulty-badge { font-size: 13px; }
 body.display-tv .cam-gallery-mode  { font-size: 12px; padding: 10px 20px; }
 body.display-tv .cam-gallery-room  { font-size: 12px; padding: 10px 16px; }
 body.display-tv #cam-gallery-status { font-size: 13px; }
+
+/* ══ Mini-jeu ══ */
+#minigame-container {
+  display: flex; flex-direction: column; align-items: center; gap: 24px;
+  padding: 20px 0;
+}
+#minigame-desc p {
+  text-align: center; font-family: var(--font-mono);
+  font-size: 11px; color: #555; letter-spacing: 2px; line-height: 2;
+}
+#minigame-launch {
+  font-family: var(--font-mono); font-size: 12px; letter-spacing: 4px;
+  color: #2a8a2a; background: transparent;
+  border: 1px solid rgba(42,138,42,0.5);
+  padding: 14px 40px; cursor: pointer;
+  transition: all .2s;
+}
+#minigame-launch:hover { background: rgba(42,138,42,0.08); border-color: #2a8a2a; color: #44cc44; }
+#minigame-launch:focus { outline: none; background: rgba(192,160,16,0.08); border-color: #c0a010; color: #c0a010; }
+body.display-tv #minigame-launch { font-size: 15px; padding: 18px 48px; }
+body.display-tv #minigame-desc p { font-size: 14px; }
