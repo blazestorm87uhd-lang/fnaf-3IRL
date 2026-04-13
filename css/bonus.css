@@ -602,3 +602,22 @@ body.display-tv #cam-gallery-status { font-size: 13px; }
 #minigame-launch:focus { outline: none; background: rgba(192,160,16,0.08); border-color: #c0a010; color: #c0a010; }
 body.display-tv #minigame-launch { font-size: 15px; padding: 18px 48px; }
 body.display-tv #minigame-desc p { font-size: 14px; }
+
+/* ── Mini-jeu — verrou ── */
+#minigame-locked {
+  display: flex; flex-direction: column; align-items: center; gap: 16px;
+  padding: 40px 24px; text-align: center;
+}
+#minigame-lock-icon {
+  font-size: 48px; opacity: 0.3; filter: grayscale(1);
+}
+#minigame-lock-msg {
+  font-family: var(--font-mono); font-size: 13px; color: #555;
+  letter-spacing: 2px; line-height: 2;
+}
+#minigame-lock-sub {
+  font-family: var(--font-mono); font-size: 10px; color: #333;
+  letter-spacing: 3px;
+}
+body.display-tv #minigame-lock-msg { font-size: 16px; }
+body.display-tv #minigame-lock-sub { font-size: 13px; }
