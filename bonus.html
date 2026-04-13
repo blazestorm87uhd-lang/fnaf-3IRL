@@ -34,7 +34,7 @@
     <button class="bonus-nav-btn" data-section="jukebox">Jukebox</button>
     <button class="bonus-nav-btn" data-section="cameras">Caméras</button>
     <button class="bonus-nav-btn" data-section="credits">Générique</button>
-    <button class="bonus-nav-btn disabled" data-section="coming">Bientôt...</button>
+    <button class="bonus-nav-btn" data-section="minigame">Mini-jeu</button>
   </div>
 
   <!-- SECTION : CUSTOM NIGHT -->
@@ -234,9 +234,19 @@
     </div>
   </div>
 
-  <!-- SECTION : BIENTÔT -->
-  <div id="section-coming" class="bonus-section" style="display:none;">
-    <div class="bonus-section-title" style="color:#555;">Bientôt...</div>
+  <!-- SECTION : MINI-JEU -->
+  <div id="section-minigame" class="bonus-section" style="display:none;">
+    <div class="bonus-section-title">Mini-jeu</div>
+    <div class="bonus-section-sub">SYSTÈME-01 — La Dernière Ronde</div>
+    <div id="minigame-container">
+      <div id="minigame-desc" style="font-family:var(--font-mono);font-size:11px;color:#555;letter-spacing:2px;line-height:2;margin-bottom:24px;">
+        <p>Une nuit normale. Des enregistrements éparpillés dans la maison.</p>
+        <p>Retrouvez les 6 bobines. Le portail vous attend.</p>
+        <p style="color:#333;margin-top:12px;">— Durée : ~5 minutes —</p>
+      </div>
+      <button id="minigame-launch" onclick="window.open('minigame.html','_self')">LANCER LE MINI-JEU</button>
+    </div>
+  </div>
     <div class="bonus-section-sub" style="color:#333;">D'autres bonus arriveront prochainement.</div>
   </div>
 
