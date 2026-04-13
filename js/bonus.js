@@ -639,7 +639,44 @@
     });
   }
 
-  // Rendre quand on entre dans la section succès
+
+  // ── Mini-jeu : vérification verrou (15 succès requis) ──
+  function checkMinigameLock() {
+    const lockedEl  = document.getElementById('minigame-locked');
+    const containerEl = document.getElementById('minigame-container');
+    const progEl    = document.getElementById('minigame-lock-prog');
+    const countEl   = document.getElementById('minigame-lock-count');
+    const launchBtn = document.getElementById('minigame-launch');
+    if (!lockedEl || !containerEl) return;
+
+    const REQUIRED = 15;
+    const unlocked = window.Achievements
+      ? Object.keys(Achievements.loadAll()).length
+      : 0;
+
+    if (progEl) progEl.textContent = unlocked;
+    if (countEl) countEl.textContent = REQUIRED;
+
+    if (unlocked >= REQUIRED) {
+      lockedEl.style.display  = 'none';
+      containerEl.style.display = 'flex';
+      if (launchBtn) launchBtn.onclick = () => { window.location.href = 'minigame.html'; };
+    } else {
+      lockedEl.style.display  = 'flex';
+      containerEl.style.display = 'none';
+    }
+  }
+
+  // Vérifier dès qu'on clique sur l'onglet Mini-jeu
+  document.addEventListener('click', e => {
+    const btn = e.target.closest('.bonus-nav-btn');
+    if (btn && btn.dataset.section === 'minigame') {
+      setTimeout(checkMinigameLock, 50);
+    }
+  });
+  setTimeout(checkMinigameLock, 300); // vérification initiale
+
+    // Rendre quand on entre dans la section succès
   document.addEventListener('click', e => {
     const btn = e.target.closest('.bonus-nav-btn');
     if (btn && btn.dataset.section === 'achievements') {
