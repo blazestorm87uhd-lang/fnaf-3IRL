@@ -178,10 +178,10 @@ let introT=0;
 let confirmHeld=false;
 
 const INTRO=[
-  {t:100, lines:["SYSTÈME DE SURVEILLANCE 01","","Connexion établie — 23h47"]},
-  {t:120, lines:["Le gardien de nuit prend son poste.","","Quelque chose ne va pas."]},
-  {t:130, lines:["Des bobines d'enregistrement","ont été éparpillées dans la maison.","Retrouvez-les toutes."]},
-  {t:130, lines:["Une fois réunies...","le portail s'ouvrira.","","Ne vous demandez pas pourquoi."]},
+  {t:160, lines:["SYSTÈME DE SURVEILLANCE 01","","Connexion établie — 23h47"]},
+  {t:190, lines:["Le gardien de nuit prend son poste.","","Quelque chose ne va pas."]},
+  {t:210, lines:["Des bobines d'enregistrement","ont été éparpillées dans la maison.","Retrouvez-les toutes."]},
+  {t:220, lines:["Une fois réunies...","le portail s'ouvrira.","","Ne vous demandez pas pourquoi."]},
   {t:999, lines:["▶ APPUYER SUR A / ENTRÉE / CLIC"]},
 ];
 
@@ -473,15 +473,15 @@ function drawIntro(){
 // ── TITLE CARD ──
 function drawTitle(){
   cx.fillStyle='#000';cx.fillRect(0,0,CW,CH);
-  if(titleT<40)return;
-  const a=Math.min(1,(titleT-40)/50);
+  if(titleT<80)return;
+  const a=Math.min(1,(titleT-80)/80);
   cx.globalAlpha=a;
   cx.textAlign='center';
   // "Brad Bitt" — grand, phosphore vert
-  cx.font='bold 52px monospace';cx.fillStyle=C.portal;
+  cx.font='bold 52px monospace';cx.fillStyle='#f53098';
   cx.fillText('BRAD BITT',CW/2,CH/2-18);
   // "mais le jeu"
-  cx.font='16px monospace';cx.fillStyle='#1a8a1a';
+  cx.font='16px monospace';cx.fillStyle='#5ce1e6';
   cx.fillText('mais le jeu',CW/2,CH/2+18);
   // Séparateur
   cx.fillStyle='#1a3a1a';
@@ -491,7 +491,7 @@ function drawTitle(){
   cx.fillText('ÉTÉ 2026',CW/2,CH/2+52);
   cx.globalAlpha=1;
   // Bouton retour après 5s
-  if(titleT>250){document.getElementById('back-btn').style.display='block';}
+  if(titleT>400){document.getElementById('back-btn').style.display='block';}
 }
 
 // ═══════════════════════════════════════
