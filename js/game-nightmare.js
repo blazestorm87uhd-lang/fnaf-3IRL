@@ -736,7 +736,7 @@
 
     const slides = [
       { type:'duo',    label:'Développé par :',                   studios:['IMAGINe Studio','HwR Engine'], dur:6000 },
-      { type:'single', label:'Musique par :',                     name:'lılyO',                             dur:4500, highlight:true },
+      { type:'single', label:'Musique par :',                     name:'lılyo',                             dur:4500, highlight:true },
       { type:'single', label:'Échantillons par :',                name:'Mixvibes',                          dur:4000 },
       { type:'single', label:'Effets sonores par :',              name:'The Sounds Resource', sub:'Website by Skyla Doragono', dur:5000 },
       { type:'single', label:'Contribution aux effets sonores :', name:'MilesTheCreator, IndigoPupper, Cooper', dur:5000 },
@@ -865,8 +865,8 @@
               if (pressed && !prevBtn) { clearInterval(iv); goMenu(); }
               prevBtn = pressed;
             }, 50);
-          }, 5000);
-        }, 7000);
+          }, 7500);
+        }, 6000);
       }
     }
 
