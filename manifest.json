@@ -1,6 +1,6 @@
 {
   "name": "Three Nights at Chez Moi — IRL",
-  "short_name": "3N IRL",
+  "short_name": "3IRL",
   "description": "Un jeu de surveillance nocturne inspiré de FNAF.",
   "start_url": "/index.html",
   "display": "fullscreen",
