@@ -729,9 +729,7 @@
     },8000);  // 8s total : animation (2s) + pause contemplative (6s)
   }
 
-  // ── DEV SHORTCUT ──
-  if(hudHour) hudHour.addEventListener('click',()=>{if(!S.over)trigNightEnd();});
-  const hudNight=$id('hud-night'); if(hudNight) hudNight.addEventListener('click',()=>{if(!S.over)trigNightEnd();});
+
 
   // ══════════════════════════════════════
   // GÉNÉRIQUE DE FIN
