@@ -26,7 +26,7 @@
   })();
 
   const NIGHT_NUMBER          = 1;
-  const NIGHT_DURATION        = 10 * 60 * 1000;
+  const NIGHT_DURATION        = 8 * 60 * 1000;
   const HOURS                 = ['12 AM','1 AM','2 AM','3 AM','4 AM','5 AM','6 AM'];
   const BRAD_VISIBLE_HOUR     = 2;
   const AMBIANCE_MAX_DURATION = 30000;
@@ -810,12 +810,7 @@
   // HORLOGE
   // ══════════════════════════════════════
 
-  // ── DEV SHORTCUT : clic sur l'heure pour finir la nuit ──
-  const devHour = document.getElementById('hud-hour');
-  const devNight = document.getElementById('hud-night');
-  function devFinish() { if (!state.over) { if(window.Achievements) Achievements.unlock('dev_skip'); triggerNightEnd(); } }
-  if (devHour)  devHour.addEventListener('click',  devFinish);
-  if (devNight) devNight.addEventListener('click', devFinish);
+
 
   function startGameClock() {
     const startTime    = Date.now();
