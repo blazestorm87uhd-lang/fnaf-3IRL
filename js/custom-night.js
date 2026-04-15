@@ -401,8 +401,7 @@
     try{localStorage.removeItem('fnaf_custom_active');}catch(e){}
     ps(SND.end,0.8);const audioDur=(SND.end&&SND.end.duration>0)?SND.end.duration*1000:4000;setTimeout(()=>{window.location.href='bonus.html';},audioDur+3000);}
 
-  // DEV shortcut
-  if(hudHour)hudHour.addEventListener('click',()=>{if(!S.over)trigNightEnd();});
+
 
   // Démarrage
   function startNight(){
