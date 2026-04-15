@@ -107,3 +107,30 @@
 /* Rendre focusable au clavier/manette */
 .maint-item     { tabindex: 0; }
 .maint-reboot   { tabindex: 0; }
+
+/* ══ Panneau Maintenance — mobile ══ */
+@media (max-width: 768px) {
+  #panel-maintenance {
+    max-height: 70vh;
+    overflow-y: auto;
+    width: min(260px, 80vw) !important;
+    right: 0 !important;
+    bottom: 0 !important;
+    top: auto !important;
+    border-radius: 4px 0 0 0;
+  }
+}
+@media (max-height: 500px) and (orientation: landscape) {
+  #panel-maintenance {
+    max-height: 90vh;
+    overflow-y: auto;
+    width: min(220px, 45vw) !important;
+    font-size: 10px !important;
+  }
+  #panel-maintenance .maint-item,
+  #panel-maintenance .maint-reboot,
+  #panel-maintenance #btn-maintenance-close {
+    padding: 5px 8px !important;
+    font-size: 9px !important;
+  }
+}
