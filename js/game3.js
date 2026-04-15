@@ -26,7 +26,7 @@
   // ══════════════════════════════════════
 
   const NIGHT_NUMBER          = 3;
-  const NIGHT_DURATION        = 10 * 60 * 1000;
+  const NIGHT_DURATION        = 8 * 60 * 1000;
   const HOURS                 = ['12 AM','1 AM','2 AM','3 AM','4 AM','5 AM','6 AM'];
   const BRAD_VISIBLE_HOUR     = 1;
   const AMBIANCE_MAX_DURATION = 9999999; // ambiance-4 joue en continu (loop)
@@ -366,6 +366,10 @@
 
   function selectRoom(roomId) {
     if (!panelMaintenance.classList.contains('hidden')) return;
+    // Si on quitte etage-2, stopper le rembobinage
+    if (state.selectedRoom === 'etage-2' && roomId !== 'etage-2' && rewindActive) {
+      stopRewind();
+    }
 
     // Arrêter le suivi du regard sur la rue si on quitte
     if (state.selectedRoom === 'rue' && roomId !== 'rue') {
@@ -1153,13 +1157,7 @@
     }, audioDur + 2000);
   }
 
-  // ══════════════════════════════════════
-  // DEV SHORTCUT — clic sur l'heure
-  // ══════════════════════════════════════
-
-  if (hudHour) hudHour.addEventListener('click', () => { if (!state.over) { if(window.Achievements) Achievements.unlock('dev_skip'); triggerNightEnd(); } });
   const hudNight = document.getElementById('hud-night');
-  if (hudNight) hudNight.addEventListener('click', () => { if (!state.over) triggerNightEnd(); });
 
   // ══════════════════════════════════════
   // DÉMARRAGE
@@ -1188,7 +1186,12 @@
       selectRoom('cellier');
       refreshMap();
       updateModuleIndicators();
-      // startAmbiance() appelée après l'appel (dans snd.call.onended)
+      // Pré-démarrer ambiance4 silencieusement pour éviter le blocage autoplay
+      if (snd.ambiance4) {
+        snd.ambiance4.volume = 0;
+        snd.ambiance4.play().catch(() => {});
+      }
+      // startAmbiance() donnera le volume après l'appel (dans snd.call.onended)
       startGameClock();
       scheduleBradMove();
       scheduleNextError();
