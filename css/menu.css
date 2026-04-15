@@ -164,3 +164,31 @@ body.display-tv .game-title   { font-size: clamp(28px, 5vw, 44px); }
 body.display-tv .item-note    { font-size: 11px; }
 body.display-tv .game-edition { font-size: 12px; }
 body.display-phone .menu-footer { display: none; }
+
+/* ══ MOBILE EXTRA — très petits écrans, no-zoom ══ */
+@media (max-width: 480px) {
+  .right {
+    padding: 10px 14px 44px;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+  .game-title { font-size: clamp(20px,7vw,28px); }
+  .game-irl   { font-size: clamp(10px,3vw,13px); }
+  .menu-item  { font-size: clamp(14px,5vw,18px); padding: 9px 0; }
+  .item-note  { font-size: clamp(7px,2.2vw,9px); }
+  .left { height: 28vw; }
+}
+
+/* Empêcher le zoom sur double-tap sur les boutons */
+button, .menu-item {
+  touch-action: manipulation;
+}
+
+/* ── Bouton Options fixe — ne pas déborder sur mobile ── */
+@media (max-width: 480px) {
+  #btn-options {
+    bottom: 8px !important;
+    right: 8px !important;
+    font-size: 12px !important;
+  }
+}
