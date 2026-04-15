@@ -192,3 +192,54 @@ button, .menu-item {
     font-size: 12px !important;
   }
 }
+
+/* ══ PAYSAGE MOBILE — priorité haute ══ */
+@media (max-height: 500px) and (orientation: landscape) {
+  #menu {
+    flex-direction: row !important;
+    height: 100dvh;
+    overflow: hidden;
+  }
+  .left {
+    width: 38% !important;
+    height: 100dvh !important;
+    flex-shrink: 0;
+    overflow: hidden;
+  }
+  .left img, .left canvas, .left video {
+    height: 100% !important;
+    width: 100% !important;
+    object-fit: cover;
+    object-position: center top;
+  }
+  .divider {
+    width: 1px !important;
+    height: 100dvh !important;
+    flex-shrink: 0;
+  }
+  .right {
+    flex: 1;
+    height: 100dvh !important;
+    padding: 10px 16px 40px !important;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+  }
+  .game-label    { font-size: 7px; margin-bottom: 2px; }
+  .game-title    { font-size: clamp(16px, 4vw, 22px); margin-bottom: 1px; }
+  .game-irl      { font-size: clamp(9px, 2vw, 11px); margin-bottom: 2px; }
+  .game-edition  { font-size: 8px; margin-bottom: 10px; }
+  .menu-item     { font-size: clamp(13px, 3.5vw, 16px); padding: 7px 0; }
+  .item-note     { font-size: 7px; }
+  .menu-footer   { margin-top: 10px; font-size: 7px; }
+
+  /* Bouton Options — ne pas déborder */
+  #btn-options {
+    bottom: 6px !important;
+    right: 8px !important;
+    font-size: 10px !important;
+    padding: 6px 0 !important;
+  }
+}
