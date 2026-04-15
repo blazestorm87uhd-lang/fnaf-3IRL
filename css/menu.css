@@ -56,6 +56,8 @@
   letter-spacing: 1px;
   text-align: right;
   pointer-events: none;
+  /* Assez bas pour ne pas chevaucher le bouton Options (bottom:44px) */
+  margin-bottom: 0;
   user-select: none;
   line-height: 1.6;
 }
@@ -187,9 +189,9 @@ button, .menu-item {
 /* ── Bouton Options fixe — ne pas déborder sur mobile ── */
 @media (max-width: 480px) {
   #btn-options {
-    bottom: 8px !important;
+    bottom: 6px !important;
     right: 8px !important;
-    font-size: 12px !important;
+    font-size: 11px !important;
   }
 }
 
@@ -241,5 +243,16 @@ button, .menu-item {
     right: 8px !important;
     font-size: 10px !important;
     padding: 6px 0 !important;
+  }
+}
+
+/* ── Bouton Options — toujours au-dessus du crédit studio ── */
+#btn-options {
+  bottom: 52px !important;  /* au-dessus du crédit (14px + hauteur texte) */
+}
+/* Sur desktop, garder la position originale (le crédit est dans .right, pas fixe) */
+@media (min-width: 769px) {
+  #btn-options {
+    bottom: 44px !important;
   }
 }
