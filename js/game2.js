@@ -25,7 +25,7 @@
   // ══════════════════════════════════════
 
   const NIGHT_NUMBER          = 2;
-  const NIGHT_DURATION        = 10 * 60 * 1000;
+  const NIGHT_DURATION        = 8 * 60 * 1000;
   const HOURS                 = ['12 AM','1 AM','2 AM','3 AM','4 AM','5 AM','6 AM'];
   const BRAD_VISIBLE_HOUR     = 1;
   const AMBIANCE_MAX_DURATION = 30000;
@@ -36,12 +36,12 @@
   const BRAD_CAM_SHOW_INDEX   = 6; // couloir+
 
   // Brad nuit 2 — légèrement plus rapide
-  const BRAD_MOVE_BASE        = 16000;
-  const BRAD_MOVE_MIN         = 6000;
+  const BRAD_MOVE_BASE        = 24000;
+  const BRAD_MOVE_MIN         = 10000;
 
   // Erreurs nuit 2 — légèrement plus fréquentes
-  const ERROR_INTERVAL_BASE   = 110000;
-  const ERROR_INTERVAL_MIN    =  60000;
+  const ERROR_INTERVAL_BASE   = 180000;
+  const ERROR_INTERVAL_MIN    = 100000;
 
   // Boîte à musique
   const MUSICBOX_DRAIN_MS     = 130000; // 130s pour se vider complètement
@@ -375,6 +375,10 @@
   function selectRoom(roomId) {
     // Bloquer si maintenance ouvert
     if (!panelMaintenance.classList.contains('hidden')) return;
+    // Stopper le rembobinage si on quitte etage-2
+    if (state.selectedRoom === 'etage-2' && roomId !== 'etage-2' && rewindActive) {
+      stopRewind();
+    }
 
     // Accès étage → pas d'image
     if (roomId === 'etage') {
@@ -1016,12 +1020,7 @@
   // HORLOGE
   // ══════════════════════════════════════
 
-  // ── DEV SHORTCUT : clic sur l'heure pour finir la nuit ──
-  const devHour2  = document.getElementById('hud-hour');
-  const devNight2 = document.getElementById('hud-night');
-  function devFinish2() { if (!state.over) triggerNightEnd(); }
-  if (devHour2)  devHour2.addEventListener('click',  devFinish2);
-  if (devNight2) devNight2.addEventListener('click', devFinish2);
+
 
   function startGameClock() {
     const startTime    = Date.now();
