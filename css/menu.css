@@ -49,14 +49,13 @@
 /* Mention dev — visible sur tous les appareils */
 .menu-dev-credit {
   position: absolute;
-  bottom: 14px; right: 18px;
+  bottom: 32px; right: 18px;
   font-family: var(--font-mono);
   font-size: clamp(9px, 1.2vw, 11px);
   color: #3a3a3a;
   letter-spacing: 1px;
   text-align: right;
   pointer-events: none;
-  /* Assez bas pour ne pas chevaucher le bouton Options (bottom:44px) */
   margin-bottom: 0;
   user-select: none;
   line-height: 1.6;
