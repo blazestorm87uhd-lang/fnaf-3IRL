@@ -256,3 +256,18 @@ button, .menu-item {
     bottom: 44px !important;
   }
 }
+
+/* ── Lien OST SoundCloud ── */
+#ost-link {
+  color: #333;
+  text-decoration: none;
+  letter-spacing: 2px;
+  font-size: 9px;
+  transition: color .2s;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+#ost-link:hover { color: #ff5500; } /* orange SoundCloud */
+#ost-link svg { opacity: 0.6; transition: opacity .2s; }
+#ost-link:hover svg { opacity: 1; }
