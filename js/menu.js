@@ -422,6 +422,7 @@ function initMenu() {
 
   // Bouton Options — en position fixe hors du menu
   _setupOptionsButton();
+  _setupOstLink();
 
   // Initialiser la détection manette et l'indicateur
   initGamepadDetection();
@@ -464,6 +465,30 @@ function initMenu() {
 }
 
 
+
+function _setupOstLink() {
+  var link = document.getElementById('ost-link-menu');
+  if (!link) {
+    link = document.createElement('a');
+    link.id = 'ost-link-menu';
+    link.href = 'https://soundcloud.com/l-ly-39181851/sets/o-s-t-3irl';
+    link.target = '_blank';
+    link.rel = 'noopener';
+    link.title = "Écouter l'OST sur SoundCloud";
+    link.setAttribute('style', [
+      'position:fixed', 'bottom:14px', 'left:18px', 'z-index:9500',
+      "font-family:var(--font-mono,'Share Tech Mono',monospace)",
+      'font-size:9px', 'color:#444', 'text-decoration:none',
+      'letter-spacing:2px', 'display:flex', 'align-items:center', 'gap:5px',
+      'transition:color .15s', 'pointer-events:all', 'line-height:1'
+    ].join(';'));
+    link.innerHTML = '<svg width="11" height="11" viewBox="0 0 24 24" fill="currentColor" style="opacity:0.55;flex-shrink:0"><path d="M1.5 13.5c0 1.1.9 2 2 2s2-.9 2-2V11c0-1.1-.9-2-2-2s-2 .9-2 2v2.5zm4.5 2c0 1.1.9 2 2 2s2-.9 2-2V9c0-1.1-.9-2-2-2s-2 .9-2 2v6.5zm4.5 1c0 1.1.9 2 2 2s2-.9 2-2V7.5c0-1.1-.9-2-2-2s-2 .9-2 2V16.5zm4.5-1.5c0 1.1.9 2 2 2s2-.9 2-2V6c0-1.1-.9-2-2-2s-2 .9-2 2v9zm4.5 0c0 1.7 1.3 3 3 3s3-1.3 3-3c0-1.4-.9-2.5-2.2-2.9V5c0-.6-.4-1-.8-1s-.8.4-.8 1v7.1c-1.3.4-2.2 1.5-2.2 2.9z"/></svg>O.S.T — 3IRL';
+    link.addEventListener('mouseenter', function(){ this.style.color='#ff5500'; });
+    link.addEventListener('mouseleave', function(){ this.style.color='#444'; });
+    document.body.appendChild(link);
+  }
+  link.style.display = 'block';
+}
 
 function _setupOptionsButton() {
   var btn = document.getElementById('btn-options');
