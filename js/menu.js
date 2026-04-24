@@ -497,7 +497,7 @@ function _setupOptionsButton() {
     btn.id = 'btn-options';
     // Pas de 'Share Tech Mono' dans cssText pour éviter les conflits de quotes
     btn.setAttribute('style', [
-      'position:fixed', 'bottom:44px', 'right:18px', 'z-index:8000',
+      'position:fixed', 'bottom:68px', 'right:18px', 'z-index:8000',
       "font-family:var(--font-mono,'Share Tech Mono',monospace)",
       'font-size:clamp(14px,2vw,18px)', 'font-weight:700', 'color:#fff',
       'background:transparent', 'border:none',
