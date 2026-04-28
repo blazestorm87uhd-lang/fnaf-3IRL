@@ -191,10 +191,19 @@ function openOptionsModal() {
   resetBtn.onclick = function() {
     ['vol-general','vol-effects','vol-voices'].forEach(function(id) {
       Opts.set(id, '80');
-      var sl = pAud.querySelector('#'+id); if(sl) sl.value = 80;
+      var sl = pAud.querySelector('#'+id);
+      if(sl) {
+        sl.value = 80;
+        // Déclencher l'événement input pour appliquer le volume aux audios en cours
+        sl.dispatchEvent(new Event('input'));
+      }
       var vl = pAud.querySelector('#'+id+'-val'); if(vl) vl.textContent = 80;
     });
     window._vol_general = 0.8; window._vol_effects = 0.8; window._vol_voices = 0.8;
+    // Appliquer immédiatement à tous les audios en cours
+    document.querySelectorAll('audio').forEach(function(a) {
+      if (!a.paused) a.volume = Math.min(1, 0.8);
+    });
   };
   pAud.appendChild(resetBtn);
 
