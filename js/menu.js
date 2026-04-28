@@ -421,8 +421,8 @@ function initMenu() {
   document.addEventListener('keydown', e => { if (e.key === 'Escape') closeNightmareModal(); });
 
   // Bouton Options — en position fixe hors du menu
-  _setupOptionsButton();
-  _setupOstLink();
+  _setupMenuFooter();
+  
 
   // Initialiser la détection manette et l'indicateur
   initGamepadDetection();
@@ -466,64 +466,94 @@ function initMenu() {
 
 
 
-function _setupOstLink() {
-  // Injecter le lien OST dans menu-dev-credit
-  var credit = document.querySelector('.menu-dev-credit');
-  if (!credit || document.getElementById('ost-link-menu')) return;
+function _setupMenuFooter() {
+  if (document.getElementById('menu-footer-block')) return;
+
+  var block = document.createElement('div');
+  block.id = 'menu-footer-block';
+  block.style.cssText = [
+    'position:fixed',
+    'bottom:16px',
+    'right:18px',
+    'z-index:9000',
+    'text-align:right',
+    "font-family:var(--font-mono,'Share Tech Mono',monospace)",
+    'display:flex',
+    'flex-direction:column',
+    'align-items:flex-end',
+    'gap:0',
+    'pointer-events:none',
+  ].join(';');
+
+  // 1. Bouton Options
+  var btn = document.getElementById('btn-options') || document.createElement('button');
+  btn.id = 'btn-options';
+  btn.style.cssText = [
+    'background:transparent',
+    'border:none',
+    'border-bottom:0.5px solid rgba(255,255,255,0.07)',
+    "font-family:var(--font-mono,'Share Tech Mono',monospace)",
+    'font-size:clamp(14px,2vw,18px)',
+    'font-weight:700',
+    'color:#fff',
+    'cursor:pointer',
+    'letter-spacing:2px',
+    'padding:10px 0',
+    'text-align:right',
+    'display:block',
+    'pointer-events:all',
+    'line-height:1.2',
+  ].join(';');
+  var btnTitle = document.createElement('div');
+  btnTitle.textContent = 'Options';
+  var btnSub = document.createElement('div');
+  btnSub.style.cssText = 'font-size:9px;color:#444;font-weight:400;letter-spacing:2px;margin-top:2px;';
+  btnSub.textContent = 'affichage · contrôles · audio';
+  btn.innerHTML = '';
+  btn.appendChild(btnTitle);
+  btn.appendChild(btnSub);
+  btn.onclick = function() {
+    if (typeof window.openOptionsModal === 'function') window.openOptionsModal();
+  };
+  block.appendChild(btn);
+
+  // 2. Spacer
+  var sp = document.createElement('div');
+  sp.style.cssText = 'height:10px;';
+  block.appendChild(sp);
+
+  // 3. Version
+  var ver = document.createElement('div');
+  ver.style.cssText = 'font-size:9px;color:#333;letter-spacing:2px;line-height:1.6;';
+  ver.textContent = 'v1.0.2';
+  block.appendChild(ver);
+
+  // 4. Studios
+  var studios = document.createElement('div');
+  studios.style.cssText = 'font-size:9px;color:#333;letter-spacing:1px;line-height:1.6;';
+  studios.textContent = 'IMAGINe Studio & HwR Engine';
+  block.appendChild(studios);
+
+  // 5. Lien OST
   var link = document.createElement('a');
   link.id = 'ost-link-menu';
   link.href = 'https://soundcloud.com/l-ly-39181851/sets/3irl-ost';
   link.target = '_blank';
   link.rel = 'noopener';
-  link.title = "Écouter l'OST sur SoundCloud";
-  link.setAttribute('style', [
-    'display:inline-flex', 'align-items:center', 'gap:4px',
-    "font-family:var(--font-mono,'Share Tech Mono',monospace)",
-    'font-size:9px', 'color:#555', 'text-decoration:none',
-    'letter-spacing:2px', 'transition:color .15s', 'margin-top:2px'
-  ].join(';'));
-  var svgNS = 'http://www.w3.org/2000/svg';
-  var svg = document.createElementNS(svgNS,'svg');
-  svg.setAttribute('width','10'); svg.setAttribute('height','10');
-  svg.setAttribute('viewBox','0 0 24 24'); svg.setAttribute('fill','currentColor');
-  svg.style.cssText='opacity:0.6;flex-shrink:0';
-  var path = document.createElementNS(svgNS,'path');
-  path.setAttribute('d','M1.5 13.5c0 1.1.9 2 2 2s2-.9 2-2V11c0-1.1-.9-2-2-2s-2 .9-2 2v2.5zm4.5 2c0 1.1.9 2 2 2s2-.9 2-2V9c0-1.1-.9-2-2-2s-2 .9-2 2v6.5zm4.5 1c0 1.1.9 2 2 2s2-.9 2-2V7.5c0-1.1-.9-2-2-2s-2 .9-2 2V16.5zm4.5-1.5c0 1.1.9 2 2 2s2-.9 2-2V6c0-1.1-.9-2-2-2s-2 .9-2 2v9zm4.5 0c0 1.7 1.3 3 3 3s3-1.3 3-3c0-1.4-.9-2.5-2.2-2.9V5c0-.6-.4-1-.8-1s-.8.4-.8 1v7.1c-1.3.4-2.2 1.5-2.2 2.9z');
-  svg.appendChild(path);
-  link.appendChild(svg);
-  link.appendChild(document.createTextNode("l’OST du jeu"));
-    link.addEventListener('mouseenter', function(){ this.style.color='#ff5500'; });
+  link.style.cssText = [
+    'font-size:9px',
+    'color:#555',
+    'text-decoration:none',
+    'letter-spacing:1px',
+    'line-height:1.6',
+    'pointer-events:all',
+    'transition:color .15s',
+    'display:inline-block',
+  ].join(';');
+  link.textContent = "l’OST du jeu";
+  link.addEventListener('mouseenter', function(){ this.style.color='#ff5500'; });
   link.addEventListener('mouseleave', function(){ this.style.color='#555'; });
-  credit.appendChild(document.createElement('br'));
-  credit.appendChild(link);
-}
+  block.appendChild(link);
 
-function _setupOptionsButton() {
-  var btn = document.getElementById('btn-options');
-  if (!btn) {
-    btn = document.createElement('button');
-    btn.id = 'btn-options';
-    // Pas de 'Share Tech Mono' dans cssText pour éviter les conflits de quotes
-    btn.setAttribute('style', [
-      'position:fixed', 'bottom:90px', 'right:18px', 'z-index:8000',
-      "font-family:var(--font-mono,'Share Tech Mono',monospace)",
-      'font-size:clamp(14px,2vw,18px)', 'font-weight:700', 'color:#fff',
-      'background:transparent', 'border:none',
-      'border-bottom:0.5px solid rgba(255,255,255,0.07)',
-      'padding:10px 0', 'cursor:pointer', 'letter-spacing:2px',
-      'transition:color .15s', 'text-align:left', 'display:block'
-    ].join(';'));
-    var title = document.createElement('div');
-    title.textContent = 'Options';
-    var sub = document.createElement('div');
-    sub.setAttribute('style', 'font-size:9px;color:#444;font-weight:400;letter-spacing:2px;margin-top:3px;');
-    sub.textContent = 'affichage · contrôles · audio';
-    btn.appendChild(title);
-    btn.appendChild(sub);
-    document.body.appendChild(btn);
-  }
-  btn.style.display = 'block';
-  btn.onclick = function() {
-    if (typeof window.openOptionsModal === 'function') window.openOptionsModal();
-  };
+  document.body.appendChild(block);
 }
