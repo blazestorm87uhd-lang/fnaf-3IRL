@@ -48,6 +48,7 @@
 
 /* Mention dev — visible sur tous les appareils */
 .menu-dev-credit {
+  display: none !important; /* Remplacé par #menu-footer-block */
   position: absolute;
   bottom: 32px; right: 18px;
   font-family: var(--font-mono);
@@ -245,16 +246,6 @@ button, .menu-item {
   }
 }
 
-/* ── Bouton Options — toujours au-dessus du crédit studio ── */
-#btn-options {
-  bottom: 52px !important;  /* au-dessus du crédit (14px + hauteur texte) */
-}
-/* Sur desktop, garder la position originale (le crédit est dans .right, pas fixe) */
-@media (min-width: 769px) {
-  #btn-options {
-    bottom: 44px !important;
-  }
-}
 
 /* ── Lien OST SoundCloud — fixe bas gauche ── */
 #ost-link {
