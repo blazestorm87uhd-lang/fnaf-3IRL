@@ -467,25 +467,33 @@ function initMenu() {
 
 
 function _setupOstLink() {
-  // Injecter le lien directement dans menu-dev-credit, après les studios
+  // Injecter le lien OST dans menu-dev-credit
   var credit = document.querySelector('.menu-dev-credit');
   if (!credit || document.getElementById('ost-link-menu')) return;
   var link = document.createElement('a');
   link.id = 'ost-link-menu';
-  link.href = 'https://soundcloud.com/l-ly-39181851/sets/o-s-t-3irl';
+  link.href = 'https://soundcloud.com/l-ly-39181851/sets/3irl-ost';
   link.target = '_blank';
   link.rel = 'noopener';
   link.title = "Écouter l'OST sur SoundCloud";
   link.setAttribute('style', [
     'display:inline-flex', 'align-items:center', 'gap:4px',
     "font-family:var(--font-mono,'Share Tech Mono',monospace)",
-    'font-size:9px', 'color:#888', 'text-decoration:none',
-    'letter-spacing:2px', 'transition:color .15s', 'margin-top:3px'
+    'font-size:9px', 'color:#555', 'text-decoration:none',
+    'letter-spacing:2px', 'transition:color .15s', 'margin-top:2px'
   ].join(';'));
-  link.innerHTML = '<svg width="10" height="10" viewBox="0 0 24 24" fill="currentColor" style="opacity:0.6;flex-shrink:0"><path d="M1.5 13.5c0 1.1.9 2 2 2s2-.9 2-2V11c0-1.1-.9-2-2-2s-2 .9-2 2v2.5zm4.5 2c0 1.1.9 2 2 2s2-.9 2-2V9c0-1.1-.9-2-2-2s-2 .9-2 2v6.5zm4.5 1c0 1.1.9 2 2 2s2-.9 2-2V7.5c0-1.1-.9-2-2-2s-2 .9-2 2V16.5zm4.5-1.5c0 1.1.9 2 2 2s2-.9 2-2V6c0-1.1-.9-2-2-2s-2 .9-2 2v9zm4.5 0c0 1.7 1.3 3 3 3s3-1.3 3-3c0-1.4-.9-2.5-2.2-2.9V5c0-.6-.4-1-.8-1s-.8.4-.8 1v7.1c-1.3.4-2.2 1.5-2.2 2.9z"/></svg>O.S.T — 3IRL';
-  link.addEventListener('mouseenter', function(){ this.style.color='#ff5500'; });
-  link.addEventListener('mouseleave', function(){ this.style.color='#888'; });
-  // Ajouter un saut de ligne puis le lien dans le crédit
+  var svgNS = 'http://www.w3.org/2000/svg';
+  var svg = document.createElementNS(svgNS,'svg');
+  svg.setAttribute('width','10'); svg.setAttribute('height','10');
+  svg.setAttribute('viewBox','0 0 24 24'); svg.setAttribute('fill','currentColor');
+  svg.style.cssText='opacity:0.6;flex-shrink:0';
+  var path = document.createElementNS(svgNS,'path');
+  path.setAttribute('d','M1.5 13.5c0 1.1.9 2 2 2s2-.9 2-2V11c0-1.1-.9-2-2-2s-2 .9-2 2v2.5zm4.5 2c0 1.1.9 2 2 2s2-.9 2-2V9c0-1.1-.9-2-2-2s-2 .9-2 2v6.5zm4.5 1c0 1.1.9 2 2 2s2-.9 2-2V7.5c0-1.1-.9-2-2-2s-2 .9-2 2V16.5zm4.5-1.5c0 1.1.9 2 2 2s2-.9 2-2V6c0-1.1-.9-2-2-2s-2 .9-2 2v9zm4.5 0c0 1.7 1.3 3 3 3s3-1.3 3-3c0-1.4-.9-2.5-2.2-2.9V5c0-.6-.4-1-.8-1s-.8.4-.8 1v7.1c-1.3.4-2.2 1.5-2.2 2.9z');
+  svg.appendChild(path);
+  link.appendChild(svg);
+  link.appendChild(document.createTextNode("l’OST du jeu"));
+    link.addEventListener('mouseenter', function(){ this.style.color='#ff5500'; });
+  link.addEventListener('mouseleave', function(){ this.style.color='#555'; });
   credit.appendChild(document.createElement('br'));
   credit.appendChild(link);
 }
