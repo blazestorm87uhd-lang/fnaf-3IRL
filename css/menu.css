@@ -48,7 +48,6 @@
 
 /* Mention dev — visible sur tous les appareils */
 .menu-dev-credit {
-  display: none !important; /* Remplacé par #menu-footer-block */
   position: absolute;
   bottom: 32px; right: 18px;
   font-family: var(--font-mono);
