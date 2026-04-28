@@ -482,7 +482,7 @@ function _setupMenuFooter() {
     'flex-direction:column',
     'align-items:flex-end',
     'gap:0',
-    'pointer-events:none',
+    'pointer-events:none',  /* surchargé individuellement par chaque élément cliquable */
   ].join(';');
 
   // 1. Bouton Options
@@ -549,6 +549,9 @@ function _setupMenuFooter() {
     'pointer-events:all',
     'transition:color .15s',
     'display:inline-block',
+    'cursor:pointer',
+    'position:relative',
+    'z-index:9999',
   ].join(';');
   link.textContent = "l’OST du jeu";
   link.addEventListener('mouseenter', function(){ this.style.color='#ff5500'; });
